@@ -33,7 +33,7 @@ const Login = () => {
 
       alert(response.data) // Affiche la réponse du serveur
     } catch (error) {
-      setError('Invalid email or password')
+      setError(error.response.data.message)
     }
   }
 

@@ -44,16 +44,14 @@ const Register = () => {
         body: JSON.stringify(userData),
       })
 
-      if (response.ok) {
+      if (userData.error) {
+        setError(userData.error)
+      } else {
         // Handle successful registration (e.g., redirect to login or show success message)
         console.log('Registration successful')
-      } else {
-        // Handle error response from API
-        const result = await response.json()
-        setError(result.message || 'Registration failed')
       }
     } catch (err) {
-      setError('Something went wrong, please try again later.')
+      setError(err.response.data.message)
     } finally {
       setLoading(false)
     }

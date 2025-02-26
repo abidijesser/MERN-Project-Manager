@@ -2,14 +2,38 @@ const User = require('../models/User');
 const bcrypt = require('bcrypt');
 
 async function register(req, res) {
+
     try {
-        const { email, password } = req.body;
+        const { name, email, password } = req.body;
+
+        if(!name){
+            return res.json({error:'Nom est obligatoire'});
+        }
+
+        const emailExist = await User.findOne({ email });
+        if (emailExist) {
+            return res.json({ error: 'Email existe déjà' });
+        }
+
+        if(!password){
+            return res.json({error: 'Mot de passe est obligatoire'});
+        }
+
+        if(!email){
+            return res.json({ error: 'Email est obligatoire'});
+        }
+        
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = new User({ email, password: hashedPassword });
+
+        const user = new User({ name, email, password: hashedPassword });
         await user.save();
-        res.status(200).send('Utilisateur enregistré avec succès');
-    } catch (error) {
-        res.status(400).send('error');
+
+        res.json({ error: 'Utilisateur enregistré avec succès'});
+
+    } 
+    
+    catch (error) {
+        res.json({error: 'error'});
     }
 }
 
