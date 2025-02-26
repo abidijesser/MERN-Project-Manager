@@ -4,7 +4,7 @@ const User = require('../models/User');
 // Ensure the Batiment model is imported correctly
 const userController = require('../controllers/UserController');
 
-router.post('/register', userController.addUser);
+router.post('/register', userController.register);
 router.post('/login', userController.login);
 
 module.exports = router;
