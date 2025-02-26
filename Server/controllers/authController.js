@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 async function register(req, res) {
 
@@ -43,19 +44,45 @@ async function login(req, res) {
 
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(400).send('Email non trouvé');
+            return res.json('Email non trouvé');
         }
         
-        const isMatched = bcrypt.compare(password, user.password);
-        if (!isMatched) {
-            return res.status(400).send('Mot de passe incorrect');
+        const isMatched = await bcrypt.compare(password, user.password);
+
+        if (isMatched) {
+            jwt.sign({
+                email: user.email, id: user._id, name: user.name}, 
+                process.env.JWT_SECRET, 
+                {}, 
+                (err, token) =>{
+                    if(err) throw error;
+                    res.cookie('token', token).json(user)
+                }
+            )
+        }
+        else{
+            return res.json('Mot de passe incorrect');
         }
        
-        res.status(200).send('Connexion réussie');
+        // res.status(200).json({success: true, message: 'Connexion réussie'});
     } catch (error) {
         console.error(error);
         res.status(500).send('Erreur interne du serveur');
     }
 }
 
-module.exports = { register, login };
+const getProfile =(req, res) => {
+    const {token} = req.cookies
+    if(token){
+        jwt.verify(token, process.env.JWT_SECRET,{}, (err, user) => {
+            if(err) throw err;
+            res.json(user);
+        });
+    } else {
+        res.json(null);
+    }
+}
+
+
+
+module.exports = { register, login, getProfile };

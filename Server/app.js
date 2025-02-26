@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
+const cookieParser = require('cookie-parser');
 
 const db = require('./config/db.json');
 const authRoutes = require("./routes/authRoutes");
@@ -17,6 +18,8 @@ app.use(
 );
 
 app.use(express.json());
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: false }));
 
 app.use("/", authRoutes);
 

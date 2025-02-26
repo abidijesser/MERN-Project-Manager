@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   CButton,
   CCard,
@@ -21,6 +22,7 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const navigate = useNavigate()
 
   const handleRegister = async (e) => {
     e.preventDefault()
@@ -47,7 +49,7 @@ const Register = () => {
       if (userData.error) {
         setError(userData.error)
       } else {
-        // Handle successful registration (e.g., redirect to login or show success message)
+        navigate('/login')
         console.log('Registration successful')
       }
     } catch (err) {

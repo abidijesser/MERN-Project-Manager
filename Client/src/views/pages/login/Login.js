@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   CButton,
   CCard,
@@ -21,9 +21,11 @@ const Login = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const navigate = useNavigate()
 
   const handleLogin = async (e) => {
     e.preventDefault()
+    setError('') // Reset the error before making the request
 
     try {
       const response = await axios.post('http://localhost:3001/login', {
@@ -31,9 +33,17 @@ const Login = () => {
         password,
       })
 
-      alert(response.data) // Affiche la réponse du serveur
+      console.log('API Response:', response.data) // Log the response data to check what's returned
+
+      if (response.data._id) {
+        // Login successful → navigate
+        navigate('/')
+      } else {
+        // Show error if not success
+        setError(response.data.error || 'Invalid credentials')
+      }
     } catch (error) {
-      setError(error.response.data.message)
+      setError(error.response?.data?.message || 'Une erreur est survenue')
     }
   }
 
