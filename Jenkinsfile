@@ -5,7 +5,9 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    sh 'npm test'
+                    dir('Server') { // Met un 'S' majuscule si le dossier est nommé 'Server'
+                        sh 'npm test'
+                    }
                 }
             }
         }
@@ -13,7 +15,9 @@ pipeline {
         stage('Build application') {
             steps {
                 script {
-                    sh 'npm run build-dev'
+                    dir('Server') { // Exécute npm run build-dev dans Server/
+                        sh 'npm run build-dev'
+                    }
                 }
             }
         }
