@@ -23,15 +23,9 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                script {
-                    def scannerHome = tool 'scanner' // Assure-toi que l'outil SonarQube est bien configuré
-                    withSonarQubeEnv('SonarQube') { 
-                        sh "${scannerHome}/bin/sonar-scanner" // Exécute l'analyse SonarQube
-                    }
-                }
-            }
-        }
+        steps{ 
+            script { 
+                def scannerHome = tool 'scanner' withSonarQubeEnv 
+                { sh "${scannerHome}/bin/sonar-scanner" } } } }
     }
 }
