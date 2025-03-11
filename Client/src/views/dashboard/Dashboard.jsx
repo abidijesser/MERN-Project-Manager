@@ -14,6 +14,10 @@ import {
   CTableRow,
   CButton,
   CBadge,
+  CCardTitle,
+  CCardSubtitle,
+  CCardText,
+  CCardLink,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilCheckCircle, cilClock, cilList, cilTask } from '@coreui/icons';
@@ -64,7 +68,9 @@ const Dashboard = () => {
 
   return (
    <CRow>
+    
   <CCol md={6}>
+    
     <CCard className="mb-4 shadow-lg" style={{ borderRadius: '10px', border: '1px solid #ddd' }}>
       <CCardHeader>
         <CIcon icon={cilList} className="me-2" style={{ fontSize: '1.5rem' }} /> Projets
