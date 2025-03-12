@@ -2,26 +2,40 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
+const cookieParser = require('cookie-parser');
 
 const db = require('./config/db.json');
-const userRoutes = require("./routes/user");
+const authRoutes = require("./routes/authRoutes");
+const adminRoutes = require("./routes/admin");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
-app.use(cors());
+app.use(
+  cors({
+      origin: 'http://localhost:3000',
+      credentials: true
+  })
+);
+
 app.use(express.json());
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: false }));
 
-// Routes
-app.use("/", userRoutes);
+app.use("/", authRoutes);
+ app.use("/admin", adminRoutes);
 
-// Connect to MongoDB
-mongoose.connect(db.url)
-  .then(() => console.log('Database connected'))
-  .catch((err) => console.log('Error:', err));
 
-// Start the server
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('Cloud Database connected'))
+  .catch((err) => console.log('Databasenot connected:', err));
+
+
+
+// mongoose.connect(db.url)
+//   .then(() => console.log('Database connected'))
+//   .catch((err) => console.log('Error:', err));
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
