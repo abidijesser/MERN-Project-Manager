@@ -17,10 +17,13 @@ app.use(express.json());
 app.use("/", userRoutes);
 
 // Connect to MongoDB
-mongoose.connect(db.url)
-  .then(() => console.log('Database connected'))
-  .catch((err) => console.log('Error:', err));
+//mongoose.connect(db.url)
+ // .then(() => console.log('Database connected'))
+  //.catch((err) => console.log('Error:', err));
 
+  mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('Cloud Database connected'))
+  .catch((err) => console.log('Databasenot connected:', err));
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
