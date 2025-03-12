@@ -6,7 +6,7 @@ const cookieParser = require('cookie-parser');
 
 const db = require('./config/db.json');
 const authRoutes = require("./routes/authRoutes");
-// const adminRoutes = require("./routes/admin");
+const adminRoutes = require("./routes/admin");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -23,7 +23,7 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 
 app.use("/", authRoutes);
-// app.use("/admin", adminRoutes);
+ app.use("/admin", adminRoutes);
 
 
 mongoose.connect(process.env.MONGO_URI)
