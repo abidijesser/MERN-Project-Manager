@@ -1,7 +1,7 @@
 const Project = require('../models/Project');
 const User = require('../models/User');
 
-async function createProject(req, res) {
+const createProject = async (req, res) => {
 
     try {
         const { projectName, description, owner } = req.body;
@@ -72,4 +72,25 @@ const updateProject = async (req, res) => {
 };
 
 
-module.exports = { createProject, updateProject };
+const deleteProject = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+
+        if (!projectId) {
+            return res.json({ error: 'ID du projet requis' });
+        }
+
+        const deletedProject = await Project.findByIdAndDelete(projectId);
+
+        if (!deletedProject) {
+            return res.json({ error: 'Projet non trouvé' });
+        }
+
+        res.json({ message: 'Projet supprimé avec succès' });
+    } catch (error) {
+        res.json(error);
+    }
+};
+
+
+module.exports = { createProject, updateProject, deleteProject };
