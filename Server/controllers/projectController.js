@@ -1,4 +1,5 @@
 const Project = require('../models/Project');
+const User = require('../models/User');
 
 async function createProject(req, res) {
 
@@ -17,16 +18,22 @@ async function createProject(req, res) {
             return res.json({error: 'owner invalid'});
         }
 
+        const ownerExists = await User.findById(owner);
+        if (!ownerExists) {
+            return res.json({ error: "L'utilisateur spécifié comme propriétaire n'existe pas" });
+        }
+
         const project = new Project({ 
 
             projectName, 
             description, 
             owner,
             status: "Active",
-            startDate: new Date()
-            // endDate: null
+            startDate: new Date(),
+            endDate: null
         });
         await project.save();
+        await User.findByIdAndUpdate(owner, { $push: { projects: project._id } });
 
         res.json('Projet créé avec succès');
     } 
