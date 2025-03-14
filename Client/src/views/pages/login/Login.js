@@ -25,7 +25,7 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault()
-    setError('') // Reset the error before making the request
+    setError('') 
 
     try {
       const response = await axios.post('http://localhost:3001/login', {
@@ -33,13 +33,11 @@ const Login = () => {
         password,
       })
 
-      console.log('API Response:', response.data) // Log the response data to check what's returned
+      console.log('API Response:', response.data) 
 
       if (response.data._id) {
-        // Login successful → navigate
         navigate('/')
       } else {
-        // Show error if not success
         setError(response.data.error || 'Invalid credentials')
       }
     } catch (error) {
