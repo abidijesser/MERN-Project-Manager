@@ -11,6 +11,6 @@ const ProjectSchema = new Schema({
     endDate: Date,
     tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
     members: [{ type: Schema.Types.ObjectId, ref: "User" }],
-    owner: { type: Schema.Types.ObjectId, ref: "User" }
+    owner: String
 });
 module.exports = mongoose.model("Project", ProjectSchema);
