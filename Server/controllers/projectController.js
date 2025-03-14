@@ -41,6 +41,35 @@ async function createProject(req, res) {
     catch (error) {
         res.json(error);
     }
-}
+};
 
-module.exports = { createProject };
+
+const updateProject = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        console.log("Params:", req.params);
+
+        const { projectName, description, status } = req.body;
+
+        if (!projectId) {
+            return res.json({ error: 'ID du projet requis' });
+        }
+
+        const updatedProject = await Project.findByIdAndUpdate(
+            projectId,
+            { projectName, description, status },
+            { new: true } 
+        );
+
+        if (!updatedProject) {
+            return res.json({ error: 'Projet non trouvé' });
+        }
+
+        res.json({ message: 'Projet mis à jour avec succès', updatedProject });
+    } catch (error) {
+        res.json(error);
+    }
+};
+
+
+module.exports = { createProject, updateProject };
