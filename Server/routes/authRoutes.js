@@ -22,9 +22,14 @@ router.get(
   }
 );
 
+// Logout route
 router.get("/logout", (req, res) => {
-  req.logout();
-  res.redirect("/");
+  req.logout((err) => {
+    if (err) {
+      return next(err);
+    }
+    res.redirect("http://localhost:3000/#/login");
+  });
 });
 
 module.exports = router;

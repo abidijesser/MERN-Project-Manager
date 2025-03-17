@@ -169,7 +169,7 @@ const Dashboard = () => {
                         <div className="fw-semibold text-nowrap">10 sec ago</div>
                       </CTableDataCell>
                       <CTableDataCell>
-                        <Link to={`/profile/${user._id}`}>View Profile</Link>
+                        <Link to={`/user-details/${user._id}`}>View Details</Link>
                       </CTableDataCell>
                     </CTableRow>
                   ))}
