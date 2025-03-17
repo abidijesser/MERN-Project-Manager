@@ -1,6 +1,7 @@
 // filepath: c:\Users\Lenovo\Desktop\pi1\MERN-Project-Manager\Client\src\views\dashboard\Dashboard.js
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 import classNames from 'classnames';
 
 import {
@@ -166,6 +167,9 @@ const Dashboard = () => {
                       <CTableDataCell>
                         <div className="small text-body-secondary text-nowrap">Last login</div>
                         <div className="fw-semibold text-nowrap">10 sec ago</div>
+                      </CTableDataCell>
+                      <CTableDataCell>
+                        <Link to={`/profile/${user._id}`}>View Profile</Link>
                       </CTableDataCell>
                     </CTableRow>
                   ))}

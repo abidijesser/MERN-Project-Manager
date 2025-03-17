@@ -1,40 +1,51 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-require('dotenv').config();
-const cookieParser = require('cookie-parser');
-
-const db = require('./config/db.json');
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+require("dotenv").config();
+const cookieParser = require("cookie-parser");
+const passport = require("passport");
+const session = require("express-session");
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/admin");
+require("./config/passportConfig");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Middleware
 app.use(
   cors({
-      origin: 'http://localhost:3000',
-      credentials: true
+    origin: "http://localhost:3000",
+    credentials: true,
   })
 );
-
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 
+// Session configuration
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "votre_secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 24 * 60 * 60 * 1000 // 24 heures
+    }
+  })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use("/", authRoutes);
- app.use("/admin", adminRoutes);
+app.use("/admin", adminRoutes);
 
-
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('Cloud Database connected'))
-  .catch((err) => console.log('Databasenot connected:', err));
-
-
-
-// mongoose.connect(db.url)
-//   .then(() => console.log('Database connected'))
-//   .catch((err) => console.log('Error:', err));
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("Cloud Database connected"))
+  .catch((err) => console.log("Database not connected:", err));
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

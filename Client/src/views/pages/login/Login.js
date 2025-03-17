@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+
 import {
   CButton,
   CCard,
@@ -45,6 +46,10 @@ const Login = () => {
     } catch (error) {
       setError(error.response?.data?.message || 'Une erreur est survenue')
     }
+  }
+
+  const handleGoogleLogin = () => {
+    window.location.href = 'http://localhost:3001/google'
   }
 
   return (
@@ -96,6 +101,9 @@ const Login = () => {
                       </CCol>
                     </CRow>
                   </CForm>
+                  <a href="http://localhost:3001/google" className="btn btn-soft-primary">
+                    Google
+                  </a>
                 </CCardBody>
               </CCard>
               <CCard className="text-white bg-primary py-5" style={{ width: '44%' }}>
