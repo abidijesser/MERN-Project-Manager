@@ -1,14 +1,17 @@
 // filepath: c:\Users\Lenovo\Desktop\pi1\MERN-Project-Manager\Client\src\routes.js
-import React from 'react';
+import React from 'react'
 import Profile from './views/pages/profile/Profile'
 
-const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'));
-const Login = React.lazy(() => import('./views/pages/login/Login'));
-const Register = React.lazy(() => import('./views/pages/register/Register'));
-const Page404 = React.lazy(() => import('./views/pages/page404/Page404'));
-const Page500 = React.lazy(() => import('./views/pages/page500/Page500'));
-const EditProfile = React.lazy(() => import('./views/pages/profile/EditProfile'));
-const UserDetails = React.lazy(() => import('./views/pages/userDetails/UserDetails'));
+const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
+const Login = React.lazy(() => import('./views/pages/login/Login'))
+const Register = React.lazy(() => import('./views/pages/register/Register'))
+const Page404 = React.lazy(() => import('./views/pages/page404/Page404'))
+const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
+const EditProfile = React.lazy(() => import('./views/pages/profile/EditProfile'))
+const UserDetails = React.lazy(() => import('./views/pages/userDetails/UserDetails'))
+const ForgotPassword = React.lazy(() => import('./views/pages/forgot-password/ForgotPassword'))
+const ResetPassword = React.lazy(() => import('./views/pages/reset-password/ResetPassword'))
+const VerifyEmail = React.lazy(() => import('./views/pages/verify-email/VerifyEmail'))
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
@@ -18,8 +21,11 @@ const routes = [
   { path: '/404', name: 'Page 404', element: Page404 },
   { path: '/500', name: 'Page 500', element: Page500 },
   { path: '/profile', name: 'Profile', element: Profile },
-  { path: '/edit-profile/:id', name: 'Edit Profile', element: EditProfile },
+  { path: '/profile/edit/:id', name: 'Edit Profile', element: EditProfile },
   { path: '/user-details/:id', name: 'User Details', element: UserDetails },
-];
+  { path: '/forgot-password', name: 'Forgot Password', element: ForgotPassword },
+  { path: '/reset-password/:token', name: 'Reset Password', element: ResetPassword },
+  { path: '/verify-email/:token', name: 'Verify Email', element: VerifyEmail },
+]
 
-export default routes;
+export default routes

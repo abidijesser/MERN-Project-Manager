@@ -24,9 +24,9 @@ const Login = () => {
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('') // Reset the error before making the request
+    setError('')
 
     try {
       const response = await axios.post('http://localhost:3001/login', {
@@ -34,17 +34,23 @@ const Login = () => {
         password,
       })
 
-      console.log('API Response:', response.data) // Log the response data to check what's returned
+      console.log('Réponse login:', response.data) // Log pour debug
 
-      if (response.data._id) {
-        // Login successful → navigate
-        navigate('/')
-      } else {
-        // Show error if not success
-        setError(response.data.error || 'Invalid credentials')
+      if (response.data.error) {
+        setError(response.data.error)
+        return
       }
-    } catch (error) {
-      setError(error.response?.data?.message || 'Une erreur est survenue')
+
+      if (response.data.success) {
+        // Stockage des informations utilisateur si nécessaire
+        localStorage.setItem('user', JSON.stringify(response.data.user))
+        navigate('/dashboard')
+      } else {
+        setError('Erreur de connexion')
+      }
+    } catch (err) {
+      console.error('Erreur de connexion:', err)
+      setError(err.response?.data?.error || 'Erreur lors de la connexion')
     }
   }
 
@@ -60,7 +66,7 @@ const Login = () => {
             <CCardGroup>
               <CCard className="p-4">
                 <CCardBody>
-                  <CForm onSubmit={handleLogin}>
+                  <CForm onSubmit={handleSubmit}>
                     <h1>Login</h1>
                     <p className="text-body-secondary">Sign In to your account</p>
                     {error && <p style={{ color: 'red' }}>{error}</p>}
@@ -95,9 +101,11 @@ const Login = () => {
                         </CButton>
                       </CCol>
                       <CCol xs={6} className="text-right">
-                        <CButton color="link" className="px-0">
-                          Forgot password?
-                        </CButton>
+                        <Link to="/forgot-password">
+                          <CButton color="link" className="px-0">
+                            Forgot password?
+                          </CButton>
+                        </Link>
                       </CCol>
                     </CRow>
                   </CForm>

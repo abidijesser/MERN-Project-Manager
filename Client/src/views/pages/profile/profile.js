@@ -1,4 +1,3 @@
-// filepath: c:\Users\Lenovo\Desktop\pi1\MERN-Project-Manager\Client\src\views\pages\profile\profile.js
 import React, { useState, useEffect } from 'react';
 import {
   CCard,
@@ -10,6 +9,7 @@ import {
   CFormInput,
   CButton,
 } from '@coreui/react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 
 const Profile = () => {
@@ -20,7 +20,7 @@ const Profile = () => {
   });
 
   useEffect(() => {
-    // Charger les données du profil
+    // Load profile data
     const fetchProfile = async () => {
       try {
         const response = await axios.get('http://localhost:3001/profile', {
@@ -30,7 +30,7 @@ const Profile = () => {
           setUser(response.data);
         }
       } catch (error) {
-        console.error('Erreur lors du chargement du profil:', error);
+        console.error('Error loading profile:', error);
       }
     };
 
@@ -47,7 +47,7 @@ const Profile = () => {
           <CCardBody>
             <CForm>
               <div className="mb-3">
-                <label className="form-label">Nom</label>
+                <label className="form-label">Name</label>
                 <CFormInput
                   type="text"
                   value={user.name || ''}
@@ -63,13 +63,16 @@ const Profile = () => {
                 />
               </div>
               <div className="mb-3">
-                <label className="form-label">Rôle</label>
+                <label className="form-label">Role</label>
                 <CFormInput
                   type="text"
                   value={user.role || ''}
                   disabled
                 />
               </div>
+              <Link to={`/profile/edit/${user._id}`}>
+                <CButton color="primary">Edit Profile</CButton>
+              </Link>
             </CForm>
           </CCardBody>
         </CCard>

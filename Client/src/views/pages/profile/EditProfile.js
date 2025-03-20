@@ -1,85 +1,99 @@
-// filepath: c:\Users\Lenovo\Desktop\pi1\MERN-Project-Manager\Client\src\views\pages\profile\EditProfile.js
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom';
-import DefaultLayout from '../../../layout/DefaultLayout';
+import React, { useEffect, useState } from 'react'
+import {
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CCol,
+  CRow,
+  CForm,
+  CFormInput,
+  CButton,
+} from '@coreui/react'
+import axios from 'axios'
+import { useParams, useNavigate } from 'react-router-dom'
 
 const EditProfile = () => {
   const [user, setUser] = useState({
     name: '',
     email: '',
-    registered: ''
-  });
-  const { id } = useParams();
-  const navigate = useNavigate();
+  })
+  const [error, setError] = useState('')
+  const { id } = useParams()
+  const navigate = useNavigate()
 
   useEffect(() => {
-    axios.get(`http://localhost:3001/admin/users/${id}`)
-      .then(response => {
-        setUser(response.data);
-      })
-      .catch(error => {
-        console.error('There was an error fetching the user!', error);
-      });
-  }, [id]);
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3001/profile/${id}`, {
+          withCredentials: true,
+        })
+        setUser(response.data)
+      } catch (err) {
+        setError('Error fetching user data')
+        console.error(err)
+      }
+    }
+    fetchUser()
+  }, [id])
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setUser(prevState => ({
+    const { name, value } = e.target
+    setUser((prevState) => ({
       ...prevState,
-      [name]: value
-    }));
-  };
+      [name]: value,
+    }))
+  }
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    axios.put(`http://localhost:3001/admin/users/${id}`, user)
-      .then(response => {
-        console.log('Profile updated successfully');
-        navigate(`/profile/${id}`);
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      await axios.put(`http://localhost:3001/profile/${id}`, user, {
+        withCredentials: true,
       })
-      .catch(error => {
-        console.error('There was an error updating the profile!', error);
-      });
-  };
+      navigate('/profile')
+    } catch (err) {
+      setError('Error updating profile')
+      console.error(err)
+    }
+  }
 
   return (
-    <DefaultLayout>
-      <div>
-        <h1>Edit Profile</h1>
-        <form onSubmit={handleSubmit}>
-          <div>
-            <label>Name:</label>
-            <input
-              type="text"
-              name="name"
-              value={user.name}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <label>Email:</label>
-            <input
-              type="email"
-              name="email"
-              value={user.email}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <label>Registered:</label>
-            <input
-              type="text"
-              name="registered"
-              value={user.registered}
-              onChange={handleChange}
-            />
-          </div>
-          <button type="submit">Save</button>
-        </form>
-      </div>
-    </DefaultLayout>
-  );
-};
+    <CRow>
+      <CCol md={8}>
+        <CCard className="mb-4">
+          <CCardHeader>
+            <h4>Edit Profile</h4>
+          </CCardHeader>
+          <CCardBody>
+            {error && <div className="alert alert-danger">{error}</div>}
+            <CForm onSubmit={handleSubmit}>
+              <div className="mb-3">
+                <label className="form-label">Name</label>
+                <CFormInput
+                  type="text"
+                  name="name"
+                  value={user.name || ''}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Email</label>
+                <CFormInput
+                  type="email"
+                  name="email"
+                  value={user.email || ''}
+                  onChange={handleChange}
+                />
+              </div>
+              <CButton type="submit" color="primary">
+                Save Changes
+              </CButton>
+            </CForm>
+          </CCardBody>
+        </CCard>
+      </CCol>
+    </CRow>
+  )
+}
 
-export default EditProfile;
+export default EditProfile
