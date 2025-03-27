@@ -7,6 +7,7 @@ const passport = require("passport");
 const session = require("express-session");
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/admin");
+const taskRoutes = require("./routes/taskRoutes");
 require("./config/passportConfig");
 
 const app = express();
@@ -31,8 +32,8 @@ app.use(
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000 // 24 heures
-    }
+      maxAge: 24 * 60 * 60 * 1000, // 24 heures
+    },
   })
 );
 
@@ -41,6 +42,7 @@ app.use(passport.session());
 
 app.use("/", authRoutes);
 app.use("/admin", adminRoutes);
+app.use("/api/tasks", taskRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI)

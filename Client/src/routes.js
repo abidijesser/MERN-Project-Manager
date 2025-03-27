@@ -1,6 +1,9 @@
 // filepath: c:\Users\Lenovo\Desktop\pi1\MERN-Project-Manager\Client\src\routes.js
 import React from 'react'
 import Profile from './views/pages/profile/Profile'
+import TaskList from './views/tasks/TaskList'
+import TaskForm from './views/tasks/TaskForm'
+import TaskDetail from './views/tasks/TaskDetail'
 
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Login = React.lazy(() => import('./views/pages/login/Login'))
@@ -26,6 +29,10 @@ const routes = [
   { path: '/forgot-password', name: 'Forgot Password', element: ForgotPassword },
   { path: '/reset-password/:token', name: 'Reset Password', element: ResetPassword },
   { path: '/verify-email/:token', name: 'Verify Email', element: VerifyEmail },
+  { path: '/tasks', name: 'Tasks', element: TaskList },
+  { path: '/tasks/create', name: 'Create Task', element: TaskForm },
+  { path: '/tasks/edit/:id', name: 'Edit Task', element: TaskForm },
+  { path: '/tasks/:id', name: 'Task Detail', element: TaskDetail },
 ]
 
 export default routes
