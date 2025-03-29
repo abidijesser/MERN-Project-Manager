@@ -4,6 +4,9 @@ import Profile from './views/pages/profile/Profile'
 import TaskList from './views/tasks/TaskList'
 import TaskForm from './views/tasks/TaskForm'
 import TaskDetail from './views/tasks/TaskDetail'
+import ProjectsList from './views/projects/ProjectsList'
+import CreateProject from './views/projects/CreateProject'
+import ProjectDetails from './views/projects/ProjectDetails'
 
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Login = React.lazy(() => import('./views/pages/login/Login'))
@@ -29,10 +32,13 @@ const routes = [
   { path: '/forgot-password', name: 'Forgot Password', element: ForgotPassword },
   { path: '/reset-password/:token', name: 'Reset Password', element: ResetPassword },
   { path: '/verify-email/:token', name: 'Verify Email', element: VerifyEmail },
-  { path: '/tasks', name: 'Tasks', element: TaskList },
-  { path: '/tasks/create', name: 'Create Task', element: TaskForm },
-  { path: '/tasks/edit/:id', name: 'Edit Task', element: TaskForm },
-  { path: '/tasks/:id', name: 'Task Detail', element: TaskDetail },
+  { path: '/tasks', exact: true, name: 'Tâches', element: TaskList },
+  { path: '/tasks/new', exact: true, name: 'Nouvelle tâche', element: TaskForm },
+  { path: '/tasks/edit/:id', exact: true, name: 'Modifier tâche', element: TaskForm },
+  { path: '/tasks/:id', exact: true, name: 'Détails tâche', element: TaskDetail },
+  { path: '/projects', exact: true, name: 'Projets', element: ProjectsList },
+  { path: '/projects/new', exact: true, name: 'Créer un projet', element: CreateProject },
+  { path: '/projects/:id', exact: true, name: 'Détails du projet', element: ProjectDetails },
 ]
 
 export default routes

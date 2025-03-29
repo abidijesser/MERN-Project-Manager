@@ -8,6 +8,7 @@ const session = require("express-session");
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/admin");
 const taskRoutes = require("./routes/taskRoutes");
+const projectRoutes = require("./routes/projectRoutes");
 require("./config/passportConfig");
 
 const app = express();
@@ -43,6 +44,7 @@ app.use(passport.session());
 app.use("/", authRoutes);
 app.use("/admin", adminRoutes);
 app.use("/api/tasks", taskRoutes);
+app.use("/api/projects", projectRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI)

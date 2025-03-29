@@ -32,7 +32,7 @@ passport.use(
             user.googleId = profile.id;
             await user.save();
           }
-          console.log("✅ Utilisateur Google connecté :", user);
+          console.log(" Utilisateur Google connecté :", user);
           return done(null, user);
         }
 
@@ -48,10 +48,10 @@ passport.use(
         });
 
         user = await newUser.save();
-        console.log("✅ Nouvel utilisateur Google enregistré :", user);
+        console.log(" Nouvel utilisateur Google enregistré :", user);
         return done(null, user);
       } catch (err) {
-        console.error("❌ Erreur Google OAuth :", err);
+        console.error(" Erreur Google OAuth :", err);
         return done(err);
       }
     }
