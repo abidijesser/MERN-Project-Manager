@@ -38,7 +38,7 @@ const _nav = [
   {
     component: CNavItem,
     name: 'Suivi des performances',
-    to: '/performance',
+    to: '/performances', // Vérifiez que cette route est bien définie dans le routeur principal
     icon: <CIcon icon={cilStar} customClassName="nav-icon" />,
   },
   {

@@ -18,6 +18,7 @@ const UserDetails = React.lazy(() => import('./views/pages/userDetails/UserDetai
 const ForgotPassword = React.lazy(() => import('./views/pages/forgot-password/ForgotPassword'))
 const ResetPassword = React.lazy(() => import('./views/pages/reset-password/ResetPassword'))
 const VerifyEmail = React.lazy(() => import('./views/pages/verify-email/VerifyEmail'))
+const Performances = React.lazy(() => import('./views/Performances/Performances'))
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
@@ -39,6 +40,7 @@ const routes = [
   { path: '/projects', exact: true, name: 'Projets', element: ProjectsList },
   { path: '/projects/new', exact: true, name: 'Créer un projet', element: CreateProject },
   { path: '/projects/:id', exact: true, name: 'Détails du projet', element: ProjectDetails },
+  { path: '/performances', name: 'Suivi des Performances', element: Performances },
 ]
 
 export default routes
