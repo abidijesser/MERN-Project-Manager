@@ -7,6 +7,7 @@ import TaskDetail from './views/tasks/TaskDetail'
 import ProjectsList from './views/projects/ProjectsList'
 import CreateProject from './views/projects/CreateProject'
 import ProjectDetails from './views/projects/ProjectDetails'
+import Collaboration from './views/Collaboration/Collaboration'
 
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Login = React.lazy(() => import('./views/pages/login/Login'))
@@ -41,6 +42,7 @@ const routes = [
   { path: '/projects/new', exact: true, name: 'Créer un projet', element: CreateProject },
   { path: '/projects/:id', exact: true, name: 'Détails du projet', element: ProjectDetails },
   { path: '/performances', name: 'Suivi des Performances', element: Performances },
+  { path: '/collaboration', name: 'Collaboration & Communication', element: Collaboration },
 ]
 
 export default routes

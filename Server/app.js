@@ -9,6 +9,10 @@ const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/admin");
 const taskRoutes = require("./routes/taskRoutes");
 const projectRoutes = require("./routes/projectRoutes");
+const chatRoutes = require("./routes/chat");
+const http = require("http");
+const { Server } = require("socket.io");
+const Message = require("./models/Message"); // Assurez-vous que le modèle Message existe
 require("./config/passportConfig");
 
 const app = express();
@@ -45,13 +49,49 @@ app.use("/", authRoutes);
 app.use("/admin", adminRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/chat", chatRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("Cloud Database connected"))
-  .catch((err) => console.log("Database not connected:", err));
+  .catch((err) => {
+    if (err.code === 'ENOTFOUND') {
+      console.error("DNS error: Unable to resolve MongoDB host. Check your MONGO_URI.");
+    } else {
+      console.error("Database connection error:", err.message);
+    }
+    process.exit(1); // Arrête l'application si la connexion échoue
+  });
 
-app.listen(PORT, () => {
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
+});
+
+// WebSocket pour le chat
+io.on("connection", (socket) => {
+  console.log("Utilisateur connecté");
+
+  // Écoute des messages envoyés par le client
+  socket.on("sendMessage", async (messageData) => {
+    try {
+      const newMessage = new Message(messageData);
+      await newMessage.save(); // Stocke le message en base de données
+      io.emit("receiveMessage", messageData); // Diffuse le message à tous les clients
+    } catch (err) {
+      console.error("Erreur lors de l'enregistrement du message:", err);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Utilisateur déconnecté");
+  });
+});
+
+server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
 

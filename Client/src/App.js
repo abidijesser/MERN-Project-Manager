@@ -4,6 +4,11 @@ import { HashRouter, Route, Routes } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { UserContextProvider } from './context/userContext';
+import { ChatProvider } from './context/ChatContext';
+import { NotificationsProvider } from './context/NotificationsContext';
+import ChatBox from './components/ChatBox';
+import MeetingScheduler from './components/MeetingScheduler';
+import Notifications from './components/Notifications';
 
 axios.defaults.withCredentials = true;
 
@@ -18,7 +23,7 @@ const Login = React.lazy(() => import('./views/pages/login/Login'));
 const Register = React.lazy(() => import('./views/pages/register/Register'));
 const Page404 = React.lazy(() => import('./views/pages/page404/Page404'));
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'));
-const Profile = React.lazy(() => import('./views/pages/profile/profile'));
+const Profile = React.lazy(() => import('./views/pages/profile/Profile'));
 const EditProfile = React.lazy(() => import('./views/pages/profile/EditProfile'));
 
 const App = () => {
@@ -41,25 +46,30 @@ const App = () => {
 
   return (
     <UserContextProvider>
-      <HashRouter>
-        <Suspense
-          fallback={
-            <div className="pt-3 text-center">
-              <CSpinner color="primary" variant="grow" />
-            </div>
-          }
-        >
-          <Routes>
-            <Route exact path="/login" name="Login Page" element={<Login />} />
-            <Route exact path="/register" name="Register Page" element={<Register />} />
-            <Route exact path="/404" name="Page 404" element={<Page404 />} />
-            <Route exact path="/500" name="Page 500" element={<Page500 />} />
-            <Route exact path="/profile/:id" name="Profile Page" element={<Profile />} />
-            <Route exact path="/edit-profile/:id" name="Edit Profile Page" element={<EditProfile />} />
-            <Route path="*" name="Home" element={<DefaultLayout />} />
-          </Routes>
-        </Suspense>
-      </HashRouter>
+      <ChatProvider>
+        <NotificationsProvider>
+          <HashRouter>
+            <Suspense
+              fallback={
+                <div className="pt-3 text-center">
+                  <CSpinner color="primary" variant="grow" />
+                </div>
+              }
+            >
+              <Routes>
+                <Route exact path="/login" name="Login Page" element={<Login />} />
+                <Route exact path="/register" name="Register Page" element={<Register />} />
+                <Route exact path="/404" name="Page 404" element={<Page404 />} />
+                <Route exact path="/500" name="Page 500" element={<Page500 />} />
+                <Route exact path="/profile/:id" name="Profile Page" element={<Profile />} />
+                <Route exact path="/edit-profile/:id" name="Edit Profile Page" element={<EditProfile />} />
+                <Route path="*" name="Home" element={<DefaultLayout />} />
+              </Routes>
+            </Suspense>
+          </HashRouter>
+          
+        </NotificationsProvider>
+      </ChatProvider>
     </UserContextProvider>
   );
 };

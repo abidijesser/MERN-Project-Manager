@@ -8,16 +8,16 @@ const AppFooter = () => {
   return (
     <CFooter className="px-4">
       <div>
-        <a href="https://coreui.io" target="_blank" rel="noopener noreferrer">
-          CoreUI
+        <a href="#" target="_blank" rel="noopener noreferrer">
+          WorkTrack
         </a>
         <span className="ms-1">&copy; 2025 creativeLabs. {user ? user.name : 'Loading user...'} </span>
       </div>
-      <div className="ms-auto">
-        <span className="me-1">Powered by</span>
-        <a href="https://coreui.io/react" target="_blank" rel="noopener noreferrer">
-          CoreUI React Admin &amp; Dashboard Template
-        </a>
+      <div>
+        <span>Contactez-nous : </span>
+        <span>Téléphone : +216 72 454 227</span> | 
+        <a href="https://facebook.com" target="_blank" rel="noopener noreferrer"> Facebook</a> | 
+        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer"> Instagram</a>
       </div>
     </CFooter>
   )
