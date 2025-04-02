@@ -10,6 +10,7 @@ import {
 } from '@coreui/react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { toast } from 'react-toastify'
 
 const ProjectDetails = () => {
   const [project, setProject] = useState(null)
@@ -23,21 +24,34 @@ const ProjectDetails = () => {
 
   const fetchProject = async () => {
     try {
-      const response = await axios.get(`http://localhost:3001/api/projects/${id}`)
+      const response = await axios.get(`http://localhost:3001/api/projects/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      })
       setProject(response.data.project)
     } catch (error) {
       console.error('Error fetching project:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de la récupération du projet')
     }
   }
 
   const handleAddComment = async () => {
     try {
-      // Envoi du commentaire au backend
-      await axios.post(`http://localhost:3001/api/projects/${id}/comments`, { comment })
-      setComment('') // Réinitialisation du champ de commentaire
-      fetchProject() // Rafraîchissement des détails du projet
+      await axios.post(`http://localhost:3001/api/projects/${id}/comments`, 
+        { comment },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      )
+      toast.success('Commentaire ajouté avec succès !')
+      setComment('')
+      fetchProject()
     } catch (error) {
       console.error('Erreur lors de l\'ajout du commentaire:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de l\'ajout du commentaire.')
     }
   }
 
@@ -60,7 +74,7 @@ const ProjectDetails = () => {
             </CButton>
           </CCardHeader>
           <CCardBody>
-            <h2>{project.name}</h2>
+            <h2>{project.projectName}</h2>
             <p>{project.description}</p>
             <p>
               <strong>Statut:</strong> {project.status}
@@ -74,9 +88,11 @@ const ProjectDetails = () => {
             <div>
               <strong>Commentaires:</strong>
               <ul>
-                {project.comments.map((c, index) => (
-                  <li key={index}>{c}</li>
-                ))}
+                {project.comments && project.comments.length > 0 ? (
+                  project.comments.map((c, index) => <li key={index}>{c}</li>)
+                ) : (
+                  <li>Aucun commentaire pour ce projet</li>
+                )}
               </ul>
               <CFormTextarea
                 value={comment}

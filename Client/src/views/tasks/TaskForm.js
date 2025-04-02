@@ -11,8 +11,9 @@ import {
   CFormSelect,
   CButton,
 } from '@coreui/react'
-import axios from 'axios'
+import axios from '../../utils/axios'
 import { useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'react-toastify'
 
 const TaskForm = () => {
   const [task, setTask] = useState({
@@ -24,49 +25,84 @@ const TaskForm = () => {
     assignedTo: '',
     project: '',
   })
+  const [loading, setLoading] = useState(false)
+  const [projects, setProjects] = useState([])
+  const [users, setUsers] = useState([])
 
   const { id } = useParams()
   const navigate = useNavigate()
   const isEditMode = Boolean(id)
 
   useEffect(() => {
-    if (isEditMode) {
-      fetchTask()
-    }
+    fetchData()
   }, [id])
 
-  const fetchTask = async () => {
+  const fetchData = async () => {
     try {
-      const response = await axios.get(`http://localhost:3001/api/tasks/${id}`)
-      const taskData = response.data.task
-      setTask({
-        ...taskData,
-        dueDate: taskData.dueDate.split('T')[0],
-      })
+      setLoading(true)
+      // Récupérer les projets et utilisateurs
+      const [projectsRes, usersRes] = await Promise.all([
+        axios.get('/api/projects'),
+        axios.get('/api/users')
+      ])
+      setProjects(projectsRes.data.projects)
+      setUsers(usersRes.data.users)
+
+      // Si en mode édition, récupérer la tâche
+      if (isEditMode) {
+        const taskRes = await axios.get(`/api/tasks/${id}`)
+        const taskData = taskRes.data.task
+        setTask({
+          ...taskData,
+          dueDate: taskData.dueDate ? new Date(taskData.dueDate).toISOString().split('T')[0] : '',
+          assignedTo: taskData.assignedTo?._id || '',
+          project: taskData.project?._id || '',
+        })
+      }
     } catch (error) {
-      console.error('Error fetching task:', error)
+      console.error('Error fetching data:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de la récupération des données')
+    } finally {
+      setLoading(false)
     }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
+      setLoading(true)
       if (isEditMode) {
-        await axios.put(`http://localhost:3001/api/tasks/${id}`, task)
+        await axios.put(`/api/tasks/${id}`, task)
+        toast.success('Tâche mise à jour avec succès')
       } else {
-        await axios.post('http://localhost:3001/api/tasks', task)
+        await axios.post('/api/tasks', task)
+        toast.success('Tâche créée avec succès')
       }
       navigate('/tasks')
     } catch (error) {
       console.error('Error saving task:', error)
+      if (error.response?.data?.details) {
+        Object.entries(error.response.data.details).forEach(([field, message]) => {
+          toast.error(`${field}: ${message}`)
+        })
+      } else {
+        toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde de la tâche')
+      }
+    } finally {
+      setLoading(false)
     }
   }
 
   const handleChange = (e) => {
-    setTask({
-      ...task,
-      [e.target.name]: e.target.value,
-    })
+    const { name, value } = e.target
+    setTask(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  if (loading) {
+    return <div>Chargement...</div>
   }
 
   return (
@@ -136,10 +172,42 @@ const TaskForm = () => {
                     onChange={handleChange}
                   />
                 </CCol>
+                <CCol>
+                  <CFormSelect
+                    label="Assigné à"
+                    name="assignedTo"
+                    value={task.assignedTo}
+                    onChange={handleChange}
+                  >
+                    <option value="">Sélectionner un utilisateur</option>
+                    {users.map(user => (
+                      <option key={user._id} value={user._id}>
+                        {user.name} ({user.email})
+                      </option>
+                    ))}
+                  </CFormSelect>
+                </CCol>
+              </CRow>
+              <CRow className="mb-3">
+                <CCol>
+                  <CFormSelect
+                    label="Projet"
+                    name="project"
+                    value={task.project}
+                    onChange={handleChange}
+                  >
+                    <option value="">Sélectionner un projet</option>
+                    {projects.map(project => (
+                      <option key={project._id} value={project._id}>
+                        {project.projectName}
+                      </option>
+                    ))}
+                  </CFormSelect>
+                </CCol>
               </CRow>
               <CRow>
                 <CCol>
-                  <CButton type="submit" color="primary">
+                  <CButton type="submit" color="primary" disabled={loading}>
                     {isEditMode ? 'Mettre à jour' : 'Créer'}
                   </CButton>
                   <CButton

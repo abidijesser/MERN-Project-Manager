@@ -9,6 +9,8 @@ import { NotificationsProvider } from './context/NotificationsContext';
 import ChatBox from './components/ChatBox';
 import MeetingScheduler from './components/MeetingScheduler';
 import Notifications from './components/Notifications';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 axios.defaults.withCredentials = true;
 
@@ -25,6 +27,7 @@ const Page404 = React.lazy(() => import('./views/pages/page404/Page404'));
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'));
 const Profile = React.lazy(() => import('./views/pages/profile/Profile'));
 const EditProfile = React.lazy(() => import('./views/pages/profile/EditProfile'));
+const EditProject = React.lazy(() => import('./views/projects/EditProject'));
 
 const App = () => {
   const { isColorModeSet, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
@@ -45,32 +48,35 @@ const App = () => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <UserContextProvider>
-      <ChatProvider>
-        <NotificationsProvider>
-          <HashRouter>
-            <Suspense
-              fallback={
-                <div className="pt-3 text-center">
-                  <CSpinner color="primary" variant="grow" />
-                </div>
-              }
-            >
-              <Routes>
-                <Route exact path="/login" name="Login Page" element={<Login />} />
-                <Route exact path="/register" name="Register Page" element={<Register />} />
-                <Route exact path="/404" name="Page 404" element={<Page404 />} />
-                <Route exact path="/500" name="Page 500" element={<Page500 />} />
-                <Route exact path="/profile/:id" name="Profile Page" element={<Profile />} />
-                <Route exact path="/edit-profile/:id" name="Edit Profile Page" element={<EditProfile />} />
-                <Route path="*" name="Home" element={<DefaultLayout />} />
-              </Routes>
-            </Suspense>
-          </HashRouter>
-          
-        </NotificationsProvider>
-      </ChatProvider>
-    </UserContextProvider>
+    <>
+      <UserContextProvider>
+        <ChatProvider>
+          <NotificationsProvider>
+            <HashRouter>
+              <Suspense
+                fallback={
+                  <div className="pt-3 text-center">
+                    <CSpinner color="primary" variant="grow" />
+                  </div>
+                }
+              >
+                <Routes>
+                  <Route exact path="/login" name="Login Page" element={<Login />} />
+                  <Route exact path="/register" name="Register Page" element={<Register />} />
+                  <Route exact path="/404" name="Page 404" element={<Page404 />} />
+                  <Route exact path="/500" name="Page 500" element={<Page500 />} />
+                  <Route exact path="/profile/:id" name="Profile Page" element={<Profile />} />
+                  <Route exact path="/edit-profile/:id" name="Edit Profile Page" element={<EditProfile />} />
+                  <Route exact path="/projects/edit/:id" name="Edit Project" element={<EditProject />} />
+                  <Route path="*" name="Home" element={<DefaultLayout />} />
+                </Routes>
+              </Suspense>
+            </HashRouter>
+          </NotificationsProvider>
+        </ChatProvider>
+      </UserContextProvider>
+      <ToastContainer />
+    </>
   );
 };
 

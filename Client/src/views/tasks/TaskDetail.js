@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { CCard, CCardBody, CCardHeader, CCol, CRow, CBadge, CButton } from '@coreui/react'
 import { useParams, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../../utils/axios'
+import { toast } from 'react-toastify'
 
 const TaskDetail = () => {
   const [task, setTask] = useState(null)
-  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
   const { id } = useParams()
   const navigate = useNavigate()
 
@@ -15,11 +16,27 @@ const TaskDetail = () => {
 
   const fetchTask = async () => {
     try {
-      const response = await axios.get(`http://localhost:3001/api/tasks/${id}`)
+      setLoading(true)
+      const response = await axios.get(`/api/tasks/${id}`)
       setTask(response.data.task)
     } catch (error) {
       console.error('Error fetching task:', error)
-      setError('Erreur lors de la récupération de la tâche')
+      toast.error(error.response?.data?.error || 'Erreur lors de la récupération de la tâche')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
+      try {
+        await axios.delete(`/api/tasks/${id}`)
+        toast.success('Tâche supprimée avec succès')
+        navigate('/tasks')
+      } catch (error) {
+        console.error('Error deleting task:', error)
+        toast.error(error.response?.data?.error || 'Erreur lors de la suppression de la tâche')
+      }
     }
   }
 
@@ -27,26 +44,26 @@ const TaskDetail = () => {
     const colors = {
       'To Do': 'info',
       'In Progress': 'warning',
-      Done: 'success',
+      'Done': 'success',
     }
     return <CBadge color={colors[status]}>{status}</CBadge>
   }
 
   const getPriorityBadge = (priority) => {
     const colors = {
-      Low: 'info',
-      Medium: 'warning',
-      High: 'danger',
+      'Low': 'info',
+      'Medium': 'warning',
+      'High': 'danger',
     }
     return <CBadge color={colors[priority]}>{priority}</CBadge>
   }
 
-  if (error) {
-    return <div className="text-center text-danger">{error}</div>
+  if (loading) {
+    return <div className="text-center">Chargement...</div>
   }
 
   if (!task) {
-    return <div className="text-center">Chargement...</div>
+    return <div className="text-center text-danger">Tâche non trouvée</div>
   }
 
   return (
@@ -62,6 +79,13 @@ const TaskDetail = () => {
                 onClick={() => navigate(`/tasks/edit/${id}`)}
               >
                 Modifier
+              </CButton>
+              <CButton
+                color="danger"
+                className="me-2"
+                onClick={handleDelete}
+              >
+                Supprimer
               </CButton>
               <CButton color="secondary" onClick={() => navigate('/tasks')}>
                 Retour
@@ -88,7 +112,7 @@ const TaskDetail = () => {
 
             <div className="mb-3">
               <strong>Date d'échéance:</strong>
-              <p>{new Date(task.dueDate).toLocaleDateString()}</p>
+              <p>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Non définie'}</p>
             </div>
 
             {task.assignedTo && (
@@ -103,7 +127,7 @@ const TaskDetail = () => {
             {task.project && (
               <div className="mb-3">
                 <strong>Projet:</strong>
-                <p>{task.project.name}</p>
+                <p>{task.project.projectName}</p>
               </div>
             )}
 

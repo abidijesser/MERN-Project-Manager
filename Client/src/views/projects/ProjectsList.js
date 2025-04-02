@@ -13,6 +13,7 @@ import {
 } from '@coreui/react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { toast } from 'react-toastify'
 
 const ProjectsList = () => {
   const [projects, setProjects] = useState([])
@@ -25,10 +26,32 @@ const ProjectsList = () => {
   const fetchProjects = async () => {
     try {
       // Récupération des projets depuis l'API backend
-      const response = await axios.get('http://localhost:3001/api/projects')
+      const response = await axios.get('http://localhost:3001/api/projects', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      })
       setProjects(response.data.projects) // Mise à jour de l'état avec les projets
     } catch (error) {
       console.error('Erreur lors de la récupération des projets:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de la récupération des projets')
+    }
+  }
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
+      try {
+        await axios.delete(`http://localhost:3001/api/projects/${id}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+        toast.success('Projet supprimé avec succès !')
+        fetchProjects()
+      } catch (error) {
+        console.error('Erreur lors de la suppression du projet:', error)
+        toast.error(error.response?.data?.error || 'Erreur lors de la suppression du projet')
+      }
     }
   }
 
@@ -56,7 +79,7 @@ const ProjectsList = () => {
           <CTableBody>
             {projects.map((project) => (
               <CTableRow key={project._id}>
-                <CTableDataCell>{project.name}</CTableDataCell>
+                <CTableDataCell>{project.projectName}</CTableDataCell> {/* Utilisation de projectName */}
                 <CTableDataCell>{project.status}</CTableDataCell>
                 <CTableDataCell>
                   <CButton
@@ -65,6 +88,22 @@ const ProjectsList = () => {
                     onClick={() => navigate(`/projects/${project._id}`)}
                   >
                     Détails
+                  </CButton>
+                  <CButton
+                    color="warning"
+                    size="sm"
+                    className="ms-2"
+                    onClick={() => navigate(`/projects/edit/${project._id}`)}
+                  >
+                    Modifier
+                  </CButton>
+                  <CButton
+                    color="danger"
+                    size="sm"
+                    className="ms-2"
+                    onClick={() => handleDelete(project._id)} // Appel à la fonction de suppression
+                  >
+                    Supprimer
                   </CButton>
                 </CTableDataCell>
               </CTableRow>

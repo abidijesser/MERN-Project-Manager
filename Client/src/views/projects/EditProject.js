@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   CCard,
   CCardBody,
@@ -11,71 +11,51 @@ import {
   CFormSelect,
   CButton,
 } from '@coreui/react'
-import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
+import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import axios from '../../utils/axios'
 
-const CreateProject = () => {
+const EditProject = () => {
   const [project, setProject] = useState({
     projectName: '',
     description: '',
     status: 'Active',
     startDate: '',
     endDate: '',
-    tasks: [],
-    members: [],
   })
   const navigate = useNavigate()
+  const { id } = useParams()
+
+  useEffect(() => {
+    fetchProject()
+  }, [id])
+
+  const fetchProject = async () => {
+    try {
+      const response = await axios.get(`http://localhost:3001/api/projects/${id}`) // Récupération des données du projet
+      setProject(response.data.project) // Mise à jour de l'état avec les données du projet
+    } catch (error) {
+      console.error('Erreur lors de la récupération du projet:', error)
+      toast.error('Erreur lors de la récupération du projet.')
+    }
+  }
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setProject(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    setProject({
+      ...project,
+      [e.target.name]: e.target.value,
+    })
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
-    // Validation des dates
-    const startDate = new Date(project.startDate);
-    const endDate = new Date(project.endDate);
-    
-    if (startDate > endDate) {
-      toast.error('La date de début doit être antérieure à la date de fin');
-      return;
-    }
-
     try {
-      console.log("Données envoyées :", project)
-      const response = await axios.post('/api/projects', project)
-      
-      if (response.data.message) {
-        toast.success(response.data.message)
-      } else {
-        toast.success('Projet créé avec succès !')
-      }
-      
-      navigate('/projects')
+      await axios.put(`http://localhost:3001/api/projects/${id}`, project) // Envoi des données mises à jour au serveur
+      toast.success('Projet modifié avec succès !') // Message de confirmation
+      navigate('/projects') // Redirection vers la liste des projets
     } catch (error) {
-      console.error('Erreur lors de la création du projet :', error)
-      if (error.response?.data?.details) {
-        // Afficher les détails de l'erreur de validation
-        if (Array.isArray(error.response.data.details)) {
-          error.response.data.details.forEach(detail => {
-            toast.error(detail)
-          })
-        } else {
-          Object.entries(error.response.data.details).forEach(([field, message]) => {
-            if (message) {
-              toast.error(message)
-            }
-          })
-        }
-      } else {
-        toast.error(error.response?.data?.error || 'Erreur lors de la création du projet')
-      }
+      console.error('Erreur lors de la modification du projet:', error)
+      toast.error('Erreur lors de la modification du projet.')
     }
   }
 
@@ -84,7 +64,7 @@ const CreateProject = () => {
       <CCol>
         <CCard>
           <CCardHeader>
-            <strong>Créer un nouveau projet</strong>
+            <strong>Modifier le projet</strong>
           </CCardHeader>
           <CCardBody>
             <CForm onSubmit={handleSubmit}>
@@ -132,7 +112,6 @@ const CreateProject = () => {
                     name="startDate"
                     value={project.startDate}
                     onChange={handleChange}
-                    required
                   />
                 </CCol>
                 <CCol>
@@ -142,14 +121,13 @@ const CreateProject = () => {
                     name="endDate"
                     value={project.endDate}
                     onChange={handleChange}
-                    required
                   />
                 </CCol>
               </CRow>
               <CRow>
                 <CCol>
                   <CButton type="submit" color="primary">
-                    Créer
+                    Modifier
                   </CButton>
                   <CButton
                     type="button"
@@ -169,4 +147,4 @@ const CreateProject = () => {
   )
 }
 
-export default CreateProject
+export default EditProject

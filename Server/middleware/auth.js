@@ -1,8 +1,10 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
-module.exports = (req, res, next) => {
+module.exports = async (req, res, next) => {
   try {
-    const token = req.cookies.token;
+    // Récupérer le token depuis l'en-tête Authorization
+    const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {
       return res.status(401).json({
@@ -11,12 +13,21 @@ module.exports = (req, res, next) => {
       });
     }
 
+    // Vérifier et décoder le token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = {
-      id: decoded.id,
-      email: decoded.email,
-      name: decoded.name,
-    };
+    
+    // Récupérer l'utilisateur depuis la base de données
+    const user = await User.findById(decoded.id);
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: "Utilisateur non trouvé",
+      });
+    }
+
+    // Ajouter l'utilisateur à la requête
+    req.user = user;
     next();
   } catch (error) {
     console.error("Auth middleware error:", error);

@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-
 import {
   CButton,
   CCard,
@@ -17,6 +16,7 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilLockLocked, cilUser } from '@coreui/icons'
 import axios from 'axios'
+import { toast } from 'react-toastify'
 
 const Login = () => {
   const [email, setEmail] = useState('')
@@ -34,23 +34,28 @@ const Login = () => {
         password,
       })
 
-      console.log('Réponse login:', response.data) // Log pour debug
+      console.log('Réponse login:', response.data)
 
       if (response.data.error) {
         setError(response.data.error)
         return
       }
 
-      if (response.data.success) {
-        // Stockage des informations utilisateur si nécessaire
+      if (response.data.token) {
+        // Stocker le token JWT
+        localStorage.setItem('token', response.data.token)
+        // Stocker les informations utilisateur
         localStorage.setItem('user', JSON.stringify(response.data.user))
+        toast.success('Connexion réussie !')
         navigate('/dashboard')
       } else {
-        setError('Erreur de connexion')
+        setError('Token non reçu')
       }
     } catch (err) {
       console.error('Erreur de connexion:', err)
-      setError(err.response?.data?.error || 'Erreur lors de la connexion')
+      const errorMessage = err.response?.data?.error || 'Erreur lors de la connexion'
+      setError(errorMessage)
+      toast.error(errorMessage)
     }
   }
 
@@ -69,7 +74,7 @@ const Login = () => {
                   <CForm onSubmit={handleSubmit}>
                     <h1>Login</h1>
                     <p className="text-body-secondary">Sign In to your account</p>
-                    {error && <p style={{ color: 'red' }}>{error}</p>}
+                    {error && <p className="text-danger">{error}</p>}
                     <CInputGroup className="mb-3">
                       <CInputGroupText>
                         <CIcon icon={cilUser} />
@@ -80,6 +85,7 @@ const Login = () => {
                         autoComplete="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        required
                       />
                     </CInputGroup>
                     <CInputGroup className="mb-4">
@@ -92,6 +98,7 @@ const Login = () => {
                         autoComplete="current-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        required
                       />
                     </CInputGroup>
                     <CRow>
@@ -109,9 +116,15 @@ const Login = () => {
                       </CCol>
                     </CRow>
                   </CForm>
-                  <a href="http://localhost:3001/google" className="btn btn-soft-primary">
-                    Google
-                  </a>
+                  <div className="mt-3">
+                    <CButton 
+                      color="danger" 
+                      className="w-100"
+                      onClick={handleGoogleLogin}
+                    >
+                      Se connecter avec Google
+                    </CButton>
+                  </div>
                 </CCardBody>
               </CCard>
               <CCard className="text-white bg-primary py-5" style={{ width: '44%' }}>
@@ -119,8 +132,7 @@ const Login = () => {
                   <div>
                     <h2>Sign up</h2>
                     <p>
-                      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-                      tempor incididunt ut labore et dolore magna aliqua.
+                      Créez votre compte pour accéder à toutes les fonctionnalités de gestion de projet.
                     </p>
                     <Link to="/register">
                       <CButton color="primary" className="mt-3" active tabIndex={-1}>

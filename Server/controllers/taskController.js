@@ -1,35 +1,49 @@
 const Task = require("../models/Task");
+const mongoose = require("mongoose");
+
+// Fonction utilitaire pour valider un ObjectId
+const isValidObjectId = (id) => {
+  return mongoose.Types.ObjectId.isValid(id);
+};
 
 // Créer une tâche
 const createTask = async (req, res) => {
   try {
-    const { title, description, status, priority, dueDate } = req.body;
+    const { title, description, status, priority, dueDate, assignedTo, project } = req.body;
 
-    // Créer la tâche avec seulement les champs obligatoires
+    // Validation des IDs si fournis
+    if (assignedTo && !isValidObjectId(assignedTo)) {
+      return res.status(400).json({
+        success: false,
+        error: "ID d'assignation invalide"
+      });
+    }
+
+    if (project && !isValidObjectId(project)) {
+      return res.status(400).json({
+        success: false,
+        error: "ID de projet invalide"
+      });
+    }
+
+    // Créer la tâche
     const task = new Task({
       title,
       description,
       status: status || "To Do",
       priority: priority || "Medium",
       dueDate: dueDate || new Date(),
-      createdBy: req.user.id, // Récupérer l'ID de l'utilisateur connecté depuis le token
+      createdBy: req.user.id,
+      assignedTo: assignedTo || null,
+      project: project || null
     });
-
-    // Ajouter assignedTo et project seulement s'ils sont fournis et non vides
-    if (req.body.assignedTo && req.body.assignedTo.trim() !== "") {
-      task.assignedTo = req.body.assignedTo;
-    }
-
-    if (req.body.project && req.body.project.trim() !== "") {
-      task.project = req.body.project;
-    }
 
     await task.save();
 
     // Peupler les références pour la réponse
     const populatedTask = await Task.findById(task._id)
       .populate("assignedTo", "name email")
-      .populate("project", "name")
+      .populate("project", "projectName")
       .populate("createdBy", "name");
 
     res.status(201).json({
@@ -51,7 +65,7 @@ const getAllTasks = async (req, res) => {
   try {
     const tasks = await Task.find()
       .populate("assignedTo", "name email")
-      .populate("project", "name")
+      .populate("project", "projectName")
       .populate("createdBy", "name");
 
     res.json({
@@ -70,9 +84,16 @@ const getAllTasks = async (req, res) => {
 // Obtenir une tâche par ID
 const getTaskById = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        error: "ID de tâche invalide"
+      });
+    }
+
     const task = await Task.findById(req.params.id)
       .populate("assignedTo", "name email")
-      .populate("project", "name")
+      .populate("project", "projectName")
       .populate("createdBy", "name");
 
     if (!task) {
@@ -98,31 +119,54 @@ const getTaskById = async (req, res) => {
 // Mettre à jour une tâche
 const updateTask = async (req, res) => {
   try {
-    const {
+    const { title, description, status, priority, dueDate, assignedTo, project } = req.body;
+
+    // Validation de l'ID de la tâche
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        error: "ID de tâche invalide"
+      });
+    }
+
+    // Validation des IDs si fournis
+    if (assignedTo && !isValidObjectId(assignedTo)) {
+      return res.status(400).json({
+        success: false,
+        error: "ID d'assignation invalide"
+      });
+    }
+
+    if (project && !isValidObjectId(project)) {
+      return res.status(400).json({
+        success: false,
+        error: "ID de projet invalide"
+      });
+    }
+
+    // Préparer les données de mise à jour
+    const updateData = {
       title,
       description,
       status,
       priority,
       dueDate,
-      assignedTo,
-      project,
-    } = req.body;
+      assignedTo: assignedTo || null,
+      project: project || null
+    };
+
+    // Supprimer les champs undefined
+    Object.keys(updateData).forEach(key => 
+      updateData[key] === undefined && delete updateData[key]
+    );
 
     const task = await Task.findByIdAndUpdate(
       req.params.id,
-      {
-        title,
-        description,
-        status,
-        priority,
-        dueDate,
-        assignedTo,
-        project,
-      },
-      { new: true }
+      updateData,
+      { new: true, runValidators: true }
     )
       .populate("assignedTo", "name email")
-      .populate("project", "name")
+      .populate("project", "projectName")
       .populate("createdBy", "name");
 
     if (!task) {
@@ -138,6 +182,13 @@ const updateTask = async (req, res) => {
     });
   } catch (error) {
     console.error("Update task error:", error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        error: "Erreur de validation",
+        details: Object.values(error.errors).map(err => err.message)
+      });
+    }
     res.status(500).json({
       success: false,
       error: "Erreur lors de la mise à jour de la tâche",
@@ -148,6 +199,13 @@ const updateTask = async (req, res) => {
 // Supprimer une tâche
 const deleteTask = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        error: "ID de tâche invalide"
+      });
+    }
+
     const task = await Task.findByIdAndDelete(req.params.id);
 
     if (!task) {

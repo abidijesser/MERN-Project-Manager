@@ -40,33 +40,14 @@ async function register(req, res) {
     await user.save();
 
     // Créer le token JWT
-    const token = jwt.sign(
-      { id: user._id, email: user.email, name: user.name },
-      process.env.JWT_SECRET,
-      { expiresIn: "24h" }
-    );
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" }); // Utilisez process.env.JWT_SECRET
 
     // Envoyer la réponse
-    res
-      .cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 24 * 60 * 60 * 1000, // 24 heures
-      })
-      .status(201)
-      .json({
-        success: true,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-        },
-      });
+    res.status(201).json({ token });
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({
-      success: false,
-      error: "Erreur lors de l'inscription",
+      error: "Erreur lors de l'enregistrement",
     });
   }
 }
@@ -102,32 +83,14 @@ async function login(req, res) {
     }
 
     // Créer le token JWT
-    const token = jwt.sign(
-      { id: user._id, email: user.email, name: user.name },
-      process.env.JWT_SECRET,
-      { expiresIn: "24h" }
-    );
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" }); // Utilisez process.env.JWT_SECRET
 
     // Envoyer la réponse
-    res
-      .cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 24 * 60 * 60 * 1000, // 24 heures
-      })
-      .json({
-        success: true,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-        },
-      });
+    res.status(200).json({ token });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({
-      success: false,
-      error: "Erreur interne du serveur",
+      error: "Erreur lors de la connexion",
     });
   }
 }
