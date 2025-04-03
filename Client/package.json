@@ -33,6 +33,7 @@
     "classnames": "^2.5.1",
     "cookie-parser": "^1.4.7",
     "core-js": "^3.40.0",
+    "emoji-picker-react": "^4.12.2",
     "gapi-script": "^1.2.0",
     "jsonwebtoken": "^9.0.2",
     "prop-types": "^15.8.1",

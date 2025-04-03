@@ -1,5 +1,6 @@
 const Task = require("../models/Task");
 const mongoose = require("mongoose");
+const notificationService = require('../services/notificationService');
 
 // Fonction utilitaire pour valider un ObjectId
 const isValidObjectId = (id) => {
@@ -39,6 +40,9 @@ const createTask = async (req, res) => {
     });
 
     await task.save();
+
+    // Créer une notification pour la nouvelle tâche
+    await notificationService.createTaskNotification(task, 'task_created', req.user);
 
     // Peupler les références pour la réponse
     const populatedTask = await Task.findById(task._id)
@@ -175,6 +179,9 @@ const updateTask = async (req, res) => {
         error: "Tâche non trouvée",
       });
     }
+
+    // Créer une notification pour la mise à jour de la tâche
+    await notificationService.createTaskNotification(task, 'task_updated', req.user);
 
     res.json({
       success: true,

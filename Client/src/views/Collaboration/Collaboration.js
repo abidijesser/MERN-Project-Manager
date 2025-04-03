@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import io from 'socket.io-client'
 import Notifications from '../../components/Notifications'
 import MeetingScheduler from '../../components/MeetingScheduler'
+import ChatBox from '../../components/ChatBox'
+import { FaComments, FaBell, FaCalendarAlt } from 'react-icons/fa'
 
 const socket = io('http://localhost:3000') // Remplacez par l'URL de votre serveur Socket.io
 
@@ -46,61 +48,34 @@ const Collaboration = () => {
   )
 
   const renderChatTab = () => (
-    <div className="chat-tab">
-      <div className="chatbox-container">
-        <div className="chatbot-sidebar">
+    <div className="collaboration-chat-container">
+      <div className="chat-sidebar">
+        <div className="sidebar-header">
           <h2>Discussions</h2>
           <input
             type="text"
-            placeholder="Rechercher ..."
+            placeholder="Rechercher..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-bar"
+            className="search-input"
           />
-          <ul className="chatbot-list">
-            {filteredChats.map((chat, index) => (
-              <li key={index} className="chatbot-item">
-                <div className="chatbot-avatar">
-                  <img src={`https://i.pravatar.cc/40?img=${index + 1}`} alt="Avatar" />
-                </div>
-                <span>{chat}</span>
-              </li>
-            ))}
-          </ul>
         </div>
-        <div className="chat-main">
-          <div className="chatbot-messages">
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`chatbot-message ${
-                  msg.sender === 'me' ? 'my-message' : 'other-message'
-                }`}
-              >
-                <div className="chatbot-message-content">
-                  <p>{msg.text}</p>
-                  <span className="chatbot-timestamp">
-                    {new Date(msg.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
+        <div className="chat-list">
+          {filteredChats.map((chat, index) => (
+            <div key={index} className="chat-item">
+              <div className="chat-avatar">
+                <img src={`https://i.pravatar.cc/40?img=${index + 1}`} alt="Avatar" />
               </div>
-            ))}
-          </div>
-          <div className="chatbot-input">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Écrire un message..."
-              className="input-field"
-            />
-            <button onClick={sendMessage} className="send-button">
-              <span role="img" aria-label="send">
-                envoyer
-              </span>
-            </button>
-          </div>
+              <div className="chat-info">
+                <span className="chat-name">{chat}</span>
+                <span className="chat-status">En ligne</span>
+              </div>
+            </div>
+          ))}
         </div>
+      </div>
+      <div className="chat-main">
+        <ChatBox />
       </div>
     </div>
   )
@@ -120,28 +95,31 @@ const Collaboration = () => {
 
   // Rendu principal
   return (
-    <div className="chatbot-collaboration-container">
-      <div className="chatbot-tabs">
+    <div className="collaboration-container">
+      <div className="collaboration-tabs">
         <button
           onClick={() => setActiveTab('chat')}
-          className={`tab-button ${activeTab === 'chat' ? 'active blue-tab' : ''}`}
+          className={`tab-button ${activeTab === 'chat' ? 'active' : ''}`}
         >
-          Chat
+          <FaComments className="tab-icon" />
+          <span>Chat</span>
         </button>
         <button
           onClick={() => setActiveTab('notifications')}
-          className={`tab-button ${activeTab === 'notifications' ? 'active blue-tab' : ''}`}
+          className={`tab-button ${activeTab === 'notifications' ? 'active' : ''}`}
         >
-          Notifications
+          <FaBell className="tab-icon" />
+          <span>Notifications</span>
         </button>
         <button
           onClick={() => setActiveTab('scheduler')}
-          className={`tab-button ${activeTab === 'scheduler' ? 'active blue-tab' : ''}`}
+          className={`tab-button ${activeTab === 'scheduler' ? 'active' : ''}`}
         >
-          Planifier une Réunions
+          <FaCalendarAlt className="tab-icon" />
+          <span>Planifier une Réunion</span>
         </button>
       </div>
-      <div className="chatbot-container">
+      <div className="collaboration-content">
         {renderContent()}
       </div>
     </div>

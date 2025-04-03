@@ -1,53 +1,139 @@
 import React, { useState, useEffect } from 'react'
+import axios from '../utils/axios'
+import { toast } from 'react-toastify'
 import './Notifications.css' // Assurez-vous de créer ce fichier CSS pour les styles
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const newNotification = {
-        id: Date.now(),
-        avatar: '/assets/chatbot-avatar.png', // Assurez-vous que ce fichier existe
-        name: 'Chatbot',
-        message: `Nouvelle alerte à ${new Date().toLocaleTimeString()}`,
-      }
-      setNotifications((prev) => [...prev, newNotification])
-      playNotificationSound()
-    }, 10000) // Ajoute une notification toutes les 10 secondes
-
+    // Vérifier si l'utilisateur est connecté
+    const token = localStorage.getItem('token')
+    if (!token) {
+      setError('Vous devez être connecté pour voir vos notifications')
+      setLoading(false)
+      return
+    }
+    
+    console.log('Token trouvé:', token.substring(0, 20) + '...')
+    fetchNotifications()
+    
+    // Rafraîchir les notifications toutes les 30 secondes
+    const interval = setInterval(fetchNotifications, 30000)
     return () => clearInterval(interval)
   }, [])
 
-  const playNotificationSound = () => {
-    const audio = new Audio('/assets/notification.wav') // Assurez-vous que ce fichier existe
-    audio.play()
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      console.log('Récupération des notifications...')
+      
+      const response = await axios.get('/api/notifications')
+      console.log('Réponse des notifications:', response.data)
+      
+      if (response.data && response.data.success) {
+        setNotifications(response.data.notifications)
+      } else {
+        console.error('Format de réponse invalide:', response.data)
+        setError('Format de réponse invalide')
+        toast.error('Erreur lors de la récupération des notifications: Format invalide')
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error)
+      setError(error.message || 'Erreur inconnue')
+      
+      // Afficher plus de détails sur l'erreur
+      if (error.response) {
+        console.error('Détails de l\'erreur:', error.response.data)
+        toast.error(`Erreur: ${error.response.data.error || 'Erreur inconnue'}`)
+      } else if (error.request) {
+        console.error('Pas de réponse du serveur:', error.request)
+        toast.error('Impossible de contacter le serveur')
+      } else {
+        console.error('Erreur lors de la configuration de la requête:', error.message)
+        toast.error(`Erreur: ${error.message}`)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const markAsRead = async (notificationId) => {
+    try {
+      console.log('Marquage de la notification comme lue:', notificationId)
+      await axios.put(`/api/notifications/${notificationId}/read`)
+      setNotifications(notifications.map(notification => 
+        notification._id === notificationId 
+          ? { ...notification, read: true }
+          : notification
+      ))
+      toast.success('Notification marquée comme lue')
+    } catch (error) {
+      console.error('Error marking notification as read:', error)
+      toast.error('Erreur lors de la mise à jour de la notification')
+    }
+  }
+
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'task_created':
+        return '📝'
+      case 'task_updated':
+        return '🔄'
+      case 'task_assigned':
+        return '👤'
+      case 'task_completed':
+        return '✅'
+      default:
+        return '📌'
+    }
+  }
+
+  if (loading) {
+    return <div className="notifications-loading">Chargement des notifications...</div>
+  }
+
+  if (error) {
+    return (
+      <div className="notifications-error">
+        <h2>Erreur</h2>
+        <p>{error}</p>
+        <button onClick={fetchNotifications} className="retry-button">
+          Réessayer
+        </button>
+      </div>
+    )
   }
 
   return (
     <div className="notifications-container">
       <h2>Notifications</h2>
-      <ul className="notifications-list">
-        {notifications.map((notification) => (
-          <li key={notification.id} className="notification-item">
-            <img
-              src={notification.avatar}
-              alt="Avatar"
-              className="notification-avatar"
-            />
-            <div className="notification-content">
-              <span className="notification-name">{notification.name}</span>
-              <p className="notification-message">{notification.message}</p>
-              <div className="quick-replies">
-                <button className="reply-button">👍</button>
-                <button className="reply-button">👎</button>
-                <button className="reply-button">Répondre</button>
+      {notifications.length === 0 ? (
+        <div className="no-notifications">Aucune notification</div>
+      ) : (
+        <ul className="notifications-list">
+          {notifications.map((notification) => (
+            <li 
+              key={notification._id} 
+              className={`notification-item ${!notification.read ? 'unread' : ''}`}
+              onClick={() => markAsRead(notification._id)}
+            >
+              <div className="notification-icon">
+                {getNotificationIcon(notification.type)}
               </div>
-            </div>
-          </li>
-        ))}
-      </ul>
-      
+              <div className="notification-content">
+                <p className="notification-message">{notification.message}</p>
+                <span className="notification-time">
+                  {new Date(notification.createdAt).toLocaleString()}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

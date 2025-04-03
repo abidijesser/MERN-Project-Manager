@@ -10,6 +10,7 @@ const adminRoutes = require("./routes/admin");
 const taskRoutes = require("./routes/taskRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const chatRoutes = require("./routes/chat");
+const notificationRoutes = require("./routes/notificationRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
 const Message = require("./models/Message"); // Assurez-vous que le modèle Message existe
@@ -50,6 +51,7 @@ app.use("/admin", adminRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI)
