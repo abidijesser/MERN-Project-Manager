@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const taskController = require("../controllers/taskController");
-const auth = require("../middleware/auth");
+const { auth } = require("../middleware/auth");
 
 // Routes protégées par authentification
 router.use(auth);

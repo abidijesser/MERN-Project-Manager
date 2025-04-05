@@ -5,16 +5,17 @@ require("dotenv").config();
 const cookieParser = require("cookie-parser");
 const passport = require("passport");
 const session = require("express-session");
+const path = require("path");
+const http = require("http");
+const { Server } = require("socket.io");
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/admin");
 const taskRoutes = require("./routes/taskRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const chatRoutes = require("./routes/chat");
 const notificationRoutes = require("./routes/notificationRoutes");
-const http = require("http");
-const { Server } = require("socket.io");
-const Message = require("./models/Message"); // Assurez-vous que le modèle Message existe
-require("./config/passportConfig");
+const Message = require("./models/Message");
+const { auth, isAdmin } = require("./middleware/auth");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -22,7 +23,7 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000", "http://localhost:3001"],
     credentials: true,
   })
 );
@@ -46,25 +47,44 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Routes publiques
 app.use("/", authRoutes);
-app.use("/admin", adminRoutes);
+
+// Routes API protégées
 app.use("/api/tasks", taskRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 
+// Routes admin protégées
+app.use("/api/admin", auth, isAdmin, adminRoutes);
+
+// Static files for Admin
+app.use('/admin', express.static(path.join(__dirname, '../Admin/dist')));
+
+// Static files for Client
+app.use('/', express.static(path.join(__dirname, '../Client/build')));
+
+// Handle React routing for Admin
+app.get('/admin/*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../Admin/dist/index.html'));
+});
+
+// Handle React routing for Client
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../Client/build/index.html'));
+});
+
+// MongoDB connection
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("Cloud Database connected"))
   .catch((err) => {
-    if (err.code === 'ENOTFOUND') {
-      console.error("DNS error: Unable to resolve MongoDB host. Check your MONGO_URI.");
-    } else {
-      console.error("Database connection error:", err.message);
-    }
-    process.exit(1); // Arrête l'application si la connexion échoue
+    console.error("Database connection error:", err.message);
+    process.exit(1);
   });
 
+// WebSocket configuration
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -73,16 +93,14 @@ const io = new Server(server, {
   },
 });
 
-// WebSocket pour le chat
 io.on("connection", (socket) => {
   console.log("Utilisateur connecté");
 
-  // Écoute des messages envoyés par le client
   socket.on("sendMessage", async (messageData) => {
     try {
       const newMessage = new Message(messageData);
-      await newMessage.save(); // Stocke le message en base de données
-      io.emit("receiveMessage", messageData); // Diffuse le message à tous les clients
+      await newMessage.save();
+      io.emit("receiveMessage", messageData);
     } catch (err) {
       console.error("Erreur lors de l'enregistrement du message:", err);
     }

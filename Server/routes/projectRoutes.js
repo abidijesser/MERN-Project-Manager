@@ -2,7 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
 const Project = require("../models/Project");
-const auth = require("../middleware/auth");
+const { auth } = require("../middleware/auth");
 
 // GET all projects
 router.get("/", auth, async (req, res) => {

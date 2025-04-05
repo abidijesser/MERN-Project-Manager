@@ -7,10 +7,12 @@ const transporter = require("../config/emailConfig");
 
 async function register(req, res) {
   try {
-    const { name, email, password } = req.body;
+    console.log('Données reçues:', req.body);
+    const { name, email, password, role } = req.body;
 
     // Validation
     if (!name || !email || !password) {
+      console.log('Validation échouée:', { name, email, password });
       return res.status(400).json({
         success: false,
         error: "Tous les champs sont obligatoires",
@@ -20,6 +22,7 @@ async function register(req, res) {
     // Vérifier si l'email existe déjà
     const emailExist = await User.findOne({ email });
     if (emailExist) {
+      console.log('Email existe déjà:', email);
       return res.status(400).json({
         success: false,
         error: "Email existe déjà",
@@ -34,20 +37,38 @@ async function register(req, res) {
       name,
       email,
       password: hashedPassword,
-      isVerified: true, // Pour le moment, on skip la vérification email
+      role: role || 'Client', // Par défaut, le rôle est Client
+      isVerified: true,
     });
 
+    console.log('Tentative de sauvegarde de l\'utilisateur:', { name, email, role });
     await user.save();
+    console.log('Utilisateur sauvegardé avec succès');
 
-    // Créer le token JWT
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" }); // Utilisez process.env.JWT_SECRET
+    // Créer le token JWT avec le rôle
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
 
-    // Envoyer la réponse
-    res.status(201).json({ token });
+    // Envoyer la réponse avec les informations utilisateur
+    res.status(201).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error("Erreur détaillée lors de l'enregistrement:", error);
     res.status(500).json({
+      success: false,
       error: "Erreur lors de l'enregistrement",
+      details: error.message
     });
   }
 }
@@ -82,11 +103,24 @@ async function login(req, res) {
       });
     }
 
-    // Créer le token JWT
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" }); // Utilisez process.env.JWT_SECRET
+    // Créer le token JWT avec le rôle
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
 
-    // Envoyer la réponse
-    res.status(200).json({ token });
+    // Envoyer la réponse avec le rôle
+    res.status(200).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({

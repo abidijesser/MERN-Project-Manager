@@ -1,6 +1,6 @@
 // filepath: c:\Users\Lenovo\Desktop\pi1\MERN-Project-Manager\Client\src\views\dashboard\Dashboard.js
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '../../utils/axios';
 import { Link } from 'react-router-dom';
 import classNames from 'classnames';
 
@@ -61,16 +61,36 @@ import MainChart from './MainChart';
 
 const Dashboard = () => {
   const [users, setUsers] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('http://localhost:3001/admin/users')
+    setLoading(true);
+    axios.get('/api/admin/users')
       .then(response => {
-        setUsers(response.data);
+        if (response.data.success && Array.isArray(response.data.data)) {
+          setUsers(response.data.data);
+        } else {
+          setError('Format de réponse invalide');
+          setUsers([]);
+        }
       })
       .catch(error => {
-        console.error('There was an error fetching the users!', error);
+        setError(error.response?.data?.error || error.message);
+        setUsers([]);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, []);
+
+  if (loading) {
+    return <div className="text-center p-3">Chargement...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center p-3 text-danger">Erreur: {error}</div>;
+  }
 
   return (
     <>
@@ -79,7 +99,7 @@ const Dashboard = () => {
         <div className="container">
           <h1 className="display-4 fw-bold">Optimisez vos projets, anticipez les risques, réussissez en toute sérénité !</h1>
           <p className="lead mt-3">
-            Notre plateforme utilise l’IA pour vous aider à gérer vos projets de manière efficace, 
+            Notre plateforme utilise l'IA pour vous aider à gérer vos projets de manière efficace, 
             en identifiant les risques et en optimisant vos ressources.
           </p>
           <div className="d-flex justify-content-center gap-3 mt-4">
@@ -103,7 +123,7 @@ const Dashboard = () => {
             {[
               { icon: '📌', title: 'Planification intelligente', description: 'Gantt, Kanban, Sprints' },
               { icon: '📌', title: 'Suivi des tâches et jalons', description: '' },
-              { icon: '📌', title: 'Prédiction des délais grâce à l’IA', description: '' },
+              { icon: '📌', title: "Prédiction des délais grâce à l'IA", description: '' },
               { icon: '📌', title: 'Optimisation des ressources', description: '' },
               { icon: '📌', title: 'Collaboration en équipe', description: 'Messagerie, documents partagés' },
             ].map((feature, index) => (

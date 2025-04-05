@@ -12,15 +12,17 @@ import {
   CInputGroup,
   CInputGroupText,
   CRow,
+  CFormSelect,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilLockLocked, cilUser } from '@coreui/icons'
-import axios from 'axios'
+import axios from '../../../utils/axios'
 import { toast } from 'react-toastify'
 
 const Login = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [role, setRole] = useState('Client')
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
@@ -29,9 +31,10 @@ const Login = () => {
     setError('')
 
     try {
-      const response = await axios.post('http://localhost:3001/login', {
+      const response = await axios.post('/login', {
         email,
         password,
+        role,
       })
 
       console.log('Réponse login:', response.data)
@@ -47,7 +50,13 @@ const Login = () => {
         // Stocker les informations utilisateur
         localStorage.setItem('user', JSON.stringify(response.data.user))
         toast.success('Connexion réussie !')
-        navigate('/dashboard')
+        
+        // Rediriger en fonction du rôle
+        if (response.data.user.role === 'Admin') {
+          window.location.href = 'http://localhost:3000/admin'
+        } else {
+          navigate('/dashboard')
+        }
       } else {
         setError('Token non reçu')
       }
@@ -60,7 +69,7 @@ const Login = () => {
   }
 
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:3001/google'
+    window.location.href = '/google'
   }
 
   return (
@@ -88,7 +97,7 @@ const Login = () => {
                         required
                       />
                     </CInputGroup>
-                    <CInputGroup className="mb-4">
+                    <CInputGroup className="mb-3">
                       <CInputGroupText>
                         <CIcon icon={cilLockLocked} />
                       </CInputGroupText>
@@ -100,6 +109,17 @@ const Login = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                       />
+                    </CInputGroup>
+                    <CInputGroup className="mb-4">
+                      <CInputGroupText>Role</CInputGroupText>
+                      <CFormSelect
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                        required
+                      >
+                        <option value="Client">Client</option>
+                        <option value="Admin">Admin</option>
+                      </CFormSelect>
                     </CInputGroup>
                     <CRow>
                       <CCol xs={6}>
