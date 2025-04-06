@@ -141,6 +141,24 @@ export default function AuthLogin({ isDemo = false }) {
                   </Button>
                 </AnimateButton>
               </Grid>
+              <Grid size={12}>
+                <Typography align="center" variant="body1" sx={{ mt: 2 }}>
+                  Or login with
+                </Typography>
+                <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
+                  <Button
+                    fullWidth
+                    size="large"
+                    variant="outlined"
+                    color="primary"
+                    onClick={() => {
+                      window.location.href = "http://localhost:3001/api/auth/facebook";
+                    }}
+                  >
+                    Login with Facebook
+                  </Button>
+                </Stack>
+              </Grid>
             </Grid>
           </form>
         )}

@@ -16,6 +16,7 @@ const chatRoutes = require("./routes/chat");
 const notificationRoutes = require("./routes/notificationRoutes");
 const Message = require("./models/Message");
 const { auth, isAdmin } = require("./middleware/auth");
+const passportConfig = require("./config/passportConfig"); // Import passport configuration
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -48,25 +49,26 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Routes publiques
-app.use("/", authRoutes);
+app.use("/api/auth", authRoutes);
 
 // Routes API protégées
-app.use("/api/tasks", taskRoutes);
-app.use("/api/projects", projectRoutes);
-app.use("/api/chat", chatRoutes);
-app.use("/api/notifications", notificationRoutes);
+app.use("/api/tasks", auth, taskRoutes);
+app.use("/api/projects", auth, projectRoutes);
+app.use("/api/chat", auth, chatRoutes);
+app.use("/api/notifications", auth, notificationRoutes);
 
 // Routes admin protégées
 app.use("/api/admin", auth, isAdmin, adminRoutes);
 
 // Static files for Admin
-app.use('/admin', express.static(path.join(__dirname, '../Admin/dist')));
+app.use('/free', express.static(path.join(__dirname, '../Admin/dist')));
+app.use('/free/assets', express.static(path.join(__dirname, '../Admin/dist/assets')));
 
 // Static files for Client
 app.use('/', express.static(path.join(__dirname, '../Client/build')));
 
 // Handle React routing for Admin
-app.get('/admin/*', (req, res) => {
+app.get('/free/*', (req, res) => {
   res.sendFile(path.join(__dirname, '../Admin/dist/index.html'));
 });
 
