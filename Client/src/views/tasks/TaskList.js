@@ -3,6 +3,9 @@ import { CCard, CCardBody, CCardHeader, CButton, CTable, CTableBody, CTableHead,
 import { useNavigate } from 'react-router-dom'
 import axios from '../../utils/axios'
 import { toast } from 'react-toastify'
+import './TaskList.css'
+import Calendar from 'react-calendar'
+import 'react-calendar/dist/Calendar.css'
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([])
@@ -43,6 +46,22 @@ const TaskList = () => {
     return <div>Chargement...</div>
   }
 
+  const taskDates = tasks.map((task) => new Date(task.dueDate))
+
+  const tileClassName = ({ date, view }) => {
+    if (view === 'month') {
+      const task = tasks.find(
+        (task) => new Date(task.dueDate).toDateString() === date.toDateString()
+      )
+      if (task) {
+        if (task.priority === 'high') return 'task-date-high'
+        if (task.priority === 'medium') return 'task-date-medium'
+        if (task.priority === 'low') return 'task-date-low'
+      }
+    }
+    return null
+  }
+
   return (
     <CCard>
       <CCardHeader>
@@ -56,52 +75,62 @@ const TaskList = () => {
         </CButton>
       </CCardHeader>
       <CCardBody>
-        <CTable hover>
-          <CTableHead>
-            <CTableRow>
-              <CTableHeaderCell>Titre</CTableHeaderCell>
-              <CTableHeaderCell>Statut</CTableHeaderCell>
-              <CTableHeaderCell>Priorité</CTableHeaderCell>
-              <CTableHeaderCell>Date d'échéance</CTableHeaderCell>
-              <CTableHeaderCell>Actions</CTableHeaderCell>
-            </CTableRow>
-          </CTableHead>
-          <CTableBody>
-            {tasks.map((task) => (
-              <CTableRow key={task._id}>
-                <CTableDataCell>{task.title}</CTableDataCell>
-                <CTableDataCell>{task.status}</CTableDataCell>
-                <CTableDataCell>{task.priority}</CTableDataCell>
-                <CTableDataCell>{new Date(task.dueDate).toLocaleDateString()}</CTableDataCell>
-                <CTableDataCell>
-                  <CButton
-                    color="info"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => navigate(`/tasks/${task._id}`)}
-                  >
-                    Détails
-                  </CButton>
-                  <CButton
-                    color="warning"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => navigate(`/tasks/edit/${task._id}`)}
-                  >
-                    Modifier
-                  </CButton>
-                  <CButton
-                    color="danger"
-                    size="sm"
-                    onClick={() => handleDelete(task._id)}
-                  >
-                    Supprimer
-                  </CButton>
-                </CTableDataCell>
-              </CTableRow>
-            ))}
-          </CTableBody>
-        </CTable>
+        <div className="d-flex flex-wrap">
+          <div className="task-table me-4">
+            <CTable hover>
+              <CTableHead>
+                <CTableRow>
+                  <CTableHeaderCell>Titre</CTableHeaderCell>
+                  <CTableHeaderCell>Statut</CTableHeaderCell>
+                  <CTableHeaderCell>Priorité</CTableHeaderCell>
+                  <CTableHeaderCell>Date d'échéance</CTableHeaderCell>
+                  <CTableHeaderCell>Actions</CTableHeaderCell>
+                </CTableRow>
+              </CTableHead>
+              <CTableBody>
+                {tasks.map((task) => (
+                  <CTableRow key={task._id}>
+                    <CTableDataCell>{task.title}</CTableDataCell>
+                    <CTableDataCell>{task.status}</CTableDataCell>
+                    <CTableDataCell>{task.priority}</CTableDataCell>
+                    <CTableDataCell>{new Date(task.dueDate).toLocaleDateString()}</CTableDataCell>
+                    <CTableDataCell>
+                      <CButton
+                        color="info"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => navigate(`/tasks/${task._id}`)}
+                      >
+                        Détails
+                      </CButton>
+                      <CButton
+                        color="warning"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => navigate(`/tasks/edit/${task._id}`)}
+                      >
+                        Modifier
+                      </CButton>
+                      <CButton
+                        color="danger"
+                        size="sm"
+                        onClick={() => handleDelete(task._id)}
+                      >
+                        Supprimer
+                      </CButton>
+                    </CTableDataCell>
+                  </CTableRow>
+                ))}
+              </CTableBody>
+            </CTable>
+          </div>
+          <div className="task-calendar">
+            <h5>Calendrier des tâches</h5>
+            <Calendar
+              tileClassName={tileClassName}
+            />
+          </div>
+        </div>
       </CCardBody>
     </CCard>
   )

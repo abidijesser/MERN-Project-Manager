@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import io from 'socket.io-client'
+import { useLocation } from 'react-router-dom'
 import Notifications from '../../components/Notifications'
 import MeetingScheduler from '../../components/MeetingScheduler'
 import ChatBox from '../../components/ChatBox'
@@ -8,12 +9,20 @@ import { FaComments, FaBell, FaCalendarAlt } from 'react-icons/fa'
 const socket = io('http://localhost:3000') // Remplacez par l'URL de votre serveur Socket.io
 
 const Collaboration = () => {
-  // States
+  const location = useLocation()
   const [activeTab, setActiveTab] = useState('chat')
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [chatList, setChatList] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const tab = params.get('tab')
+    if (tab) {
+      setActiveTab(tab)
+    }
+  }, [location.search])
 
   // Effets
   useEffect(() => {

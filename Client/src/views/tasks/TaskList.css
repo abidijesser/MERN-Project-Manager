@@ -1,0 +1,44 @@
+.react-calendar__tile.highlight {
+  background-color: #007bff;
+  color: white;
+  border-radius: 50%;
+}
+
+.task-table {
+  flex: 2;
+  min-width: 300px;
+}
+
+.task-calendar {
+  flex: 1;
+  min-width: 300px;
+}
+
+.task-calendar .react-calendar {
+  width: 100%;
+  max-width: 400px;
+}
+
+.task-date {
+  background-color: #007bff !important;
+  color: white !important;
+  border-radius: 50%;
+}
+
+.task-date-high {
+  background-color: red !important;
+  color: white !important;
+  border-radius: 50%;
+}
+
+.task-date-medium {
+  background-color: orange !important;
+  color: white !important;
+  border-radius: 50%;
+}
+
+.task-date-low {
+  background-color: green !important;
+  color: white !important;
+  border-radius: 50%;
+}

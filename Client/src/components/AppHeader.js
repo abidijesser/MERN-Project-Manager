@@ -26,6 +26,7 @@ import {
   cilSun,
   cilAccountLogout,
 } from '@coreui/icons';
+import { FaRobot } from 'react-icons/fa'; // Ajouter l'import pour l'icône d'assistant virtuel
 
 import { AppBreadcrumb } from './index';
 import { AppHeaderDropdown } from './header/index';
@@ -63,26 +64,26 @@ const AppHeader = () => {
             </CNavLink>
           </CNavItem>
           <CNavItem>
-            <CNavLink href="#">Create project</CNavLink>
+            <CNavLink to="/projects/new" as={NavLink}>
+              Create project
+            </CNavLink>
           </CNavItem>
-          <CNavItem>
-            <CNavLink href="#">Settings</CNavLink>
-          </CNavItem>
+          
         </CHeaderNav>
         <CHeaderNav className="ms-auto">
           <CNavItem>
-            <CNavLink href="#">
+            <CNavLink to="/collaboration?tab=notifications" as={NavLink}>
               <CIcon icon={cilBell} size="lg" />
             </CNavLink>
           </CNavItem>
           <CNavItem>
-            <CNavLink href="#">
+            <CNavLink to="/tasks" as={NavLink}>
               <CIcon icon={cilList} size="lg" />
             </CNavLink>
           </CNavItem>
           <CNavItem>
-            <CNavLink href="#">
-              <CIcon icon={cilEnvelopeOpen} size="lg" />
+            <CNavLink to="/collaboration?tab=chat" as={NavLink}>
+              <FaRobot size="1.5em" /> {/* Icône d'assistant virtuel */}
             </CNavLink>
           </CNavItem>
         </CHeaderNav>
