@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
-import { NavLink } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useEffect, useRef } from 'react'
+import { NavLink } from 'react-router-dom'
+import { useSelector, useDispatch } from 'react-redux'
 import {
   CContainer,
   CDropdown,
@@ -14,8 +14,8 @@ import {
   CNavItem,
   useColorModes,
   CButton,
-} from '@coreui/react';
-import CIcon from '@coreui/icons-react';
+} from '@coreui/react'
+import CIcon from '@coreui/icons-react'
 import {
   cilBell,
   cilContrast,
@@ -25,28 +25,28 @@ import {
   cilMoon,
   cilSun,
   cilAccountLogout,
-} from '@coreui/icons';
+} from '@coreui/icons'
 
-import { AppBreadcrumb } from './index';
-import { AppHeaderDropdown } from './header/index';
+import { AppBreadcrumb } from './index'
+import { AppHeaderDropdown } from './header/index'
 
 const AppHeader = () => {
-  const headerRef = useRef();
-  const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
+  const headerRef = useRef()
+  const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
 
-  const dispatch = useDispatch();
-  const sidebarShow = useSelector((state) => state.sidebarShow);
+  const dispatch = useDispatch()
+  const sidebarShow = useSelector((state) => state.sidebarShow)
 
   useEffect(() => {
     document.addEventListener('scroll', () => {
       headerRef.current &&
-        headerRef.current.classList.toggle('shadow-sm', document.documentElement.scrollTop > 0);
-    });
-  }, []);
+        headerRef.current.classList.toggle('shadow-sm', document.documentElement.scrollTop > 0)
+    })
+  }, [])
 
   const handleLogout = () => {
-    window.location.href = 'http://localhost:3001/logout';
-  };
+    window.location.href = 'http://localhost:3001/logout'
+  }
   return (
     <CHeader position="sticky" className="mb-4 p-0" ref={headerRef}>
       <CContainer className="border-bottom px-4" fluid>
@@ -133,7 +133,7 @@ const AppHeader = () => {
           <li className="nav-item py-1">
             <div className="vr h-100 mx-2 text-body text-opacity-75"></div>
           </li>
-         
+
           <AppHeaderDropdown />
         </CHeaderNav>
       </CContainer>
@@ -141,7 +141,7 @@ const AppHeader = () => {
         <AppBreadcrumb />
       </CContainer>
     </CHeader>
-  );
-};
+  )
+}
 
-export default AppHeader;
+export default AppHeader

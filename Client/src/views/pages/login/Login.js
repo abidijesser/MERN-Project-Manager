@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   CButton,
@@ -34,24 +34,42 @@ const Login = () => {
         password,
       })
 
-      // Store the token from the response
-      const token = response.data.token
-      localStorage.setItem('token', token)
-
-      // Redirect to dashboard
-      navigate('/dashboard')
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token)
+        navigate('/dashboard')
+      }
     } catch (error) {
       console.error('Login error:', error)
-      // Handle error (show error message, etc.)
+      setError(error.response?.data?.error || 'Login failed')
+      toast.error(error.response?.data?.error || 'Login failed')
     }
   }
 
+  // Add useEffect to handle token and errors from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const token = urlParams.get('token')
+    const error = urlParams.get('error')
+
+    if (error) {
+      toast.error('Authentication failed. Please try again.')
+      return
+    }
+
+    if (token) {
+      localStorage.setItem('token', token)
+      navigate('/dashboard')
+    }
+  }, [navigate])
+
   const handleGoogleLogin = () => {
+    // Clear any existing tokens
+    localStorage.removeItem('token')
     window.location.href = 'http://localhost:3001/google'
   }
 
   return (
-    <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
+    <div className="bg-light min-vh-100 d-flex flex-row align-items-center">
       <CContainer>
         <CRow className="justify-content-center">
           <CCol md={8}>
@@ -60,19 +78,17 @@ const Login = () => {
                 <CCardBody>
                   <CForm onSubmit={handleSubmit}>
                     <h1>Login</h1>
-                    <p className="text-body-secondary">Sign In to your account</p>
-                    {error && <p className="text-danger">{error}</p>}
+                    <p className="text-muted">Sign In to your account</p>
+                    {error && <div className="alert alert-danger">{error}</div>}
                     <CInputGroup className="mb-3">
                       <CInputGroupText>
                         <CIcon icon={cilUser} />
                       </CInputGroupText>
                       <CFormInput
-                        type="email"
                         placeholder="Email"
                         autoComplete="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        required
                       />
                     </CInputGroup>
                     <CInputGroup className="mb-4">
@@ -85,12 +101,11 @@ const Login = () => {
                         autoComplete="current-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        required
                       />
                     </CInputGroup>
                     <CRow>
                       <CCol xs={6}>
-                        <CButton type="submit" color="primary" className="px-4">
+                        <CButton color="primary" className="px-4" type="submit">
                           Login
                         </CButton>
                       </CCol>
@@ -105,7 +120,7 @@ const Login = () => {
                   </CForm>
                   <div className="mt-3">
                     <CButton color="danger" className="w-100" onClick={handleGoogleLogin}>
-                      Se connecter avec Google
+                      Sign in with Google
                     </CButton>
                   </div>
                 </CCardBody>
@@ -115,8 +130,8 @@ const Login = () => {
                   <div>
                     <h2>Sign up</h2>
                     <p>
-                      Créez votre compte pour accéder à toutes les fonctionnalités de gestion de
-                      projet.
+                      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+                      tempor incididunt ut labore et dolore magna aliqua.
                     </p>
                     <Link to="/register">
                       <CButton color="primary" className="mt-3" active tabIndex={-1}>

@@ -9,12 +9,10 @@ const getAllProjects = async (req, res) => {
     res.status(200).json({ success: true, projects });
   } catch (error) {
     console.error("Erreur lors de la récupération des projets:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Erreur lors de la récupération des projets",
-      });
+    res.status(500).json({
+      success: false,
+      error: "Erreur lors de la récupération des projets",
+    });
   }
 };
 

@@ -5,7 +5,7 @@ require("dotenv").config();
 const cookieParser = require("cookie-parser");
 const passport = require("passport");
 const session = require("express-session");
-const authRoutes = require("./routes/authRoutes");
+const { authRouter, googleAuthRouter } = require("./routes/authRoutes");
 const adminRoutes = require("./routes/admin");
 const taskRoutes = require("./routes/taskRoutes");
 const projectRoutes = require("./routes/projectRoutes");
@@ -46,7 +46,12 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use("/api/auth", authRoutes);
+// Mount Google Auth routes at the root
+app.use("/", googleAuthRouter);
+
+// Mount other Auth routes under /api/auth
+app.use("/api/auth", authRouter);
+
 app.use("/admin", adminRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/projects", projectRoutes);
