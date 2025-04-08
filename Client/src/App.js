@@ -1,4 +1,3 @@
-// filepath: c:\Users\Lenovo\Desktop\pi1\MERN-Project-Manager\Client\src\App.js
 import React, { Suspense, useEffect } from 'react';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -6,13 +5,9 @@ import axios from 'axios';
 import { UserContextProvider } from './context/userContext';
 import { ChatProvider } from './context/ChatContext';
 import { NotificationsProvider } from './context/NotificationsContext';
-import ChatBox from './components/ChatBox';
-import MeetingScheduler from './components/MeetingScheduler';
-import Notifications from './components/Notifications';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-axios.defaults.withCredentials = true;
+import PrivateRoute from './utils/PrivateRoute';
 
 import { CSpinner, useColorModes } from '@coreui/react';
 import './scss/style.scss';
@@ -29,6 +24,9 @@ const Profile = React.lazy(() => import('./views/pages/profile/Profile'));
 const EditProfile = React.lazy(() => import('./views/pages/profile/EditProfile'));
 const EditProject = React.lazy(() => import('./views/projects/EditProject'));
 
+// Axios configuration
+axios.defaults.withCredentials = true;
+
 const App = () => {
   const { isColorModeSet, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
   const storedTheme = useSelector((state) => state.theme);
@@ -40,12 +38,10 @@ const App = () => {
       setColorMode(theme);
     }
 
-    if (isColorModeSet()) {
-      return;
+    if (!isColorModeSet()) {
+      setColorMode(storedTheme);
     }
-
-    setColorMode(storedTheme);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isColorModeSet, setColorMode, storedTheme]);
 
   return (
     <>
@@ -61,13 +57,14 @@ const App = () => {
                 }
               >
                 <Routes>
-                  <Route exact path="/login" name="Login Page" element={<Login />} />
-                  <Route exact path="/register" name="Register Page" element={<Register />} />
-                  <Route exact path="/404" name="Page 404" element={<Page404 />} />
-                  <Route exact path="/500" name="Page 500" element={<Page500 />} />
-                  <Route exact path="/profile/:id" name="Profile Page" element={<Profile />} />
-                  <Route exact path="/edit-profile/:id" name="Edit Profile Page" element={<EditProfile />} />
-                  <Route exact path="/projects/edit/:id" name="Edit Project" element={<EditProject />} />
+                  <Route path="/login" name="Login Page" element={<Login />} />
+                  <Route path="/dashboard" element={<PrivateRoute><DefaultLayout /></PrivateRoute>} />
+                  <Route path="/register" name="Register Page" element={<Register />} />
+                  <Route path="/404" name="Page 404" element={<Page404 />} />
+                  <Route path="/500" name="Page 500" element={<Page500 />} />
+                  <Route path="/profile/:id" name="Profile Page" element={<Profile />} />
+                  <Route path="/edit-profile/:id" name="Edit Profile Page" element={<EditProfile />} />
+                  <Route path="/projects/edit/:id" name="Edit Project" element={<EditProject />} />
                   <Route path="*" name="Home" element={<DefaultLayout />} />
                 </Routes>
               </Suspense>

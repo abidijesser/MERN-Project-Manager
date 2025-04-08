@@ -8,7 +8,7 @@ import ProjectsList from './views/projects/ProjectsList'
 import CreateProject from './views/projects/CreateProject'
 import ProjectDetails from './views/projects/ProjectDetails'
 import Collaboration from './views/Collaboration/Collaboration'
-
+import PrivateRoute from './utils/PrivateRoute';
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Login = React.lazy(() => import('./views/pages/login/Login'))
 const Register = React.lazy(() => import('./views/pages/register/Register'))
@@ -23,7 +23,7 @@ const Performances = React.lazy(() => import('./views/Performances/Performances'
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
-  { path: '/dashboard', name: 'Dashboard', element: Dashboard },
+  { path: '/dashboard', name: 'Dashboard', element: <PrivateRoute><Dashboard /></PrivateRoute> },
   { path: '/login', name: 'Login', element: Login },
   { path: '/register', name: 'Register', element: Register },
   { path: '/404', name: 'Page 404', element: Page404 },

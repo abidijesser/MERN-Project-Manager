@@ -3,6 +3,7 @@ const passport = require("passport");
 const router = express.Router();
 const authController = require("../controllers/authController");
 const jwt = require("jsonwebtoken");
+const { auth, isAdmin } = require('../middleware/auth');
 
 // Existing routes
 router.post("/register", authController.register);
@@ -23,6 +24,15 @@ router.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
   (req, res) => {
+    // Générer un token JWT après une connexion réussie
+    const token = jwt.sign(
+      { id: req.user._id, role: req.user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // Envoyer le token au frontend via un cookie sécurisé
+    res.cookie("token", token, { httpOnly: true, secure: false }); // `secure: true` en production
     res.redirect("http://localhost:3000/#/dashboard");
   }
 );
@@ -37,24 +47,43 @@ router.get(
   "/facebook/callback",
   passport.authenticate("facebook", { failureRedirect: "/" }),
   (req, res) => {
+    // Générer un token JWT après une connexion réussie
+    const token = jwt.sign(
+      { id: req.user._id, role: req.user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // Envoyer le token au frontend via un cookie sécurisé
+    res.cookie("token", token, { httpOnly: true, secure: false }); // `secure: true` en production
     res.redirect("http://localhost:3000/#/dashboard");
   }
 );
 
 // Logout route
-router.get("/logout", (req, res) => {
-  req.logout((err) => {
-    if (err) {
-      return next(err);
-    }
-    res.redirect("http://localhost:3000/#/login");
-  });
+router.post("/logout", auth, (req, res) => {
+  try {
+    // Supprimer le cookie contenant le token
+    res.clearCookie("token");
+    
+    // Répondre avec succès
+    res.json({
+      success: true,
+      message: "Déconnexion réussie"
+    });
+  } catch (error) {
+    console.error("Erreur lors de la déconnexion:", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur lors de la déconnexion"
+    });
+  }
 });
 
-// New route
+// Email verification route
 router.get("/verify-email/:token", authController.verifyEmail);
 
-// Ajouter cette route pour tester l'authentification
+// Test authentication route
 router.get("/test-auth", (req, res) => {
   const { token } = req.cookies;
   if (!token) {

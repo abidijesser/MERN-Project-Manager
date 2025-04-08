@@ -1,5 +1,7 @@
 import PropTypes from 'prop-types';
 import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from '../../../../../utils/axios';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -50,6 +52,7 @@ function a11yProps(index) {
 
 export default function Profile() {
   const theme = useTheme();
+  const navigate = useNavigate();
 
   const anchorRef = useRef(null);
   const [open, setOpen] = useState(false);
@@ -68,6 +71,20 @@ export default function Profile() {
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axios.post('/api/auth/logout');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/free/login';
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/free/login';
+    }
   };
 
   return (
@@ -132,7 +149,11 @@ export default function Profile() {
                       </Grid>
                       <Grid>
                         <Tooltip title="Logout">
-                          <IconButton size="large" sx={{ color: 'text.primary' }}>
+                          <IconButton 
+                            size="large" 
+                            sx={{ color: 'text.primary' }}
+                            onClick={handleLogout}
+                          >
                             <LogoutOutlined />
                           </IconButton>
                         </Tooltip>

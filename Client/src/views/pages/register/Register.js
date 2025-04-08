@@ -57,7 +57,7 @@ const Register = () => {
 
     try {
       console.log('Envoi des données:', { ...userData, password: '***' })
-      const response = await axios.post('http://localhost:3001/register', userData)
+      const response = await axios.post('http://localhost:3001/api/auth/register', userData)
       console.log('Réponse du serveur:', response.data)
 
       if (response.data.success) {

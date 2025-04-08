@@ -1,4 +1,6 @@
 import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
+import axios from '../../../../../utils/axios';
 
 // material-ui
 import List from '@mui/material/List';
@@ -15,7 +17,23 @@ import WalletOutlined from '@ant-design/icons/WalletOutlined';
 
 // ==============================|| HEADER PROFILE - PROFILE TAB ||============================== //
 
-export default function ProfileTab() {
+const ProfileTab = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await axios.post('/api/auth/logout');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/free/login';
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/free/login';
+    }
+  };
+
   return (
     <List component="nav" sx={{ p: 0, '& .MuiListItemIcon-root': { minWidth: 32 } }}>
       <ListItemButton>
@@ -43,7 +61,7 @@ export default function ProfileTab() {
         </ListItemIcon>
         <ListItemText primary="Billing" />
       </ListItemButton>
-      <ListItemButton>
+      <ListItemButton onClick={handleLogout}>
         <ListItemIcon>
           <LogoutOutlined />
         </ListItemIcon>
@@ -51,6 +69,8 @@ export default function ProfileTab() {
       </ListItemButton>
     </List>
   );
-}
+};
 
 ProfileTab.propTypes = { handleLogout: PropTypes.func };
+
+export default ProfileTab;

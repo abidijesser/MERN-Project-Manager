@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link as RouterLink, useSearchParams } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import axios from '../../utils/axios';
 
 // material-ui
 import Button from '@mui/material/Button';
@@ -33,6 +34,8 @@ import EyeInvisibleOutlined from '@ant-design/icons/EyeInvisibleOutlined';
 export default function AuthRegister() {
   const [level, setLevel] = useState();
   const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
+
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
@@ -46,9 +49,6 @@ export default function AuthRegister() {
     setLevel(strengthColor(temp));
   };
 
-  const [searchParams] = useSearchParams();
-  const auth = searchParams.get('auth'); // get auth and set route based on that
-
   useEffect(() => {
     changePassword('');
   }, []);
@@ -60,7 +60,6 @@ export default function AuthRegister() {
           firstname: '',
           lastname: '',
           email: '',
-          company: '',
           password: '',
           submit: null
         }}
@@ -71,18 +70,39 @@ export default function AuthRegister() {
           password: Yup.string()
             .required('Password is required')
             .test('no-leading-trailing-whitespace', 'Password cannot start or end with spaces', (value) => value === value.trim())
-            .max(10, 'Password must be less than 10 characters')
+            .min(6, 'Password must be at least 6 characters')
+            .max(20, 'Password must be less than 20 characters')
         })}
+        onSubmit={async (values, { setErrors, setSubmitting }) => {
+          try {
+            const response = await axios.post('/api/auth/register', {
+              name: `${values.firstname} ${values.lastname}`,
+              email: values.email,
+              password: values.password,
+              role: 'Admin'
+            });
+
+            if (response.data.success) {
+              // Rediriger vers la page de connexion après une inscription réussie
+              navigate('/login', { replace: true });
+            }
+          } catch (error) {
+            console.error('Registration error:', error);
+            setErrors({ submit: error.response?.data?.error || 'Something went wrong' });
+          } finally {
+            setSubmitting(false);
+          }
+        }}
       >
-        {({ errors, handleBlur, handleChange, touched, values }) => (
-          <form noValidate>
+        {({ errors, handleBlur, handleChange, handleSubmit, touched, values }) => (
+          <form noValidate onSubmit={handleSubmit}>
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <Stack sx={{ gap: 1 }}>
                   <InputLabel htmlFor="firstname-signup">First Name*</InputLabel>
                   <OutlinedInput
-                    id="firstname-login"
-                    type="firstname"
+                    id="firstname-signup"
+                    type="text"
                     value={values.firstname}
                     name="firstname"
                     onBlur={handleBlur}
@@ -102,16 +122,15 @@ export default function AuthRegister() {
                 <Stack sx={{ gap: 1 }}>
                   <InputLabel htmlFor="lastname-signup">Last Name*</InputLabel>
                   <OutlinedInput
-                    fullWidth
-                    error={Boolean(touched.lastname && errors.lastname)}
                     id="lastname-signup"
-                    type="lastname"
+                    type="text"
                     value={values.lastname}
                     name="lastname"
                     onBlur={handleBlur}
                     onChange={handleChange}
                     placeholder="Doe"
-                    inputProps={{}}
+                    fullWidth
+                    error={Boolean(touched.lastname && errors.lastname)}
                   />
                 </Stack>
                 {touched.lastname && errors.lastname && (
@@ -122,39 +141,17 @@ export default function AuthRegister() {
               </Grid>
               <Grid size={12}>
                 <Stack sx={{ gap: 1 }}>
-                  <InputLabel htmlFor="company-signup">Company</InputLabel>
-                  <OutlinedInput
-                    fullWidth
-                    error={Boolean(touched.company && errors.company)}
-                    id="company-signup"
-                    value={values.company}
-                    name="company"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder="Demo Inc."
-                    inputProps={{}}
-                  />
-                </Stack>
-                {touched.company && errors.company && (
-                  <FormHelperText error id="helper-text-company-signup">
-                    {errors.company}
-                  </FormHelperText>
-                )}
-              </Grid>
-              <Grid size={12}>
-                <Stack sx={{ gap: 1 }}>
                   <InputLabel htmlFor="email-signup">Email Address*</InputLabel>
                   <OutlinedInput
-                    fullWidth
-                    error={Boolean(touched.email && errors.email)}
-                    id="email-login"
+                    id="email-signup"
                     type="email"
                     value={values.email}
                     name="email"
                     onBlur={handleBlur}
                     onChange={handleChange}
                     placeholder="demo@company.com"
-                    inputProps={{}}
+                    fullWidth
+                    error={Boolean(touched.email && errors.email)}
                   />
                 </Stack>
                 {touched.email && errors.email && (
@@ -165,10 +162,8 @@ export default function AuthRegister() {
               </Grid>
               <Grid size={12}>
                 <Stack sx={{ gap: 1 }}>
-                  <InputLabel htmlFor="password-signup">Password</InputLabel>
+                  <InputLabel htmlFor="password-signup">Password*</InputLabel>
                   <OutlinedInput
-                    fullWidth
-                    error={Boolean(touched.password && errors.password)}
                     id="password-signup"
                     type={showPassword ? 'text' : 'password'}
                     value={values.password}
@@ -178,6 +173,9 @@ export default function AuthRegister() {
                       handleChange(e);
                       changePassword(e.target.value);
                     }}
+                    placeholder="******"
+                    fullWidth
+                    error={Boolean(touched.password && errors.password)}
                     endAdornment={
                       <InputAdornment position="end">
                         <IconButton
@@ -191,8 +189,6 @@ export default function AuthRegister() {
                         </IconButton>
                       </InputAdornment>
                     }
-                    placeholder="******"
-                    inputProps={{}}
                   />
                 </Stack>
                 {touched.password && errors.password && (
@@ -213,18 +209,6 @@ export default function AuthRegister() {
                   </Grid>
                 </FormControl>
               </Grid>
-              <Grid size={12}>
-                <Typography variant="body2">
-                  By Signing up, you agree to our &nbsp;
-                  <Link variant="subtitle2" component={RouterLink} to="#">
-                    Terms of Service
-                  </Link>
-                  &nbsp; and &nbsp;
-                  <Link variant="subtitle2" component={RouterLink} to="#">
-                    Privacy Policy
-                  </Link>
-                </Typography>
-              </Grid>
               {errors.submit && (
                 <Grid size={12}>
                   <FormHelperText error>{errors.submit}</FormHelperText>
@@ -232,7 +216,7 @@ export default function AuthRegister() {
               )}
               <Grid size={12}>
                 <AnimateButton>
-                  <Button fullWidth size="large" variant="contained" color="primary">
+                  <Button fullWidth size="large" type="submit" variant="contained" color="primary">
                     Create Account
                   </Button>
                 </AnimateButton>

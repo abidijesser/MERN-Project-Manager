@@ -10,12 +10,29 @@ async function register(req, res) {
     console.log('Données reçues:', req.body);
     const { name, email, password, role } = req.body;
 
-    // Validation
+    // Validation améliorée
     if (!name || !email || !password) {
-      console.log('Validation échouée:', { name, email, password });
+      console.log('Validation échouée:', { name, email });
       return res.status(400).json({
         success: false,
         error: "Tous les champs sont obligatoires",
+      });
+    }
+
+    // Validation du format email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: "Format d'email invalide",
+      });
+    }
+
+    // Validation de la longueur du mot de passe
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: "Le mot de passe doit contenir au moins 6 caractères",
       });
     }
 
@@ -29,6 +46,14 @@ async function register(req, res) {
       });
     }
 
+    // Validation du rôle
+    if (role && !["Client", "Admin"].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        error: "Rôle invalide",
+      });
+    }
+
     // Hasher le mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -37,7 +62,7 @@ async function register(req, res) {
       name,
       email,
       password: hashedPassword,
-      role: role || 'Client', // Par défaut, le rôle est Client
+      role: role || 'Client',
       isVerified: true,
     });
 
@@ -65,6 +90,15 @@ async function register(req, res) {
     });
   } catch (error) {
     console.error("Erreur détaillée lors de l'enregistrement:", error);
+    
+    // Gestion spécifique des erreurs MongoDB
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        error: "Cet email est déjà utilisé",
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: "Erreur lors de l'enregistrement",

@@ -31,7 +31,7 @@ const Login = () => {
     setError('')
 
     try {
-      const response = await axios.post('/login', {
+      const response = await axios.post('/api/auth/login', {
         email,
         password,
         role,
@@ -53,7 +53,7 @@ const Login = () => {
         
         // Rediriger en fonction du rôle
         if (response.data.user.role === 'Admin') {
-          window.location.href = 'http://localhost:3000/admin'
+          window.location.href = 'http://localhost:3001/free'
         } else {
           navigate('/dashboard')
         }
