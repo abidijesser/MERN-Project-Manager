@@ -23,6 +23,8 @@ const EditProject = () => {
     startDate: '',
     endDate: '',
   })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const navigate = useNavigate()
   const { id } = useParams()
 
@@ -32,11 +34,30 @@ const EditProject = () => {
 
   const fetchProject = async () => {
     try {
-      const response = await axios.get(`http://localhost:3001/api/projects/${id}`) // Récupération des données du projet
-      setProject(response.data.project) // Mise à jour de l'état avec les données du projet
+      setLoading(true)
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setError('No authentication token found')
+        setLoading(false)
+        return
+      }
+
+      const response = await axios.get(`http://localhost:3001/api/projects/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.data.success && response.data.project) {
+        setProject(response.data.project)
+      } else {
+        setError('Failed to load project data')
+      }
     } catch (error) {
       console.error('Erreur lors de la récupération du projet:', error)
-      toast.error('Erreur lors de la récupération du projet.')
+      setError(error.response?.data?.error || 'Erreur lors de la récupération du projet.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -50,13 +71,35 @@ const EditProject = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await axios.put(`http://localhost:3001/api/projects/${id}`, project) // Envoi des données mises à jour au serveur
-      toast.success('Projet modifié avec succès !') // Message de confirmation
-      navigate('/projects') // Redirection vers la liste des projets
+      setLoading(true)
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setError('No authentication token found')
+        setLoading(false)
+        return
+      }
+
+      await axios.put(`http://localhost:3001/api/projects/${id}`, project, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      toast.success('Projet modifié avec succès !')
+      navigate('/projects')
     } catch (error) {
       console.error('Erreur lors de la modification du projet:', error)
-      toast.error('Erreur lors de la modification du projet.')
+      setError(error.response?.data?.error || 'Erreur lors de la modification du projet.')
+    } finally {
+      setLoading(false)
     }
+  }
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
+
+  if (error) {
+    return <div className="alert alert-danger">{error}</div>
   }
 
   return (
@@ -126,8 +169,8 @@ const EditProject = () => {
               </CRow>
               <CRow>
                 <CCol>
-                  <CButton type="submit" color="primary">
-                    Modifier
+                  <CButton type="submit" color="primary" disabled={loading}>
+                    {loading ? 'Sauvegarde...' : 'Modifier'}
                   </CButton>
                   <CButton
                     type="button"

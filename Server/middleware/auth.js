@@ -15,10 +15,10 @@ module.exports = async (req, res, next) => {
 
     // Vérifier et décoder le token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     // Récupérer l'utilisateur depuis la base de données
     const user = await User.findById(decoded.id);
-    
+
     if (!user) {
       return res.status(401).json({
         success: false,

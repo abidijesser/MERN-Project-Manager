@@ -40,7 +40,9 @@ async function register(req, res) {
     await user.save();
 
     // Créer le token JWT
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" }); // Utilisez process.env.JWT_SECRET
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    }); // Utilisez process.env.JWT_SECRET
 
     // Envoyer la réponse
     res.status(201).json({ token });
@@ -83,7 +85,9 @@ async function login(req, res) {
     }
 
     // Créer le token JWT
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" }); // Utilisez process.env.JWT_SECRET
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    }); // Utilisez process.env.JWT_SECRET
 
     // Envoyer la réponse
     res.status(200).json({ token });
@@ -96,17 +100,34 @@ async function login(req, res) {
 }
 
 const getProfile = async (req, res) => {
-  const { token } = req.cookies;
-  if (token) {
-    jwt.verify(token, process.env.JWT_SECRET, {}, async (err, decodedToken) => {
-      if (err) throw err;
+  try {
+    // The auth middleware already verified the token and attached the user
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: "Not authenticated",
+      });
+    }
 
-      // Récupérer les informations complètes de l'utilisateur
-      const user = await User.findById(decodedToken.id).select("-password");
-      res.json(user);
+    // Get the full user data without the password
+    const user = await User.findById(req.user._id).select("-password");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      user,
     });
-  } else {
-    res.json(null);
+  } catch (error) {
+    console.error("Error in getProfile:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error fetching profile",
+    });
   }
 };
 
@@ -236,6 +257,22 @@ const verifyEmail = async (req, res) => {
   }
 };
 
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.json({
+      success: true,
+      users,
+    });
+  } catch (error) {
+    console.error("Error in getAllUsers:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error fetching users",
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -245,4 +282,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   verifyEmail,
+  getAllUsers,
 };

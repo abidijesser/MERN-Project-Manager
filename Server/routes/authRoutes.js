@@ -2,14 +2,19 @@ const express = require("express");
 const passport = require("passport");
 const router = express.Router();
 const authController = require("../controllers/authController");
-const jwt = require("jsonwebtoken");
+const auth = require("../middleware/auth");
 
-// Existing routes
+// Public routes
 router.post("/register", authController.register);
 router.post("/login", authController.login);
-router.get("/profile", authController.getProfile);
-router.get("/profile/:id", authController.getProfileById);
-router.put("/profile/:id", authController.updateProfile);
+
+// Protected routes
+router.get("/profile", auth, authController.getProfile);
+router.get("/profile/:id", auth, authController.getProfileById);
+router.put("/profile/:id", auth, authController.updateProfile);
+router.get("/users", auth, authController.getAllUsers);
+
+// Password reset routes
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
 
@@ -31,28 +36,16 @@ router.get(
 router.get("/logout", (req, res) => {
   req.logout((err) => {
     if (err) {
-      return next(err);
+      return res.status(500).json({
+        success: false,
+        error: "Error during logout",
+      });
     }
     res.redirect("http://localhost:3000/#/login");
   });
 });
 
-// New route
+// Email verification
 router.get("/verify-email/:token", authController.verifyEmail);
-
-// Ajouter cette route pour tester l'authentification
-router.get("/test-auth", (req, res) => {
-  const { token } = req.cookies;
-  if (!token) {
-    return res.json({ authenticated: false });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
-      return res.json({ authenticated: false, error: "Token invalide" });
-    }
-    res.json({ authenticated: true, user: decoded });
-  });
-});
 
 module.exports = router;

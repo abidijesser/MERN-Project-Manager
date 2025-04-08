@@ -29,33 +29,20 @@ const Login = () => {
     setError('')
 
     try {
-      const response = await axios.post('http://localhost:3001/login', {
+      const response = await axios.post('http://localhost:3001/api/auth/login', {
         email,
         password,
       })
 
-      console.log('Réponse login:', response.data)
+      // Store the token from the response
+      const token = response.data.token
+      localStorage.setItem('token', token)
 
-      if (response.data.error) {
-        setError(response.data.error)
-        return
-      }
-
-      if (response.data.token) {
-        // Stocker le token JWT
-        localStorage.setItem('token', response.data.token)
-        // Stocker les informations utilisateur
-        localStorage.setItem('user', JSON.stringify(response.data.user))
-        toast.success('Connexion réussie !')
-        navigate('/dashboard')
-      } else {
-        setError('Token non reçu')
-      }
-    } catch (err) {
-      console.error('Erreur de connexion:', err)
-      const errorMessage = err.response?.data?.error || 'Erreur lors de la connexion'
-      setError(errorMessage)
-      toast.error(errorMessage)
+      // Redirect to dashboard
+      navigate('/dashboard')
+    } catch (error) {
+      console.error('Login error:', error)
+      // Handle error (show error message, etc.)
     }
   }
 
@@ -117,11 +104,7 @@ const Login = () => {
                     </CRow>
                   </CForm>
                   <div className="mt-3">
-                    <CButton 
-                      color="danger" 
-                      className="w-100"
-                      onClick={handleGoogleLogin}
-                    >
+                    <CButton color="danger" className="w-100" onClick={handleGoogleLogin}>
                       Se connecter avec Google
                     </CButton>
                   </div>
@@ -132,7 +115,8 @@ const Login = () => {
                   <div>
                     <h2>Sign up</h2>
                     <p>
-                      Créez votre compte pour accéder à toutes les fonctionnalités de gestion de projet.
+                      Créez votre compte pour accéder à toutes les fonctionnalités de gestion de
+                      projet.
                     </p>
                     <Link to="/register">
                       <CButton color="primary" className="mt-3" active tabIndex={-1}>
