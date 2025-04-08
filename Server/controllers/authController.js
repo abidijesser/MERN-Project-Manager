@@ -64,7 +64,6 @@ async function login(req, res) {
             return res.json('Mot de passe incorrect');
         }
        
-        // res.status(200).json({success: true, message: 'Connexion réussie'});
     } catch (error) {
         console.error(error);
         res.status(500).send('Erreur interne du serveur');

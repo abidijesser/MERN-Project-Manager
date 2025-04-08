@@ -122,5 +122,22 @@ const getAllProjects = async (req, res) => {
     }
 };
 
+const getProjectsByOwner = async (req, res) => {
+    try {
+        const { ownerId } = req.params;
 
-module.exports = { createProject, updateProject, deleteProject, getProjectById, getAllProjects };
+        if (!ownerId) {
+            return res.json({ error: "ID du propriétaire requis" });
+        }
+
+        const projects = await Project.find({ owner: ownerId });
+
+        res.json(projects);
+    } catch (error) {
+        res.json(error);
+    }
+};
+
+
+
+module.exports = { createProject, updateProject, deleteProject, getProjectById, getAllProjects, getProjectsByOwner };
