@@ -7,7 +7,7 @@ const axiosInstance = axios.create({
   }
 });
 
-// Intercepteur pour ajouter le token JWT aux requêtes
+// Intercepteur pour ajouter le token aux requêtes
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -26,9 +26,17 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Supprimer le token et rediriger vers la page de connexion
+      // Supprimer le token et les informations utilisateur
       localStorage.removeItem('token');
-      window.location.href = '/free/login';
+      localStorage.removeItem('user');
+      
+      // Rediriger vers la page de login avec le bon chemin
+      const currentPath = window.location.pathname;
+      if (currentPath.startsWith('/free')) {
+        window.location.href = '/free/login';
+      } else {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

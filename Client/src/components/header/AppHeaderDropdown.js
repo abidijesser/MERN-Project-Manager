@@ -29,11 +29,19 @@ import avatar8 from './../../assets/images/avatars/8.jpg';
 const AppHeaderDropdown = () => {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    window.location.href = 'http://localhost:3001/logout';
-    setTimeout(() => {
-      window.location.href = 'http://localhost:3000/#/login';
-    }, 100);
+  const handleLogout = async () => {
+    try {
+      // Supprimer les données de l'utilisateur
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Rediriger vers la page de connexion
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      // En cas d'erreur, rediriger quand même
+      window.location.href = '/login';
+    }
   };
 
   const handleProfileClick = () => {

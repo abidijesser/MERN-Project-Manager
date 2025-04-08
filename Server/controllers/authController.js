@@ -304,6 +304,40 @@ const verifyEmail = async (req, res) => {
   }
 };
 
+// Fonction pour supprimer un compte utilisateur
+const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.id; // Obtenu depuis le middleware auth
+
+    // Vérifier si l'utilisateur existe
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "Utilisateur non trouvé"
+      });
+    }
+
+    // Supprimer l'utilisateur
+    await User.findByIdAndDelete(userId);
+
+    // Effacer le cookie contenant le token
+    res.clearCookie('token');
+
+    res.status(200).json({
+      success: true,
+      message: "Compte supprimé avec succès"
+    });
+  } catch (error) {
+    console.error("Erreur lors de la suppression du compte:", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur lors de la suppression du compte",
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -313,4 +347,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   verifyEmail,
+  deleteAccount
 };

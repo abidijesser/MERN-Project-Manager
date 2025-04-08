@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   CButton,
@@ -25,6 +25,39 @@ const Login = () => {
   const [role, setRole] = useState('Client')
   const [error, setError] = useState('')
   const navigate = useNavigate()
+
+  useEffect(() => {
+    // Vérifier si nous sommes sur la page de login après une redirection
+    const searchParams = new URLSearchParams(window.location.search);
+    const userInfo = searchParams.get('user');
+    const token = searchParams.get('token');
+    const error = searchParams.get('error');
+
+    if (token && userInfo) {
+      try {
+        // Stocker le token
+        localStorage.setItem('token', token);
+        // Stocker les informations utilisateur
+        localStorage.setItem('user', userInfo);
+        
+        const user = JSON.parse(decodeURIComponent(userInfo));
+        
+        toast.success('Connexion réussie !');
+        
+        // Rediriger en fonction du rôle
+        if (user.role === 'Admin') {
+          window.location.href = 'http://localhost:3001/free';
+        } else {
+          navigate('/dashboard');
+        }
+      } catch (err) {
+        console.error('Erreur lors du traitement des informations de connexion:', err);
+        toast.error('Erreur lors de la connexion');
+      }
+    } else if (error) {
+      toast.error('Erreur lors de la connexion avec Facebook');
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -69,7 +102,11 @@ const Login = () => {
   }
 
   const handleGoogleLogin = () => {
-    window.location.href = '/google'
+    window.location.href = 'http://localhost:3001/api/auth/google'
+  }
+
+  const handleFacebookLogin = () => {
+    window.location.href = 'http://localhost:3001/api/auth/facebook'
   }
 
   return (
@@ -139,10 +176,17 @@ const Login = () => {
                   <div className="mt-3">
                     <CButton 
                       color="danger" 
-                      className="w-100"
+                      className="w-100 mb-2"
                       onClick={handleGoogleLogin}
                     >
                       Se connecter avec Google
+                    </CButton>
+                    <CButton 
+                      color="primary" 
+                      className="w-100"
+                      onClick={handleFacebookLogin}
+                    >
+                      Se connecter avec Facebook
                     </CButton>
                   </div>
                 </CCardBody>

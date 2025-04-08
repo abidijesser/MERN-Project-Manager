@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import axios from '../../../../../utils/axios';
+import { handleLogout } from '../../../../../utils/auth';
 
 // material-ui
 import List from '@mui/material/List';
@@ -20,18 +20,8 @@ import WalletOutlined from '@ant-design/icons/WalletOutlined';
 const ProfileTab = () => {
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    try {
-      await axios.post('/api/auth/logout');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/free/login';
-    } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/free/login';
-    }
+  const handleLogoutClick = () => {
+    handleLogout();
   };
 
   return (
@@ -61,7 +51,7 @@ const ProfileTab = () => {
         </ListItemIcon>
         <ListItemText primary="Billing" />
       </ListItemButton>
-      <ListItemButton onClick={handleLogout}>
+      <ListItemButton onClick={handleLogoutClick}>
         <ListItemIcon>
           <LogoutOutlined />
         </ListItemIcon>

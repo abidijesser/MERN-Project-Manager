@@ -47,16 +47,32 @@ router.get(
   "/facebook/callback",
   passport.authenticate("facebook", { failureRedirect: "/" }),
   (req, res) => {
-    // Générer un token JWT après une connexion réussie
-    const token = jwt.sign(
-      { id: req.user._id, role: req.user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+    try {
+      // Générer un token JWT après une connexion réussie
+      const token = jwt.sign(
+        { id: req.user._id, role: req.user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+      );
 
-    // Envoyer le token au frontend via un cookie sécurisé
-    res.cookie("token", token, { httpOnly: true, secure: false }); // `secure: true` en production
-    res.redirect("http://localhost:3000/#/dashboard");
+      // Stocker le token dans un cookie
+      res.cookie("token", token, { 
+        httpOnly: true, 
+        secure: false, // En production, mettre à true
+        sameSite: 'lax',
+        maxAge: 3600000 // 1 heure
+      });
+
+      // Rediriger directement vers le dashboard en fonction du rôle
+      if (req.user.role === 'Admin') {
+        res.redirect('http://localhost:3001/free/dashboard');
+      } else {
+        res.redirect('http://localhost:3000/#/dashboard');
+      }
+    } catch (error) {
+      console.error("Erreur dans le callback Facebook:", error);
+      res.redirect("http://localhost:3000/#/login?error=auth_failed");
+    }
   }
 );
 
@@ -97,5 +113,8 @@ router.get("/test-auth", (req, res) => {
     res.json({ authenticated: true, user: decoded });
   });
 });
+
+// Delete account route
+router.delete("/delete-account", auth, authController.deleteAccount);
 
 module.exports = router;
