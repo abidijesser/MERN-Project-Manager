@@ -2,13 +2,18 @@ pipeline {
     agent any
 
     stages {
-        stage('Test') {
+        stage('Install dependencies') {
             steps {
                 script {
-                    dir('Server') { // Assure-toi que le dossier est bien "Server"
-                        sh 'npm install' // Installe les dépendances
-                        sh 'npm test' // Exécute les tests
-                    }
+                    sh('npm install')
+                }
+            }
+        }
+
+        stage('Unit Test') {
+            steps {
+                script {
+                    sh('npm test')
                 }
             }
         }
@@ -16,22 +21,10 @@ pipeline {
         stage('Build application') {
             steps {
                 script {
-                    dir('Server') {
-                        sh 'npm run build-dev' // Compile l'application
-                    }
+                    sh('npm run build-dev')
                 }
             }
         }
-
-        stage('SonarQube Analysis') {
-            steps {
-                script {
-                    def scannerHome = tool 'scanner' // Assure-toi que l'outil SonarQube est bien configuré
-                    withSonarQubeEnv('SonarQube') { 
-                        sh "${scannerHome}/bin/sonar-scanner" // Exécute l'analyse SonarQube
-                    }
-                }
-            }
-        }
+        
     }
 }
