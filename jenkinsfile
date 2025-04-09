@@ -7,13 +7,21 @@ pipeline {
                 script {
                     sh('npm install')
                 }
+
+                dir('Server') {
+                    sh ('npm install')
+                }
+
+                dir('Client') {
+                    sh ('npm install')
+                }
             }
         }
 
         stage('Unit Test') {
             steps {
                 script {
-                    sh('npm test')
+                    echo "No tests yet.."
                 }
             }
         }
@@ -21,10 +29,16 @@ pipeline {
         stage('Build application') {
             steps {
                 script {
-                    sh('npm run build-dev')
-                }
+                    
+                    dir('Client') {
+                        sh ('npm run build')
+                    }
+            
+                    echo "Build application completed"
+                }       
             }
-        }
+}
+
         
     }
 }
