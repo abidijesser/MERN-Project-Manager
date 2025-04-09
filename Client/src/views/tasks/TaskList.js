@@ -22,7 +22,6 @@ const TaskList = () => {
       const response = await axios.get('/api/tasks')
       setTasks(response.data.tasks)
     } catch (error) {
-      console.error('Error fetching tasks:', error)
       toast.error(error.response?.data?.error || 'Erreur lors de la récupération des tâches')
     } finally {
       setLoading(false)
@@ -36,30 +35,26 @@ const TaskList = () => {
         toast.success('Tâche supprimée avec succès')
         fetchTasks()
       } catch (error) {
-        console.error('Error deleting task:', error)
         toast.error(error.response?.data?.error || 'Erreur lors de la suppression de la tâche')
       }
     }
   }
 
-  if (loading) {
-    return <div>Chargement...</div>
-  }
-
-  const taskDates = tasks.map((task) => new Date(task.dueDate))
-
-  const tileClassName = ({ date, view }) => {
+  const tileContent = ({ date, view }) => {
     if (view === 'month') {
       const task = tasks.find(
         (task) => new Date(task.dueDate).toDateString() === date.toDateString()
       )
       if (task) {
-        if (task.priority === 'high') return 'task-date-high'
-        if (task.priority === 'medium') return 'task-date-medium'
-        if (task.priority === 'low') return 'task-date-low'
+        const priorityClass = `task-priority-${task.priority || 'default'}`
+        return <div className={`task-date ${priorityClass}`}>{task.title}</div>
       }
     }
     return null
+  }
+
+  if (loading) {
+    return <div>Chargement...</div>
   }
 
   return (
@@ -90,7 +85,9 @@ const TaskList = () => {
               <CTableBody>
                 {tasks.map((task) => (
                   <CTableRow key={task._id}>
-                    <CTableDataCell>{task.title}</CTableDataCell>
+                    <CTableDataCell className={`task-priority-${task.priority || 'default'}`}>
+                      {task.title}
+                    </CTableDataCell>
                     <CTableDataCell>{task.status}</CTableDataCell>
                     <CTableDataCell>{task.priority}</CTableDataCell>
                     <CTableDataCell>{new Date(task.dueDate).toLocaleDateString()}</CTableDataCell>
@@ -126,9 +123,12 @@ const TaskList = () => {
           </div>
           <div className="task-calendar">
             <h5>Calendrier des tâches</h5>
-            <Calendar
-              tileClassName={tileClassName}
-            />
+            <div className="calendar-legend">
+              <span className="legend-item high">Haute priorité</span>
+              <span className="legend-item medium">Priorité moyenne</span>
+              <span className="legend-item low">Basse priorité</span>
+            </div>
+            <Calendar tileContent={tileContent} />
           </div>
         </div>
       </CCardBody>

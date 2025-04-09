@@ -15,7 +15,7 @@ import axios from '../../utils/axios'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 
-const TaskForm = () => {
+const EditTask = () => {
   const [task, setTask] = useState({
     title: '',
     description: '',
@@ -25,96 +25,70 @@ const TaskForm = () => {
     assignedTo: '',
     project: '',
   })
-  const [loading, setLoading] = useState(false)
   const [projects, setProjects] = useState([])
   const [users, setUsers] = useState([])
-
-  const { id } = useParams()
   const navigate = useNavigate()
-  const isEditMode = Boolean(id)
+  const { id } = useParams()
 
   useEffect(() => {
-    fetchData()
+    fetchTask()
+    fetchProjectsAndUsers()
   }, [id])
 
-  const fetchData = async () => {
+  const fetchTask = async () => {
     try {
-      setLoading(true)
-      // Récupérer les projets créés par l'utilisateur connecté
+      const response = await axios.get(`/api/tasks/${id}`)
+      const taskData = response.data.task
+      setTask({
+        ...taskData,
+        dueDate: taskData.dueDate ? new Date(taskData.dueDate).toISOString().split('T')[0] : '',
+        assignedTo: taskData.assignedTo?._id || '',
+        project: taskData.project?._id || '',
+      })
+    } catch (error) {
+      console.error('Erreur lors de la récupération de la tâche:', error)
+      toast.error('Erreur lors de la récupération de la tâche.')
+    }
+  }
+
+  const fetchProjectsAndUsers = async () => {
+    try {
       const projectsRes = await axios.get('/api/projects', {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       })
-      setProjects(projectsRes.data.projects)
+      setProjects(projectsRes.data.projects || [])
 
-      // Récupérer les utilisateurs
       const usersRes = await axios.get('/api/users', {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       })
-      setUsers(usersRes.data.users)
-
-      // Si en mode édition, récupérer la tâche
-      if (isEditMode) {
-        const taskRes = await axios.get(`/api/tasks/${id}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        })
-        const taskData = taskRes.data.task
-        setTask({
-          ...taskData,
-          dueDate: taskData.dueDate ? new Date(taskData.dueDate).toISOString().split('T')[0] : '',
-          assignedTo: taskData.assignedTo?._id || '',
-          project: taskData.project?._id || '',
-        })
-      }
+      setUsers(usersRes.data.users || [])
     } catch (error) {
-      console.error('Error fetching data:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la récupération des données')
-    } finally {
-      setLoading(false)
+      console.error('Erreur lors de la récupération des projets ou utilisateurs:', error)
+      toast.error('Erreur lors de la récupération des projets ou utilisateurs.')
     }
+  }
+
+  const handleChange = (e) => {
+    setTask({
+      ...task,
+      [e.target.name]: e.target.value,
+    })
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      setLoading(true)
-      if (isEditMode) {
-        await axios.put(`/api/tasks/${id}`, task)
-        toast.success('Tâche mise à jour avec succès')
-      } else {
-        await axios.post('/api/tasks', task)
-        toast.success('Tâche créée avec succès')
-      }
+      await axios.put(`/api/tasks/${id}`, task)
+      toast.success('Tâche modifiée avec succès !')
       navigate('/tasks')
     } catch (error) {
-      console.error('Error saving task:', error)
-      if (error.response?.data?.details) {
-        Object.entries(error.response.data.details).forEach(([field, message]) => {
-          toast.error(`${field}: ${message}`)
-        })
-      } else {
-        toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde de la tâche')
-      }
-    } finally {
-      setLoading(false)
+      console.error('Erreur lors de la modification de la tâche:', error)
+      toast.error('Erreur lors de la modification de la tâche.')
     }
-  }
-
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setTask(prev => ({
-      ...prev,
-      [name]: value
-    }))
-  }
-
-  if (loading) {
-    return <div>Chargement...</div>
   }
 
   return (
@@ -122,7 +96,7 @@ const TaskForm = () => {
       <CCol>
         <CCard>
           <CCardHeader>
-            <strong>{isEditMode ? 'Modifier la tâche' : 'Nouvelle tâche'}</strong>
+            <strong>Modifier la tâche</strong>
           </CCardHeader>
           <CCardBody>
             <CForm onSubmit={handleSubmit}>
@@ -219,8 +193,8 @@ const TaskForm = () => {
               </CRow>
               <CRow>
                 <CCol>
-                  <CButton type="submit" color="primary" disabled={loading}>
-                    {isEditMode ? 'Mettre à jour' : 'Créer'}
+                  <CButton type="submit" color="primary">
+                    Modifier
                   </CButton>
                   <CButton
                     type="button"
@@ -240,4 +214,4 @@ const TaskForm = () => {
   )
 }
 
-export default TaskForm
+export default EditTask

@@ -15,6 +15,7 @@ const Collaboration = () => {
   const [newMessage, setNewMessage] = useState('')
   const [chatList, setChatList] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
+  const [notifications, setNotifications] = useState([])
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -39,6 +40,20 @@ const Collaboration = () => {
       socket.off('chatList')
     }
   }, [])
+
+  useEffect(() => {
+    socket.on('notification', (notification) => {
+      console.log('Nouvelle notification reçue:', notification)
+      if (activeTab === 'notifications') {
+        // Mettre à jour les notifications en temps réel
+        setNotifications((prevNotifications) => [notification, ...prevNotifications])
+      }
+    })
+
+    return () => {
+      socket.off('notification')
+    }
+  }, [activeTab])
 
   // Fonctions
   const sendMessage = () => {
@@ -94,7 +109,7 @@ const Collaboration = () => {
       case 'chat':
         return renderChatTab()
       case 'notifications':
-        return <Notifications />
+        return <Notifications socket={socket} /> // Passer le socket pour les notifications
       case 'scheduler':
         return <MeetingScheduler />
       default:

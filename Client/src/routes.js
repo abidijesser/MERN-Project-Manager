@@ -20,6 +20,7 @@ const ForgotPassword = React.lazy(() => import('./views/pages/forgot-password/Fo
 const ResetPassword = React.lazy(() => import('./views/pages/reset-password/ResetPassword'))
 const VerifyEmail = React.lazy(() => import('./views/pages/verify-email/VerifyEmail'))
 const Performances = React.lazy(() => import('./views/Performances/Performances'))
+const EditTask = React.lazy(() => import('./views/tasks/EditTask'))
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
@@ -36,7 +37,7 @@ const routes = [
   { path: '/verify-email/:token', name: 'Verify Email', element: VerifyEmail },
   { path: '/tasks', exact: true, name: 'Tâches', element: TaskList },
   { path: '/tasks/new', exact: true, name: 'Nouvelle tâche', element: TaskForm },
-  { path: '/tasks/edit/:id', exact: true, name: 'Modifier tâche', element: TaskForm },
+  { path: '/tasks/edit/:id', exact: true, name: 'Modifier tâche', element: EditTask },
   { path: '/tasks/:id', exact: true, name: 'Détails tâche', element: TaskDetail },
   { path: '/projects', exact: true, name: 'Projets', element: ProjectsList },
   { path: '/projects/new', exact: true, name: 'Créer un projet', element: CreateProject },

@@ -3,7 +3,7 @@ import axios from '../utils/axios'
 import { toast } from 'react-toastify'
 import './Notifications.css' // Assurez-vous de créer ce fichier CSS pour les styles
 
-const Notifications = () => {
+const Notifications = ({ socket }) => {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -24,6 +24,19 @@ const Notifications = () => {
     const interval = setInterval(fetchNotifications, 30000)
     return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    if (socket) {
+      socket.on('notification', (notification) => {
+        console.log('Notification reçue via socket:', notification)
+        setNotifications((prevNotifications) => [notification, ...prevNotifications])
+      })
+
+      return () => {
+        socket.off('notification')
+      }
+    }
+  }, [socket])
 
   const fetchNotifications = async () => {
     try {

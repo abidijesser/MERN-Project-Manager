@@ -41,6 +41,31 @@ const notificationService = {
     }
   },
 
+  // Créer une notification de suppression de tâche
+  async createTaskDeletionNotification(task, deleter) {
+    try {
+      console.log(`Création d'une notification de suppression pour la tâche ${task._id}`);
+      
+      // Récupérer tous les utilisateurs qui doivent être notifiés
+      const users = await User.find({});
+      console.log(`Nombre d'utilisateurs trouvés: ${users.length}`);
+      
+      const notifications = users.map(user => ({
+        recipient: user._id,
+        type: 'task_deleted',
+        task: task._id,
+        message: `${deleter.name} a supprimé la tâche: ${task.title}`,
+      }));
+
+      console.log(`Création de ${notifications.length} notifications`);
+      await Notification.insertMany(notifications);
+      console.log('Notifications de suppression de tâche créées avec succès');
+    } catch (error) {
+      console.error('Error creating task deletion notification:', error);
+      throw error;
+    }
+  },
+
   // Marquer une notification comme lue
   async markAsRead(notificationId) {
     try {
@@ -99,4 +124,4 @@ function getTaskNotificationMessage(task, type, creator) {
   }
 }
 
-module.exports = notificationService; 
+module.exports = notificationService;

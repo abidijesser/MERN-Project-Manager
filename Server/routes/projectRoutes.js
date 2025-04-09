@@ -7,6 +7,7 @@ const auth = require("../middleware/auth");
 // GET all projects
 router.get("/", auth, async (req, res) => {
   try {
+    // Filtrer les projets par propriétaire (utilisateur connecté)
     const projects = await Project.find({ owner: req.user.id }).populate("tasks members owner");
     res.status(200).json({ projects });
   } catch (error) {
