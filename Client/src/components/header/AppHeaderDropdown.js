@@ -33,6 +33,7 @@ const AppHeaderDropdown = () => {
 
   const handleLogout = async () => {
     try {
+<<<<<<< HEAD
       const token = localStorage.getItem('token')
       if (!token) {
         navigate('/login')
@@ -67,6 +68,20 @@ const AppHeaderDropdown = () => {
       navigate('/login')
     }
   }
+=======
+      // Supprimer les données de l'utilisateur
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Rediriger vers la page de connexion
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      // En cas d'erreur, rediriger quand même
+      window.location.href = '/login';
+    }
+  };
+>>>>>>> doua
 
   const handleProfileClick = () => {
     navigate('/profile')

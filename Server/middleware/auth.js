@@ -1,7 +1,8 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
-module.exports = async (req, res, next) => {
+// Middleware pour vérifier l'authentification
+const auth = async (req, res, next) => {
   try {
     // Get token from Authorization header
     const token = req.headers.authorization?.split(" ")[1];
@@ -43,3 +44,24 @@ module.exports = async (req, res, next) => {
     });
   }
 };
+
+// Middleware pour vérifier le rôle admin
+const isAdmin = async (req, res, next) => {
+  try {
+    if (req.user.role !== 'Admin') {
+      return res.status(403).json({
+        success: false,
+        error: "Accès non autorisé. Rôle admin requis.",
+      });
+    }
+    next();
+  } catch (error) {
+    console.error("Admin middleware error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur lors de la vérification du rôle",
+    });
+  }
+};
+
+module.exports = { auth, isAdmin };

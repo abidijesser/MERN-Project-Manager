@@ -1,8 +1,13 @@
 const express = require("express");
 const router = express.Router();
+<<<<<<< HEAD
 const auth = require("../middleware/auth");
 const projectController = require("../controllers/projectController");
 const Project = require("../models/Project");
+=======
+const Project = require("../models/Project");
+const { auth } = require("../middleware/auth");
+>>>>>>> doua
 
 // GET all projects
 router.get("/", auth, async (req, res) => {

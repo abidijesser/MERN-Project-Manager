@@ -2,13 +2,18 @@ import axios from 'axios'
 
 // Créer une instance axios avec une configuration de base
 const instance = axios.create({
+<<<<<<< HEAD
   baseURL: 'http://localhost:3001/api',
   headers: {
     'Content-Type': 'application/json',
   },
 })
+=======
+  baseURL: 'http://localhost:3001',
+});
+>>>>>>> doua
 
-// Ajouter un intercepteur pour les requêtes
+// Intercepteur pour ajouter le token à chaque requête
 instance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token')
@@ -22,7 +27,7 @@ instance.interceptors.request.use(
   },
 )
 
-// Ajouter un intercepteur pour les réponses
+// Intercepteur pour gérer les erreurs d'authentification
 instance.interceptors.response.use(
   (response) => {
     return response

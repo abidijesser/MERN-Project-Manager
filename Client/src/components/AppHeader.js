@@ -45,9 +45,26 @@ const AppHeader = () => {
     })
   }, [])
 
+<<<<<<< HEAD
   const handleLogout = () => {
     window.location.href = 'http://localhost:3001/logout'
   }
+=======
+  const handleLogout = async () => {
+    try {
+      // Supprimer les données de l'utilisateur
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Rediriger vers la page de connexion
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      // En cas d'erreur, rediriger quand même
+      window.location.href = '/login';
+    }
+  };
+>>>>>>> doua
   return (
     <CHeader position="sticky" className="mb-4 p-0" ref={headerRef}>
       <CContainer className="border-bottom px-4" fluid>
