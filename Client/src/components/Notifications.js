@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from '../utils/axios'
+import axios from 'axios'
 import { toast } from 'react-toastify'
 import './Notifications.css' // Assurez-vous de créer ce fichier CSS pour les styles
 
@@ -44,7 +44,18 @@ const Notifications = ({ socket }) => {
       setError(null)
       console.log('Récupération des notifications...')
       
-      const response = await axios.get('/api/notifications')
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setError('No authentication token found')
+        setLoading(false)
+        return
+      }
+
+      const response = await axios.get('http://localhost:3001/api/notifications', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       console.log('Réponse des notifications:', response.data)
       
       if (response.data && response.data.success) {
@@ -58,7 +69,6 @@ const Notifications = ({ socket }) => {
       console.error('Error fetching notifications:', error)
       setError(error.message || 'Erreur inconnue')
       
-      // Afficher plus de détails sur l'erreur
       if (error.response) {
         console.error('Détails de l\'erreur:', error.response.data)
         toast.error(`Erreur: ${error.response.data.error || 'Erreur inconnue'}`)
@@ -76,8 +86,18 @@ const Notifications = ({ socket }) => {
 
   const markAsRead = async (notificationId) => {
     try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('No authentication token found')
+        return
+      }
+
       console.log('Marquage de la notification comme lue:', notificationId)
-      await axios.put(`/api/notifications/${notificationId}/read`)
+      await axios.put(`http://localhost:3001/api/notifications/${notificationId}/read`, null, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       setNotifications(notifications.map(notification => 
         notification._id === notificationId 
           ? { ...notification, read: true }

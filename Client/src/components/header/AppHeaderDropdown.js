@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   CAvatar,
   CBadge,
@@ -9,7 +9,7 @@ import {
   CDropdownItem,
   CDropdownMenu,
   CDropdownToggle,
-} from '@coreui/react';
+} from '@coreui/react'
 import {
   cilBell,
   cilCreditCard,
@@ -21,24 +21,56 @@ import {
   cilTask,
   cilUser,
   cilAccountLogout,
-} from '@coreui/icons';
-import CIcon from '@coreui/icons-react';
+} from '@coreui/icons'
+import CIcon from '@coreui/icons-react'
+import axios from 'axios'
+import { toast } from 'react-toastify'
 
-import avatar8 from './../../assets/images/avatars/8.jpg';
+import avatar8 from './../../assets/images/avatars/8.jpg'
 
 const AppHeaderDropdown = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
-  const handleLogout = () => {
-    window.location.href = 'http://localhost:3001/logout';
-    setTimeout(() => {
-      window.location.href = 'http://localhost:3000/#/login';
-    }, 100);
-  };
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        navigate('/login')
+        return
+      }
+
+      const response = await axios.get('http://localhost:3001/api/auth/logout', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.data.success) {
+        // Clear local storage
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+
+        // Show success message
+        toast.success('Déconnexion réussie')
+
+        // Navigate to login page
+        navigate('/login')
+      } else {
+        throw new Error(response.data.error || 'Erreur lors de la déconnexion')
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de la déconnexion')
+      // Still clear local storage and redirect to login
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      navigate('/login')
+    }
+  }
 
   const handleProfileClick = () => {
-    navigate('/profile');
-  };
+    navigate('/profile')
+  }
 
   return (
     <CDropdown variant="nav-item">
@@ -47,11 +79,7 @@ const AppHeaderDropdown = () => {
       </CDropdownToggle>
       <CDropdownMenu className="pt-0" placement="bottom-end">
         <CDropdownHeader className="bg-body-secondary fw-semibold mb-2">Account</CDropdownHeader>
-       
-       
-          
-       
-       
+
         <CDropdownHeader className="bg-body-secondary fw-semibold my-2">Settings</CDropdownHeader>
         <CDropdownItem onClick={handleProfileClick}>
           <CIcon icon={cilUser} className="me-2" />
@@ -82,7 +110,7 @@ const AppHeaderDropdown = () => {
         </CDropdownItem>
       </CDropdownMenu>
     </CDropdown>
-  );
-};
+  )
+}
 
-export default AppHeaderDropdown;
+export default AppHeaderDropdown

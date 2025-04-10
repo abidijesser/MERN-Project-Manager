@@ -5,7 +5,7 @@ require("dotenv").config();
 const cookieParser = require("cookie-parser");
 const passport = require("passport");
 const session = require("express-session");
-const authRoutes = require("./routes/authRoutes");
+const { authRouter, googleAuthRouter } = require("./routes/authRoutes");
 const adminRoutes = require("./routes/admin");
 const taskRoutes = require("./routes/taskRoutes");
 const projectRoutes = require("./routes/projectRoutes");
@@ -46,23 +46,32 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use("/", authRoutes);
+// Mount Google Auth routes under /auth
+app.use("/auth", googleAuthRouter);
+
+// Mount other Auth routes under /api/auth
+app.use("/api/auth", authRouter);
+
 app.use("/admin", adminRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 
+// Add a simple test route
+app.get("/api/test", (req, res) => {
+  res.json({ message: "Server is running" });
+});
+
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("Cloud Database connected"))
   .catch((err) => {
-    if (err.code === 'ENOTFOUND') {
-      console.error("DNS error: Unable to resolve MongoDB host. Check your MONGO_URI.");
+    if (err.code === "ENOTFOUND") {
+      console.error("Network error. Please check your internet connection.");
     } else {
-      console.error("Database connection error:", err.message);
+      console.error("Database connection error:", err);
     }
-    process.exit(1); // Arrête l'application si la connexion échoue
   });
 
 const server = http.createServer(app);
@@ -75,7 +84,7 @@ const io = new Server(server, {
 
 // WebSocket pour le chat
 io.on("connection", (socket) => {
-  console.log("Utilisateur connecté");
+  console.log("A user connected");
 
   // Écoute des messages envoyés par le client
   socket.on("sendMessage", async (messageData) => {
@@ -89,12 +98,12 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log("Utilisateur déconnecté");
+    console.log("User disconnected");
   });
 });
 
 server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
 
 module.exports = app;

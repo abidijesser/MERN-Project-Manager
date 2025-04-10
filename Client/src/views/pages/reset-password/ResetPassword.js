@@ -37,7 +37,7 @@ const ResetPassword = () => {
 
     try {
       console.log('Envoi de la requête de réinitialisation...')
-      const response = await axios.post('http://localhost:3001/reset-password', {
+      const response = await axios.post('http://localhost:3001/api/auth/reset-password', {
         token,
         newPassword,
       })
@@ -45,15 +45,14 @@ const ResetPassword = () => {
       console.log('Réponse reçue:', response.data)
 
       if (response.data.success) {
-        setSuccess(
-          'Mot de passe réinitialisé avec succès. Redirection vers la page de connexion...',
-        )
         setError('')
+        setSuccess('Votre mot de passe a été réinitialisé avec succès')
         setTimeout(() => {
           navigate('/login')
         }, 3000)
       } else {
-        setError(response.data.error || 'Erreur lors de la réinitialisation du mot de passe')
+        setError(response.data.error || 'Une erreur est survenue')
+        setSuccess('')
       }
     } catch (err) {
       console.error('Erreur détaillée:', err.response?.data)

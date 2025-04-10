@@ -11,7 +11,7 @@ import {
   CFormSelect,
   CButton,
 } from '@coreui/react'
-import axios from '../../utils/axios'
+import axios from 'axios'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 
@@ -37,7 +37,17 @@ const EditTask = () => {
 
   const fetchTask = async () => {
     try {
-      const response = await axios.get(`/api/tasks/${id}`)
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('No authentication token found')
+        return
+      }
+
+      const response = await axios.get(`http://localhost:3001/api/tasks/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       const taskData = response.data.task
       setTask({
         ...taskData,
@@ -53,18 +63,25 @@ const EditTask = () => {
 
   const fetchProjectsAndUsers = async () => {
     try {
-      const projectsRes = await axios.get('/api/projects', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      })
-      setProjects(projectsRes.data.projects || [])
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('No authentication token found')
+        return
+      }
 
-      const usersRes = await axios.get('/api/users', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      })
+      const [projectsRes, usersRes] = await Promise.all([
+        axios.get('http://localhost:3001/api/projects', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+        axios.get('http://localhost:3001/api/auth/users', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+      ])
+      setProjects(projectsRes.data.projects || [])
       setUsers(usersRes.data.users || [])
     } catch (error) {
       console.error('Erreur lors de la récupération des projets ou utilisateurs:', error)
@@ -82,7 +99,17 @@ const EditTask = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await axios.put(`/api/tasks/${id}`, task)
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('No authentication token found')
+        return
+      }
+
+      await axios.put(`http://localhost:3001/api/tasks/${id}`, task, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       toast.success('Tâche modifiée avec succès !')
       navigate('/tasks')
     } catch (error) {

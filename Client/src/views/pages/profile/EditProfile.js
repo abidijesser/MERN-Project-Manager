@@ -24,7 +24,16 @@ const EditProfile = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get(`http://localhost:3001/profile/${id}`, {
+        const token = localStorage.getItem('token')
+        if (!token) {
+          setError('No authentication token found')
+          return
+        }
+
+        const response = await axios.get(`http://localhost:3001/api/auth/profile/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
           withCredentials: true,
         })
         setUser(response.data)
@@ -47,7 +56,16 @@ const EditProfile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await axios.put(`http://localhost:3001/profile/${id}`, user, {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setError('No authentication token found')
+        return
+      }
+
+      await axios.put(`http://localhost:3001/api/auth/profile/${id}`, user, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         withCredentials: true,
       })
       navigate('/profile')
