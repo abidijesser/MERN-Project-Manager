@@ -24,6 +24,8 @@ const UserSchema = new Schema({
   tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
   resetPasswordToken: String,
   resetPasswordExpires: Date,
+  twoFactorSecret: String,
+  twoFactorEnabled: { type: Boolean, default: false },
   isVerified: {
     type: Boolean,
     default: true, // Pour le moment

@@ -15,7 +15,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilLockLocked, cilUser } from '@coreui/icons'
-import axios from 'axios'
+import axios from '../../../utils/axios'
 import { toast } from 'react-toastify'
 
 const Login = () => {
@@ -24,24 +24,60 @@ const Login = () => {
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
+  async function handleSubmit(event) {
+    event.preventDefault()
+    setError('') // Clear any previous errors
+    console.log('Attempting to login with email:', email)
 
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/login', {
-        email,
-        password,
+      console.log('Sending login request to:', axios.defaults.baseURL + '/auth/login')
+      const response = await axios.post('/auth/login', {
+        email: email,
+        password: password,
       })
 
-      if (response.data.token) {
+      console.log('Login response:', response.data)
+
+      if (response.data.success) {
+        // Store the token in localStorage
         localStorage.setItem('token', response.data.token)
+        console.log('Token stored from login')
+        // Navigate to dashboard
         navigate('/dashboard')
+      } else if (response.data.message === '2FA required') {
+        const twoFactorToken = prompt('Enter your 2FA token:')
+
+        console.log('Sending 2FA verification request')
+        const finalResponse = await axios.post(
+          '/auth/login',
+          {
+            email: email,
+            password: password,
+          },
+          {
+            headers: {
+              'x-2fa-token': twoFactorToken,
+            },
+          },
+        )
+
+        console.log('2FA response:', finalResponse.data)
+
+        if (finalResponse.data.success) {
+          localStorage.setItem('token', finalResponse.data.token)
+          console.log('Token stored from 2FA login')
+          navigate('/dashboard')
+        } else {
+          setError(finalResponse.data.error || 'Login failed')
+        }
       }
     } catch (error) {
-      console.error('Login error:', error)
-      setError(error.response?.data?.error || 'Login failed')
-      toast.error(error.response?.data?.error || 'Login failed')
+      console.error('Login error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      })
+      setError(error.response?.data?.error || 'An error occurred during login')
     }
   }
 
@@ -65,6 +101,7 @@ const Login = () => {
   const handleGoogleLogin = () => {
     // Clear any existing tokens
     localStorage.removeItem('token')
+    // Use the full URL for Google auth since it's a redirect, not an API call
     window.location.href = 'http://localhost:3001/google'
   }
 

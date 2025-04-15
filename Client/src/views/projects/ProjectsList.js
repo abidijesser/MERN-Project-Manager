@@ -12,7 +12,7 @@ import {
   CTableDataCell,
 } from '@coreui/react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../../utils/axios'
 import { toast } from 'react-toastify'
 
 const ProjectsList = () => {
@@ -26,11 +26,7 @@ const ProjectsList = () => {
   const fetchProjects = async () => {
     try {
       // Récupération des projets depuis l'API backend
-      const response = await axios.get('http://localhost:3001/api/projects', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      })
+      const response = await axios.get('/projects')
       setProjects(response.data.projects) // Mise à jour de l'état avec les projets
     } catch (error) {
       console.error('Erreur lors de la récupération des projets:', error)
@@ -41,11 +37,7 @@ const ProjectsList = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
       try {
-        await axios.delete(`http://localhost:3001/api/projects/${id}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        })
+        await axios.delete(`/projects/${id}`)
         toast.success('Projet supprimé avec succès !')
         fetchProjects()
       } catch (error) {
@@ -59,11 +51,7 @@ const ProjectsList = () => {
     <CCard>
       <CCardHeader>
         <strong>Liste des projets</strong>
-        <CButton
-          color="primary"
-          className="float-end"
-          onClick={() => navigate('/projects/new')}
-        >
+        <CButton color="primary" className="float-end" onClick={() => navigate('/projects/new')}>
           Nouveau projet
         </CButton>
       </CCardHeader>
@@ -79,7 +67,8 @@ const ProjectsList = () => {
           <CTableBody>
             {projects.map((project) => (
               <CTableRow key={project._id}>
-                <CTableDataCell>{project.projectName}</CTableDataCell> {/* Utilisation de projectName */}
+                <CTableDataCell>{project.projectName}</CTableDataCell>{' '}
+                {/* Utilisation de projectName */}
                 <CTableDataCell>{project.status}</CTableDataCell>
                 <CTableDataCell>
                   <CButton

@@ -4,14 +4,48 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const transporter = require("../config/emailConfig");
+const speakeasy = require("speakeasy");
+const qrcode = require("qrcode");
 require("dotenv").config();
+
+exports.generate2FA = async (req, res) => {
+  const secret = speakeasy.generateSecret({ length: 20 });
+  const user = await User.findById(req.user.id);
+  user.twoFactorSecret = secret.base32;
+  await user.save();
+
+  qrcode.toDataURL(secret.otpauth_url, (err, data_url) => {
+    res.json({ success: true, qrCode: data_url });
+  });
+};
+
+exports.verify2FA = async (req, res) => {
+  const { token } = req.body;
+  const user = await User.findById(req.user.id);
+
+  const verified = speakeasy.totp.verify({
+    secret: user.twoFactorSecret,
+    encoding: "base32",
+    token,
+  });
+
+  if (verified) {
+    user.twoFactorEnabled = true;
+    await user.save();
+    res.json({ success: true, message: "2FA enabled successfully" });
+  } else {
+    res.status(401).json({ success: false, error: "Invalid 2FA token" });
+  }
+};
 
 async function register(req, res) {
   try {
+    console.log("Registration request received:", req.body);
     const { name, email, password } = req.body;
 
     // Validation
     if (!name || !email || !password) {
+      console.log("Registration validation failed - missing fields");
       return res.status(400).json({
         success: false,
         error: "Tous les champs sont obligatoires",
@@ -21,6 +55,7 @@ async function register(req, res) {
     // Vérifier si l'email existe déjà
     const emailExist = await User.findOne({ email });
     if (emailExist) {
+      console.log("Registration failed - email already exists:", email);
       return res.status(400).json({
         success: false,
         error: "Email existe déjà",
@@ -29,6 +64,7 @@ async function register(req, res) {
 
     // Hasher le mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
+    console.log("Password hashed successfully");
 
     // Créer le nouvel utilisateur
     const user = new User({
@@ -38,18 +74,23 @@ async function register(req, res) {
       isVerified: true, // Pour le moment, on skip la vérification email
     });
 
+    console.log("Attempting to save new user:", { name, email });
     await user.save();
+    console.log("User saved successfully with ID:", user._id);
 
     // Créer le token JWT
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     }); // Utilisez process.env.JWT_SECRET
+    console.log("JWT token generated successfully");
 
     // Envoyer la réponse
-    res.status(201).json({ token });
+    console.log("Sending successful registration response");
+    res.status(201).json({ success: true, token });
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({
+      success: false,
       error: "Erreur lors de l'enregistrement",
     });
   }
@@ -57,44 +98,58 @@ async function register(req, res) {
 
 async function login(req, res) {
   try {
+    console.log("Login request received:", req.body);
     const { email, password } = req.body;
+    console.log("Login attempt for email:", email);
 
     // Validation
     if (!email || !password) {
+      console.log("Login validation failed - missing email or password");
       return res.status(400).json({
         success: false,
         error: "Email et mot de passe sont requis",
       });
     }
 
-    // Trouver l'utilisateur
+    // Find the user
+    console.log("Searching for user with email:", email);
     const user = await User.findOne({ email });
+    console.log("User found:", user ? "Yes" : "No");
+
     if (!user) {
+      console.log("Login failed - email not found:", email);
       return res.status(400).json({
         success: false,
         error: "Email non trouvé",
       });
     }
 
-    // Vérifier le mot de passe
+    // Verify the password
+    console.log("Verifying password for user:", user.email);
     const isMatched = await bcrypt.compare(password, user.password);
+    console.log("Password match:", isMatched ? "Yes" : "No");
+
     if (!isMatched) {
+      console.log("Login failed - incorrect password for user:", user.email);
       return res.status(400).json({
         success: false,
         error: "Mot de passe incorrect",
       });
     }
 
-    // Créer le token JWT
+    // Generate JWT and send response
+    console.log("Generating JWT token for user:", user.email);
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
-    }); // Utilisez process.env.JWT_SECRET
+    });
+    console.log("JWT token generated successfully");
 
-    // Envoyer la réponse
-    res.status(200).json({ token });
+    console.log("Login successful for user:", user.email);
+    res.status(200).json({ success: true, token });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({
+      success: false,
       error: "Erreur lors de la connexion",
     });
   }
@@ -338,7 +393,6 @@ const getAllUsers = async (req, res) => {
     });
   }
 };
-
 module.exports = {
   register,
   login,

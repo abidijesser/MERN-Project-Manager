@@ -1,15 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import {
-  CCard,
-  CCardBody,
-  CCardHeader,
-  CCol,
-  CRow,
-  CButton,
-  CFormTextarea,
-} from '@coreui/react'
+import { CCard, CCardBody, CCardHeader, CCol, CRow, CButton, CFormTextarea } from '@coreui/react'
 import { useParams, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../../utils/axios'
 import { toast } from 'react-toastify'
 
 const ProjectDetails = () => {
@@ -24,11 +16,7 @@ const ProjectDetails = () => {
 
   const fetchProject = async () => {
     try {
-      const response = await axios.get(`http://localhost:3001/api/projects/${id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      })
+      const response = await axios.get(`/projects/${id}`)
       setProject(response.data.project)
     } catch (error) {
       console.error('Error fetching project:', error)
@@ -38,20 +26,13 @@ const ProjectDetails = () => {
 
   const handleAddComment = async () => {
     try {
-      await axios.post(`http://localhost:3001/api/projects/${id}/comments`, 
-        { comment },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      )
+      await axios.post(`/projects/${id}/comments`, { comment })
       toast.success('Commentaire ajouté avec succès !')
       setComment('')
       fetchProject()
     } catch (error) {
-      console.error('Erreur lors de l\'ajout du commentaire:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'ajout du commentaire.')
+      console.error("Erreur lors de l'ajout du commentaire:", error)
+      toast.error(error.response?.data?.error || "Erreur lors de l'ajout du commentaire.")
     }
   }
 
@@ -65,11 +46,7 @@ const ProjectDetails = () => {
         <CCard>
           <CCardHeader>
             <strong>Détails du projet</strong>
-            <CButton
-              color="secondary"
-              className="float-end"
-              onClick={() => navigate('/projects')}
-            >
+            <CButton color="secondary" className="float-end" onClick={() => navigate('/projects')}>
               Retour
             </CButton>
           </CCardHeader>
@@ -85,6 +62,29 @@ const ProjectDetails = () => {
             <p>
               <strong>Date de fin:</strong> {new Date(project.endDate).toLocaleDateString()}
             </p>
+
+            <div className="mb-4">
+              <strong>Tâches:</strong>
+              <ul>
+                {project.tasks && project.tasks.length > 0 ? (
+                  project.tasks.map((task) => <li key={task._id}>{task.title}</li>)
+                ) : (
+                  <li>Aucune tâche pour ce projet</li>
+                )}
+              </ul>
+            </div>
+
+            <div className="mb-4">
+              <strong>Membres:</strong>
+              <ul>
+                {project.members && project.members.length > 0 ? (
+                  project.members.map((member) => <li key={member._id}>{member.name}</li>)
+                ) : (
+                  <li>Aucun membre pour ce projet</li>
+                )}
+              </ul>
+            </div>
+
             <div>
               <strong>Commentaires:</strong>
               <ul>

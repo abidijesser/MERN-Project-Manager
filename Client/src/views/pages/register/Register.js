@@ -36,9 +36,11 @@ const Register = () => {
     setError('')
 
     const userData = { name, email, password }
+    console.log('Attempting to register with:', { name, email })
 
     try {
-      const response = await fetch('http://localhost:3001/register', {
+      console.log('Sending registration request to: http://localhost:3001/api/auth/register')
+      const response = await fetch('http://localhost:3001/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -46,14 +48,24 @@ const Register = () => {
         body: JSON.stringify(userData),
       })
 
-      if (userData.error) {
-        setError(userData.error)
+      console.log('Registration response status:', response.status)
+      const data = await response.json()
+      console.log('Registration response data:', data)
+
+      if (!response.ok) {
+        setError(data.error || 'Registration failed')
       } else {
+        // Store the token if it's returned from registration
+        if (data.token) {
+          localStorage.setItem('token', data.token)
+          console.log('Token stored from registration')
+        }
         navigate('/login')
         console.log('Registration successful')
       }
     } catch (err) {
-      setError(err.response.data.message)
+      console.error('Registration error:', err)
+      setError('An error occurred during registration')
     } finally {
       setLoading(false)
     }
