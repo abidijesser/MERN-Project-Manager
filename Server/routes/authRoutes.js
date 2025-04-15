@@ -13,7 +13,11 @@ router.post("/login", authController.login);
 router.get("/profile", auth, authController.getProfile);
 router.get("/profile/:id", auth, authController.getProfileById);
 router.put("/profile/:id", auth, authController.updateProfile);
+// User management routes
 router.get("/users", auth, authController.getAllUsers);
+router.get("/users/:id", auth, authController.getUserById);
+router.put("/users/:id", auth, authController.updateUser);
+router.delete("/users/:id", auth, authController.deleteUser);
 
 // Password reset routes
 router.post("/forgot-password", authController.forgotPassword);

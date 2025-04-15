@@ -12,14 +12,22 @@ const ProtectedRoute = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        console.log('Checking authentication...');
         // First check if user is authenticated
-        if (!isAuthenticated()) {
+        const authenticated = isAuthenticated();
+        console.log('Is authenticated:', authenticated);
+
+        if (!authenticated) {
+          console.log('Not authenticated, redirecting to login');
           setLoading(false);
           return;
         }
 
         // Then check if user has admin role
+        console.log('Checking admin role...');
         const hasAdminRole = await isAdmin();
+        console.log('Has admin role:', hasAdminRole);
+
         setAuthorized(hasAdminRole);
         setLoading(false);
       } catch (error) {

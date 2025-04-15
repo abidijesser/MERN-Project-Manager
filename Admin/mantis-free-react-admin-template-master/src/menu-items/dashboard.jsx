@@ -1,9 +1,11 @@
 // assets
-import { DashboardOutlined } from '@ant-design/icons';
+import { DashboardOutlined, UserOutlined, TeamOutlined } from '@ant-design/icons';
 
 // icons
 const icons = {
-  DashboardOutlined
+  DashboardOutlined,
+  UserOutlined,
+  TeamOutlined
 };
 
 // ==============================|| MENU ITEMS - DASHBOARD ||============================== //
@@ -19,6 +21,14 @@ const dashboard = {
       type: 'item',
       url: '/dashboard/default',
       icon: icons.DashboardOutlined,
+      breadcrumbs: false
+    },
+    {
+      id: 'user-management',
+      title: 'User Management',
+      type: 'item',
+      url: '/user-management',
+      icon: icons.TeamOutlined,
       breadcrumbs: false
     }
   ]

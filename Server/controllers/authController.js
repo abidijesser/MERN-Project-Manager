@@ -147,7 +147,15 @@ async function login(req, res) {
     console.log("JWT token generated successfully");
 
     console.log("Login successful for user:", user.email);
-    res.status(200).json({ success: true, token });
+    // Return user data (excluding password) along with the token
+    const userData = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
+    console.log("Returning user data:", userData);
+    res.status(200).json({ success: true, token, user: userData });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({
@@ -383,15 +391,98 @@ const verifyEmail = async (req, res) => {
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password");
-    res.json({
-      success: true,
-      users,
-    });
+    res.json(users);
   } catch (error) {
     console.error("Error in getAllUsers:", error);
     res.status(500).json({
       success: false,
       error: "Error fetching users",
+    });
+  }
+};
+
+const getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("-password");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+    res.json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error("Error in getUserById:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error fetching user",
+    });
+  }
+};
+
+const updateUser = async (req, res) => {
+  try {
+    const { name, email, role, password } = req.body;
+
+    // Find the user
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    // Update user fields
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (role) user.role = role;
+
+    // Only update password if provided
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
+    }
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "User updated successfully",
+    });
+  } catch (error) {
+    console.error("Error in updateUser:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error updating user",
+    });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+
+    res.json({
+      success: true,
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error in deleteUser:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error deleting user",
     });
   }
 };
@@ -405,4 +496,7 @@ module.exports = {
   resetPassword,
   verifyEmail,
   getAllUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
 };

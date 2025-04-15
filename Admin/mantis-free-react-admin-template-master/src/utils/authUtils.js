@@ -29,12 +29,17 @@ export const isAuthenticated = () => {
 // Function to get the current user's information
 export const getCurrentUser = async () => {
   try {
+    console.log('Getting current user...');
     const token = localStorage.getItem('token');
+    console.log('Token exists:', !!token);
     if (!token) {
+      console.log('No token found, returning null');
       return null;
     }
 
+    console.log('Fetching user profile...');
     const response = await api.get('/auth/profile');
+    console.log('Profile response:', response.data);
     return response.data.user;
   } catch (error) {
     console.error('Error fetching current user:', error);
@@ -45,8 +50,12 @@ export const getCurrentUser = async () => {
 // Function to check if user has admin role
 export const isAdmin = async () => {
   try {
+    console.log('Checking if user has admin role...');
     const user = await getCurrentUser();
-    return user && user.role === 'Admin';
+    console.log('Current user:', user);
+    const isAdminUser = user && user.role === 'Admin';
+    console.log('Is admin user:', isAdminUser);
+    return isAdminUser;
   } catch (error) {
     console.error('Error checking admin role:', error);
     return false;

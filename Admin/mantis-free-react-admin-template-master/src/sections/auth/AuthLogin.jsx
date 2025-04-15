@@ -15,6 +15,7 @@ import InputLabel from '@mui/material/InputLabel';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import Alert from '@mui/material/Alert';
 
 // third-party
 import * as Yup from 'yup';
@@ -51,23 +52,22 @@ export default function AuthLogin({ isDemo = false }) {
   const handleTwoFactorSubmit = async () => {
     try {
       const result = await verify2FA(loginEmail, loginPassword, twoFactorCode);
+      console.log('2FA verification result:', result);
 
       if (result.success) {
         // Check user role and redirect accordingly
+        console.log('User role (2FA):', result.user?.role);
         if (result.user && result.user.role === 'Admin') {
           // Admin users go to the admin dashboard
+          console.log('Redirecting to admin dashboard (2FA)');
           navigate('/dashboard/default');
         } else {
-          // Non-admin users are redirected directly to the client dashboard
-          // Store the token in localStorage for the client application
-          const clientToken = result.token || localStorage.getItem('token');
+          // Non-admin users are not allowed to access the admin dashboard
+          console.log('Access denied - not an admin user (2FA)');
+          setLoginError('Access denied. Only Admin users can access this dashboard.');
 
-          // Store the token in localStorage
-          localStorage.setItem('clientToken', clientToken);
-
-          // Redirect to the client application with the token
-          // Try a simpler approach with direct dashboard access
-          window.location.href = `http://localhost:3000/#/dashboard?token=${encodeURIComponent(clientToken)}`;
+          // Remove the token since we're denying access
+          localStorage.removeItem('token');
         }
       } else {
         setLoginError(result.error || 'Invalid 2FA code');
@@ -128,25 +128,26 @@ export default function AuthLogin({ isDemo = false }) {
               setLoginPassword(values.password);
 
               const result = await login(values.email, values.password);
+              console.log('Login result:', result);
 
               if (result.success) {
                 setStatus({ success: true });
 
                 // Check user role and redirect accordingly
+                console.log('User role:', result.user?.role);
                 if (result.user && result.user.role === 'Admin') {
                   // Admin users go to the admin dashboard
+                  console.log('Redirecting to admin dashboard');
                   navigate('/dashboard/default');
                 } else {
-                  // Non-admin users are redirected directly to the client dashboard
-                  // Store the token in localStorage for the client application
-                  const clientToken = result.token || localStorage.getItem('token');
+                  // Non-admin users are not allowed to access the admin dashboard
+                  console.log('Access denied - not an admin user');
+                  setStatus({ success: false });
+                  setErrors({ submit: 'Access denied. Only Admin users can access this dashboard.' });
+                  setLoginError('Access denied. Only Admin users can access this dashboard.');
 
-                  // Store the token in localStorage
-                  localStorage.setItem('clientToken', clientToken);
-
-                  // Redirect to the client application with the token
-                  // Try a simpler approach with direct dashboard access
-                  window.location.href = `http://localhost:3000/#/dashboard?token=${encodeURIComponent(clientToken)}`;
+                  // Remove the token since we're denying access
+                  localStorage.removeItem('token');
                 }
               } else if (result.requires2FA) {
                 setShowTwoFactorInput(true);
@@ -245,9 +246,9 @@ export default function AuthLogin({ isDemo = false }) {
                 </Grid>
                 <Grid size={12}>
                   {loginError && (
-                    <FormHelperText error id="login-error" sx={{ mb: 2 }}>
+                    <Alert severity="error" sx={{ mb: 2 }}>
                       {loginError}
-                    </FormHelperText>
+                    </Alert>
                   )}
                   <AnimateButton>
                     <Button fullWidth size="large" variant="contained" color="primary" type="submit">

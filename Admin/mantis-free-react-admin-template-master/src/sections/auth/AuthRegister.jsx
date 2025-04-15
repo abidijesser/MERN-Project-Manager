@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link as RouterLink, useSearchParams, useNavigate } from 'react-router-dom';
-import api from 'utils/authUtils';
+import api from 'utils/api';
 
 // material-ui
 import Button from '@mui/material/Button';
@@ -91,13 +91,16 @@ export default function AuthRegister() {
           try {
             // Prepare user data for registration
             const userData = {
-              name: `${values.firstname} ${values.lastname}`,
-              email: values.email,
+              name: `${values.firstname} ${values.lastname}`.trim(),
+              email: values.email.trim(),
               password: values.password,
               role: values.role
             };
 
+            console.log('Sending registration data:', { ...userData, password: '***' });
+
             // Call the API to register the user
+            console.log('API URL:', api.defaults.baseURL);
             const response = await api.post('/auth/register', userData);
 
             if (response.data.success) {
@@ -294,6 +297,28 @@ export default function AuthRegister() {
                     </Grid>
                   </Grid>
                 </FormControl>
+              </Grid>
+              <Grid size={12}>
+                <Stack sx={{ gap: 1 }}>
+                  <InputLabel htmlFor="role-signup">Role</InputLabel>
+                  <Select
+                    fullWidth
+                    id="role-signup"
+                    value={values.role}
+                    name="role"
+                    onBlur={handleBlur}
+                    onChange={handleChange}
+                    error={Boolean(touched.role && errors.role)}
+                  >
+                    <MenuItem value="Admin">Admin</MenuItem>
+                    <MenuItem value="Client">Client</MenuItem>
+                  </Select>
+                </Stack>
+                {touched.role && errors.role && (
+                  <FormHelperText error id="helper-text-role-signup">
+                    {errors.role}
+                  </FormHelperText>
+                )}
               </Grid>
               <Grid size={12}>
                 <Typography variant="body2">
