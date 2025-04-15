@@ -1,6 +1,6 @@
 // filepath: c:\Users\Lenovo\Desktop\pi1\MERN-Project-Manager\Client\src\views\dashboard\Dashboard.js
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import axios from '../../utils/axios'
 import { Link } from 'react-router-dom'
 import classNames from 'classnames'
 
@@ -63,14 +63,23 @@ const Dashboard = () => {
   const [users, setUsers] = useState([])
 
   useEffect(() => {
-    axios
-      .get('http://localhost:3001/admin/users')
-      .then((response) => {
+    const fetchUsers = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) {
+          console.error('No authentication token found')
+          return
+        }
+
+        const response = await axios.get('/auth/users')
+
         setUsers(response.data)
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error('There was an error fetching the users!', error)
-      })
+      }
+    }
+
+    fetchUsers()
   }, [])
 
   return (

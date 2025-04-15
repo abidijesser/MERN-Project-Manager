@@ -72,17 +72,16 @@ export default function ProfileTab({ handleClose }) {
   return (
     <>
       <List component="nav" sx={{ p: 0, '& .MuiListItemIcon-root': { minWidth: 32 } }}>
-        <ListItemButton>
-          <ListItemIcon>
-            <EditOutlined />
-          </ListItemIcon>
-          <ListItemText primary="Edit Profile" />
-        </ListItemButton>
-        <ListItemButton>
+        <ListItemButton
+          onClick={() => {
+            handleClose();
+            navigate('/profile');
+          }}
+        >
           <ListItemIcon>
             <UserOutlined />
           </ListItemIcon>
-          <ListItemText primary="View Profile" />
+          <ListItemText primary="My Profile" />
         </ListItemButton>
 
         <ListItemButton>

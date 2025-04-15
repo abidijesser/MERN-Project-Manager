@@ -30,6 +30,8 @@ const AuthRedirect = React.lazy(() => import('./views/pages/auth-redirect/AuthRe
 const Profile = React.lazy(() => import('./views/pages/profile/Profile'))
 const EditProfile = React.lazy(() => import('./views/pages/profile/EditProfile'))
 const EditProject = React.lazy(() => import('./views/projects/EditProject'))
+const ForgotPassword = React.lazy(() => import('./views/pages/forgot-password/ForgotPassword'))
+const ResetPassword = React.lazy(() => import('./views/pages/reset-password/ResetPassword'))
 
 // Components
 const ProtectedRoute = React.lazy(() => import('./components/ProtectedRoute'))
@@ -81,6 +83,18 @@ const App = () => {
                     path="/auth-redirect"
                     name="Auth Redirect"
                     element={<AuthRedirect />}
+                  />
+                  <Route
+                    exact
+                    path="/forgot-password"
+                    name="Forgot Password"
+                    element={<ForgotPassword />}
+                  />
+                  <Route
+                    exact
+                    path="/reset-password/:token"
+                    name="Reset Password"
+                    element={<ResetPassword />}
                   />
                   <Route
                     exact

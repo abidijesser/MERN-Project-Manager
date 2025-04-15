@@ -19,6 +19,9 @@ const SamplePage = Loadable(lazy(() => import('pages/extra-pages/sample-page')))
 // render - user management
 const UserManagement = Loadable(lazy(() => import('pages/user-management')));
 
+// render - profile
+const ProfilePage = Loadable(lazy(() => import('pages/profile')));
+
 // ==============================|| MAIN ROUTING ||============================== //
 
 const MainRoutes = {
@@ -61,6 +64,10 @@ const MainRoutes = {
     {
       path: 'user-management',
       element: <UserManagement />
+    },
+    {
+      path: 'profile',
+      element: <ProfilePage />
     }
   ]
 };

@@ -1,9 +1,9 @@
 import PropTypes from 'prop-types';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // project imports
-import { logout } from 'utils/authUtils';
+import { logout, getCurrentUser } from 'utils/authUtils';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -63,6 +63,23 @@ export default function Profile() {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [user, setUser] = useState(null);
+
+  // Fetch user data on component mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userData = await getCurrentUser();
+        if (userData) {
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
   };
@@ -150,7 +167,7 @@ export default function Profile() {
           <Stack direction="row" sx={{ gap: 1.25, alignItems: 'center', p: 0.5 }}>
             <Avatar alt="profile user" src={avatar1} size="sm" />
             <Typography variant="subtitle1" sx={{ textTransform: 'capitalize' }}>
-              John Doe
+              {user ? user.name : 'Loading...'}
             </Typography>
           </Stack>
         </ButtonBase>
@@ -183,9 +200,9 @@ export default function Profile() {
                           <Stack direction="row" sx={{ gap: 1.25, alignItems: 'center' }}>
                             <Avatar alt="profile user" src={avatar1} sx={{ width: 32, height: 32 }} />
                             <Stack>
-                              <Typography variant="h6">John Doe</Typography>
+                              <Typography variant="h6">{user ? user.name : 'Loading...'}</Typography>
                               <Typography variant="body2" color="text.secondary">
-                                UI/UX Designer
+                                {user ? user.email : ''}
                               </Typography>
                             </Stack>
                           </Stack>

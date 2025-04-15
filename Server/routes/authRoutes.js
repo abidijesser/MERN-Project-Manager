@@ -19,9 +19,10 @@ router.get("/users/:id", auth, authController.getUserById);
 router.put("/users/:id", auth, authController.updateUser);
 router.delete("/users/:id", auth, authController.deleteUser);
 
-// Password reset routes
+// Password routes
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
+router.post("/change-password", auth, authController.changePassword);
 
 // Logout route
 router.get("/logout", auth, (req, res) => {

@@ -264,8 +264,15 @@ const forgotPassword = async (req, res) => {
 
     await user.save();
 
-    // Construct reset URL (adjust frontend URL as needed)
-    const resetUrl = `http://localhost:3000/#/reset-password/${resetToken}`;
+    // Construct reset URL based on user role
+    let resetUrl;
+    if (user.role === "Admin") {
+      // Admin users get the admin application reset URL
+      resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+    } else {
+      // Regular users get the client application reset URL
+      resetUrl = `http://localhost:3000/#/reset-password/${resetToken}`;
+    }
 
     // Email content
     const mailOptions = {
@@ -274,7 +281,8 @@ const forgotPassword = async (req, res) => {
       subject: "Password Reset Request",
       html: `
         <p>You requested a password reset.</p>
-        <p>Click this <a href="${resetUrl}">link</a> to set a new password.</p>
+        <p>Click the link below to set a new password:</p>
+        <p><a href="${resetUrl}">Reset Password</a></p>
         <p>This link will expire in 1 hour.</p>
         <p>If you didn't request this, please ignore this email.</p>
       `,
@@ -293,8 +301,7 @@ const forgotPassword = async (req, res) => {
       console.log("✅ Password reset email sent: %s", info.messageId);
       res.json({
         success: true,
-        message:
-          "If an account with that email exists, a password reset link has been sent.",
+        message: "Password reset link has been sent to your email.",
       });
     });
   } catch (error) {
@@ -345,10 +352,12 @@ const resetPassword = async (req, res) => {
     await user.save();
 
     // Optionally log the user in or send a confirmation email
+    console.log("Password reset successful for user:", user.email);
 
     res.json({
       success: true,
-      message: "Password has been reset successfully.",
+      message:
+        "Password reset successful. You can now log in with your new password.",
     });
   } catch (error) {
     console.error("❌ Error in resetPassword:", error);
@@ -486,6 +495,58 @@ const deleteUser = async (req, res) => {
     });
   }
 };
+// Change password function
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: "Current password and new password are required",
+      });
+    }
+
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        error: "Current password is incorrect",
+      });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    // Save the user with the new password
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    console.error("Error in changePassword:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error changing password",
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -499,4 +560,5 @@ module.exports = {
   getUserById,
   updateUser,
   deleteUser,
+  changePassword,
 };
