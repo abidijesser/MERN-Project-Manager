@@ -41,7 +41,7 @@ exports.verify2FA = async (req, res) => {
 async function register(req, res) {
   try {
     console.log("Registration request received:", req.body);
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     // Validation
     if (!name || !email || !password) {
@@ -71,6 +71,7 @@ async function register(req, res) {
       name,
       email,
       password: hashedPassword,
+      role: role || "Client", // Default to Client if no role is provided
       isVerified: true, // Pour le moment, on skip la vérification email
     });
 
@@ -78,15 +79,16 @@ async function register(req, res) {
     await user.save();
     console.log("User saved successfully with ID:", user._id);
 
-    // Créer le token JWT
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    }); // Utilisez process.env.JWT_SECRET
-    console.log("JWT token generated successfully");
+    // We're not automatically logging in the user after registration anymore
+    // So we don't need to generate a token here
+    console.log("User registered successfully");
 
-    // Envoyer la réponse
+    // Envoyer la réponse sans token
     console.log("Sending successful registration response");
-    res.status(201).json({ success: true, token });
+    res.status(201).json({
+      success: true,
+      message: "Registration successful. Please log in with your credentials.",
+    });
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({

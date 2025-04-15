@@ -55,13 +55,9 @@ const Register = () => {
       if (!response.ok) {
         setError(data.error || 'Registration failed')
       } else {
-        // Store the token if it's returned from registration
-        if (data.token) {
-          localStorage.setItem('token', data.token)
-          console.log('Token stored from registration')
-        }
+        // We're not storing the token anymore - user needs to log in manually
+        console.log('Registration successful, redirecting to login')
         navigate('/login')
-        console.log('Registration successful')
       }
     } catch (err) {
       console.error('Registration error:', err)

@@ -1,0 +1,6 @@
+@echo off
+echo Installing dependencies for Client application...
+cd Client
+npm install
+echo Starting Client application...
+npm start
