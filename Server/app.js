@@ -46,11 +46,9 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Mount Google Auth routes at the root
-app.use("/", googleAuthRouter);
-
-// Mount other Auth routes under /api/auth
+// Mount routes
 app.use("/api/auth", authRouter);
+app.use("/", googleAuthRouter); // This should be before other routes
 
 app.use("/admin", adminRoutes);
 app.use("/api/tasks", taskRoutes);
@@ -61,6 +59,15 @@ app.use("/api/notifications", notificationRoutes);
 // Add a simple test route
 app.get("/api/test", (req, res) => {
   res.json({ message: "Server is running" });
+});
+
+// Add a route to check Google OAuth configuration
+app.get("/api/check-google-config", (req, res) => {
+  res.json({
+    clientID: process.env.GOOGLE_CLIENT_ID ? "Configured" : "Missing",
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET ? "Configured" : "Missing",
+    callbackURL: "http://localhost:3001/auth/google/callback",
+  });
 });
 
 mongoose

@@ -60,28 +60,47 @@ router.get("/verify-email/:token", authController.verifyEmail);
 
 // Google authentication routes
 const googleAuthRouter = express.Router();
+
+// Route initiale pour l'authentification Google
 googleAuthRouter.get(
-  "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  "/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    accessType: "offline",
+    prompt: "consent",
+  })
 );
 
+// Route de callback Google
 googleAuthRouter.get(
-  "/google/callback",
+  "/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
   (req, res) => {
     if (!req.user) {
+      console.log("❌ Google auth callback: No user found");
       return res.redirect(
         "http://localhost:3000/#/login?error=authentication_failed"
       );
     }
+
+    console.log("✅ Google auth callback: User authenticated", {
+      id: req.user._id,
+      email: req.user.email,
+      role: req.user.role,
+    });
+
     // Generate JWT token
     const token = jwt.sign(
       { id: req.user._id, email: req.user.email, role: req.user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
+
+    console.log("✅ Token generated, redirecting to dashboard");
+
     // Redirect to frontend with token
-    res.redirect(`http://localhost:3000/#/dashboard?token=${token}`);
+    // Use hash format that works with the client's HashRouter
+    res.redirect(`http://localhost:3000/#/auth-redirect?token=${token}`);
   }
 );
 
