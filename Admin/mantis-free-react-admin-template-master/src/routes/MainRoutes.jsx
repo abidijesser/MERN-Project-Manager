@@ -22,6 +22,9 @@ const UserManagement = Loadable(lazy(() => import('pages/user-management')));
 // render - profile
 const ProfilePage = Loadable(lazy(() => import('pages/profile')));
 
+// render - statistics
+const StatisticsPage = Loadable(lazy(() => import('pages/statistics')));
+
 // ==============================|| MAIN ROUTING ||============================== //
 
 const MainRoutes = {
@@ -68,6 +71,10 @@ const MainRoutes = {
     {
       path: 'profile',
       element: <ProfilePage />
+    },
+    {
+      path: 'statistics',
+      element: <StatisticsPage />
     }
   ]
 };

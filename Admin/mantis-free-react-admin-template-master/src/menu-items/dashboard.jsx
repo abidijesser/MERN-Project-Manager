@@ -1,11 +1,12 @@
 // assets
-import { DashboardOutlined, UserOutlined, TeamOutlined } from '@ant-design/icons';
+import { DashboardOutlined, UserOutlined, TeamOutlined, PieChartOutlined } from '@ant-design/icons';
 
 // icons
 const icons = {
   DashboardOutlined,
   UserOutlined,
-  TeamOutlined
+  TeamOutlined,
+  PieChartOutlined
 };
 
 // ==============================|| MENU ITEMS - DASHBOARD ||============================== //
@@ -29,6 +30,14 @@ const dashboard = {
       type: 'item',
       url: '/user-management',
       icon: icons.TeamOutlined,
+      breadcrumbs: false
+    },
+    {
+      id: 'statistics',
+      title: 'Statistics',
+      type: 'item',
+      url: '/statistics',
+      icon: icons.PieChartOutlined,
       breadcrumbs: false
     }
   ]
