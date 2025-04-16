@@ -32,5 +32,16 @@ pipeline {
                 }       
             }
         }
+
+        stage('Trigger Nexus Pipeline') {
+            steps {
+                script {
+                    def branch = env.BRANCH_NAME
+                    build job: "pipeline-2-nexus/${branch}", wait: false
+                }
+            }
+        }
+
+
     }
 }
