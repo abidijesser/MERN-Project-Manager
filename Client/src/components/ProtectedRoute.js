@@ -22,11 +22,11 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
         // Otherwise, check if user has client role
         const hasCorrectRole = adminOnly ? await isAdmin() : await isClient()
 
-        // For debugging, log the role check
+        // Log the role check for monitoring
         console.log('Role check:', { adminOnly, hasCorrectRole })
 
-        // Temporarily accept all authenticated users
-        setAuthorized(true) // Change this back to hasCorrectRole after debugging
+        // Restore strict role verification
+        setAuthorized(hasCorrectRole)
         setLoading(false)
       } catch (error) {
         console.error('Error checking authentication:', error)
