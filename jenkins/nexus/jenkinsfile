@@ -15,9 +15,9 @@ pipeline {
             steps {
                 copyArtifacts(
                     projectName: "pipeline-1-sonar/${env.BRANCH_NAME}",
-                    selector: specific("${params.BUILD_NUMBER}"),
-                    filter: 'dist/**',
-                    target: 'Client',
+                    selector: specific("${env.BUILD_NUMBER}"),
+                    filter: 'Client/build/**',
+                    target: 'Client/build',
                     flatten: false
                 )
             }
