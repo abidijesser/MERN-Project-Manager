@@ -105,6 +105,13 @@ const Login = () => {
     window.location.href = 'http://localhost:3001/auth/google?scope=profile%20email'
   }
 
+  const handleFacebookLogin = () => {
+    // Clear any existing tokens
+    localStorage.removeItem('token')
+    // Use the full URL for Facebook auth
+    window.location.href = 'http://localhost:3001/api/auth/facebook'
+  }
+
   return (
     <div className="bg-light min-vh-100 d-flex flex-row align-items-center">
       <CContainer>
@@ -156,8 +163,11 @@ const Login = () => {
                     </CRow>
                   </CForm>
                   <div className="mt-3">
-                    <CButton color="danger" className="w-100" onClick={handleGoogleLogin}>
+                    <CButton color="danger" className="w-100 mb-2" onClick={handleGoogleLogin}>
                       Sign in with Google
+                    </CButton>
+                    <CButton color="primary" className="w-100" onClick={handleFacebookLogin}>
+                      Sign in with Facebook
                     </CButton>
                   </div>
                 </CCardBody>

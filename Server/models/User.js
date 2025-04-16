@@ -6,6 +6,7 @@ const RoleEnum = ["Client", "Admin"];
 
 const UserSchema = new Schema({
   googleId: { type: String, unique: true, sparse: true },
+  facebookId: { type: String, unique: true, sparse: true },
   name: {
     type: String,
     required: true,

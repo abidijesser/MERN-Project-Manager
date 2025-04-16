@@ -15,6 +15,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const Message = require("./models/Message"); // Assurez-vous que le modèle Message existe
 require("./config/passportConfig");
+require("./config/facebookStrategy");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -61,12 +62,19 @@ app.get("/api/test", (req, res) => {
   res.json({ message: "Server is running" });
 });
 
-// Add a route to check Google OAuth configuration
-app.get("/api/check-google-config", (req, res) => {
+// Add a route to check OAuth configurations
+app.get("/api/check-oauth-config", (req, res) => {
   res.json({
-    clientID: process.env.GOOGLE_CLIENT_ID ? "Configured" : "Missing",
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET ? "Configured" : "Missing",
-    callbackURL: "http://localhost:3001/auth/google/callback",
+    google: {
+      clientID: process.env.GOOGLE_CLIENT_ID ? "Configured" : "Missing",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ? "Configured" : "Missing",
+      callbackURL: "http://localhost:3001/auth/google/callback",
+    },
+    facebook: {
+      clientID: process.env.FACEBOOK_APP_ID ? "Configured" : "Missing",
+      clientSecret: process.env.FACEBOOK_APP_SECRET ? "Configured" : "Missing",
+      callbackURL: "http://localhost:3001/api/auth/facebook/callback",
+    },
   });
 });
 

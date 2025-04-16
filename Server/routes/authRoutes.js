@@ -5,6 +5,9 @@ const authController = require("../controllers/authController");
 const auth = require("../middleware/auth");
 const jwt = require("jsonwebtoken");
 
+// Import Facebook strategy
+require("../config/facebookStrategy");
+
 // Public routes
 router.post("/register", authController.register);
 router.post("/login", authController.login);
@@ -71,6 +74,14 @@ googleAuthRouter.get(
   })
 );
 
+// Facebook authentication routes
+router.get(
+  "/facebook",
+  passport.authenticate("facebook", {
+    scope: ["email", "public_profile"],
+  })
+);
+
 // Route de callback Google
 googleAuthRouter.get(
   "/auth/google/callback",
@@ -100,6 +111,38 @@ googleAuthRouter.get(
 
     // Redirect to frontend with token
     // Use hash format that works with the client's HashRouter
+    res.redirect(`http://localhost:3000/#/auth-redirect?token=${token}`);
+  }
+);
+
+// Route de callback Facebook
+router.get(
+  "/facebook/callback",
+  passport.authenticate("facebook", { failureRedirect: "/login" }),
+  (req, res) => {
+    if (!req.user) {
+      console.log("❌ Facebook auth callback: No user found");
+      return res.redirect(
+        "http://localhost:3000/#/login?error=authentication_failed"
+      );
+    }
+
+    console.log("✅ Facebook auth callback: User authenticated", {
+      id: req.user._id,
+      email: req.user.email,
+      role: req.user.role,
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: req.user._id, email: req.user.email, role: req.user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    console.log("✅ Token generated, redirecting to dashboard");
+
+    // Redirect to frontend with token
     res.redirect(`http://localhost:3000/#/auth-redirect?token=${token}`);
   }
 );
