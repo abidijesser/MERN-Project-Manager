@@ -101,8 +101,8 @@ const Login = () => {
   const handleGoogleLogin = () => {
     // Clear any existing tokens
     localStorage.removeItem('token')
-    // Use the full URL for Google auth since it's a redirect, not an API call
-    window.location.href = 'http://localhost:3001/google'
+    // Use the full URL for Google auth with explicit scope
+    window.location.href = 'http://localhost:3001/auth/google?scope=profile%20email'
   }
 
   return (

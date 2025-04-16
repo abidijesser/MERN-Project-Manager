@@ -9,18 +9,22 @@ const AuthRedirect = () => {
     // Function to get URL parameters from hash
     const getHashParams = () => {
       const params = {}
+      console.log('Full URL:', window.location.href)
 
       // Try different ways to extract parameters
       // Method 1: From hash fragment after ?
       let hash = ''
       if (window.location.hash.includes('?')) {
         hash = window.location.hash.split('?')[1] || ''
+        console.log('Hash fragment after ?:', hash)
       }
 
       // Method 2: From search params
       const searchParams = new URLSearchParams(window.location.search)
+      console.log('Search params:', Object.fromEntries(searchParams))
       if (searchParams.has('token')) {
         params.token = searchParams.get('token')
+        console.log('Token from search params:', params.token)
         return params
       }
 
@@ -28,15 +32,21 @@ const AuthRedirect = () => {
       if (!hash) {
         // If no query string in hash, try to parse the hash itself
         const hashParts = window.location.hash.split('/')
+        console.log('Hash parts:', hashParts)
         const lastPart = hashParts[hashParts.length - 1]
         if (lastPart.includes('=')) {
           hash = lastPart
+          console.log('Last part of hash with =:', hash)
         }
       }
 
-      if (!hash) return params
+      if (!hash) {
+        console.log('No hash found')
+        return params
+      }
 
       const pairs = hash.split('&')
+      console.log('Hash pairs:', pairs)
 
       for (let i = 0; i < pairs.length; i++) {
         const pair = pairs[i].split('=')
@@ -45,6 +55,7 @@ const AuthRedirect = () => {
         }
       }
 
+      console.log('Extracted params:', params)
       return params
     }
 
@@ -60,14 +71,20 @@ const AuthRedirect = () => {
       console.log('Token found:', !!token)
 
       if (token) {
+        console.log('Storing token and redirecting to dashboard')
         // Store the token in localStorage
         localStorage.setItem('token', token)
         // Clear the temporary clientToken if it exists
         localStorage.removeItem('clientToken')
 
-        // Redirect to dashboard
-        navigate('/dashboard')
+        // Add a small delay before redirecting to ensure token is stored
+        setTimeout(() => {
+          // Redirect to dashboard
+          console.log('Navigating to dashboard')
+          navigate('/dashboard')
+        }, 500)
       } else {
+        console.log('No token found, redirecting to login')
         // If no token is found, redirect to login
         navigate('/login')
       }
