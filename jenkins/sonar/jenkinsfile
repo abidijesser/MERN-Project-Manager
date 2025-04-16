@@ -35,10 +35,11 @@ pipeline {
         stage('Archive frontend build') {
             steps {
                 dir('Client') {
-                    archiveArtifacts artifacts: 'dist/**', fingerprint: true
+                archiveArtifacts allowEmptyArchive: true, artifacts: 'build/**', onlyIfSuccess: true
                 }
             }
         }
+
 
         stage('SonarQube Analysis') {
             steps {
