@@ -5,12 +5,12 @@ pipeline {
         stage('Install dependencies') {
             steps {
                 script {
-                    sh('npm install')
+                    sh 'npm install'
                     dir('Server') {
-                        sh ('npm install')
+                        sh 'npm install'
                     }
                     dir('Client') {
-                        sh ('npm install')
+                        sh 'npm install'
                     }
                 }
             }
@@ -19,6 +19,24 @@ pipeline {
         stage('Unit Test') {
             steps {
                 echo "No tests yet.."
+            }
+        }
+
+        stage('Build frontend') {
+            steps {
+                script {
+                    dir('Client') {
+                        sh 'npm run build'
+                    }
+                }
+            }
+        }
+
+        stage('Archive frontend build') {
+            steps {
+                dir('Client') {
+                    archiveArtifacts artifacts: 'dist/**', fingerprint: true
+                }
             }
         }
 
@@ -37,11 +55,12 @@ pipeline {
             steps {
                 script {
                     def branch = env.BRANCH_NAME
-                    build job: "pipeline-2-nexus/${branch}", wait: false
+                    def buildNumber = env.BUILD_NUMBER
+                    build job: "pipeline-2-nexus/${branch}", wait: false, parameters: [
+                        string(name: 'BUILD_NUMBER', value: buildNumber)
+                    ]
                 }
             }
         }
-
-
     }
 }

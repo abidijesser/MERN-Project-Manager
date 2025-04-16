@@ -1,26 +1,31 @@
 pipeline {
     agent any
 
+    parameters {
+        string(name: 'BUILD_NUMBER', defaultValue: '', description: 'Upstream build number')
+    }
+
     environment { 
         registryCredentials = "nexus"
         registry = "192.168.33.10:8083"
     }
 
     stages {
-        stage('Build application') {
+        stage('Retrieve Artifacts') {
             steps {
-                script {
-                    dir('Client') {
-                        sh ('npm run build')
-                    }
-                    echo "Build completed"
-                }
+                copyArtifacts(
+                    projectName: "pipeline-1-sonar/${env.BRANCH_NAME}",
+                    selector: specific("${params.BUILD_NUMBER}"),
+                    filter: 'dist/**',
+                    target: 'Client',
+                    flatten: false
+                )
             }
         }
 
-        stage('Build Docker images') {
+        stage('Build Docker image') {
             steps {
-                sh('docker-compose build')
+                sh 'docker-compose build'
             }
         }
 
@@ -28,7 +33,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("http://${registry}", registryCredentials) {
-                        sh('docker push $registry/nodemongoapp:5.0')
+                        sh 'docker push $registry/nodemongoapp:5.0'
                     }
                 }
             }
@@ -38,8 +43,8 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("http://${registry}", registryCredentials) {
-                        sh('docker pull $registry/nodemongoapp:6.0')
-                        sh('docker-compose up -d')
+                        sh 'docker pull $registry/nodemongoapp:6.0'
+                        sh 'docker-compose up -d'
                     }
                 }
             }
