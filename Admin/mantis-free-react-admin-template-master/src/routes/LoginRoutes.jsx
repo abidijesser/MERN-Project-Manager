@@ -5,8 +5,11 @@ import AuthLayout from 'layout/Auth';
 import Loadable from 'components/Loadable';
 
 // jwt auth
-const LoginPage = Loadable(lazy(() => import('pages/auth/Login')));
-const RegisterPage = Loadable(lazy(() => import('pages/auth/Register')));
+// Remplacer la page de connexion par une redirection
+const LoginRedirectPage = Loadable(lazy(() => import('pages/auth/LoginRedirect')));
+// Page de transfert d'authentification
+const AuthTransferPage = Loadable(lazy(() => import('pages/auth/AuthTransfer')));
+// Suppression de la page d'inscription
 const UnauthorizedPage = Loadable(lazy(() => import('pages/auth/Unauthorized')));
 const ForgotPasswordPage = Loadable(lazy(() => import('pages/auth/ForgotPassword')));
 const ResetPasswordPage = Loadable(lazy(() => import('pages/auth/ResetPassword')));
@@ -21,13 +24,14 @@ const LoginRoutes = {
       element: <AuthLayout />,
       children: [
         {
-          path: '/login',
-          element: <LoginPage />
+          path: '/',
+          element: <LoginRedirectPage />
         },
         {
-          path: '/register',
-          element: <RegisterPage />
+          path: '/login',
+          element: <LoginRedirectPage />
         },
+        // Suppression de la route d'inscription
         {
           path: '/unauthorized',
           element: <UnauthorizedPage />
@@ -39,6 +43,10 @@ const LoginRoutes = {
         {
           path: '/reset-password/:token',
           element: <ResetPasswordPage />
+        },
+        {
+          path: '/auth-transfer',
+          element: <AuthTransferPage />
         }
       ]
     }

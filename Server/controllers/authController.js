@@ -71,9 +71,11 @@ async function register(req, res) {
       name,
       email,
       password: hashedPassword,
-      role: role || "Client", // Default to Client if no role is provided
+      role: "Client", // Force le rôle Client pour l'inscription publique
       isVerified: true, // Pour le moment, on skip la vérification email
     });
+
+    console.log("User created with Client role");
 
     console.log("Attempting to save new user:", { name, email });
     await user.save();
@@ -410,6 +412,70 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+// Fonction spécifique pour l'ajout d'utilisateurs par les administrateurs
+const createUserByAdmin = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+
+    // Validation
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: "All fields are required",
+      });
+    }
+
+    // Vérifier si l'email existe déjà
+    const emailExist = await User.findOne({ email });
+    if (emailExist) {
+      return res.status(400).json({
+        success: false,
+        error: "Email already exists",
+      });
+    }
+
+    // Vérifier les permissions de rôle
+    // Seul un admin peut créer un utilisateur admin
+    if (role === "Admin" && req.user.role !== "Admin") {
+      return res.status(403).json({
+        success: false,
+        error: "Only admins can create admin users",
+      });
+    }
+
+    // Hasher le mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Créer le nouvel utilisateur
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role: role || "Client", // Par défaut, le rôle est Client
+      isVerified: true,
+    });
+
+    await user.save();
+
+    res.status(201).json({
+      success: true,
+      message: "User created successfully",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("Error creating user by admin:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error creating user",
+    });
+  }
+};
+
 const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select("-password");
@@ -442,6 +508,15 @@ const updateUser = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "User not found",
+      });
+    }
+
+    // Vérifier les permissions de rôle
+    // Seul un super admin peut modifier un utilisateur en admin
+    if (role === "Admin" && req.user.role !== "Admin") {
+      return res.status(403).json({
+        success: false,
+        error: "Only super admins can assign Admin role",
       });
     }
 
@@ -561,4 +636,5 @@ module.exports = {
   updateUser,
   deleteUser,
   changePassword,
+  createUserByAdmin,
 };

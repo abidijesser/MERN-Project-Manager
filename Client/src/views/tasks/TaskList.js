@@ -58,6 +58,16 @@ const TaskList = () => {
   }
 
   const handleDelete = async (id) => {
+    // Vérifier le rôle de l'utilisateur
+    const userRole = localStorage.getItem('userRole')
+    console.log('TaskList - User role:', userRole)
+
+    // Seuls les administrateurs peuvent supprimer des tâches
+    if (userRole !== 'Admin') {
+      toast.error('Seuls les administrateurs peuvent supprimer des tâches')
+      return
+    }
+
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
       try {
         const token = localStorage.getItem('token')
@@ -114,9 +124,11 @@ const TaskList = () => {
     <CCard>
       <CCardHeader className="d-flex justify-content-between align-items-center">
         <h5>Liste des tâches</h5>
-        <CButton color="primary" onClick={() => navigate('/tasks/new')}>
-          Nouvelle tâche
-        </CButton>
+        {localStorage.getItem('userRole') === 'Admin' && (
+          <CButton color="primary" onClick={() => navigate('/tasks/new')}>
+            Nouvelle tâche
+          </CButton>
+        )}
       </CCardHeader>
       <CCardBody>
         <CTable hover responsive>
@@ -151,17 +163,21 @@ const TaskList = () => {
                   >
                     Détails
                   </CButton>
-                  <CButton
-                    color="primary"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => navigate(`/tasks/edit/${task._id}`)}
-                  >
-                    Modifier
-                  </CButton>
-                  <CButton color="danger" size="sm" onClick={() => handleDelete(task._id)}>
-                    Supprimer
-                  </CButton>
+                  {localStorage.getItem('userRole') === 'Admin' && (
+                    <>
+                      <CButton
+                        color="primary"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => navigate(`/tasks/edit/${task._id}`)}
+                      >
+                        Modifier
+                      </CButton>
+                      <CButton color="danger" size="sm" onClick={() => handleDelete(task._id)}>
+                        Supprimer
+                      </CButton>
+                    </>
+                  )}
                 </CTableDataCell>
               </CTableRow>
             ))}

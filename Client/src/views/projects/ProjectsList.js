@@ -35,6 +35,16 @@ const ProjectsList = () => {
   }
 
   const handleDelete = async (id) => {
+    // Vérifier le rôle de l'utilisateur
+    const userRole = localStorage.getItem('userRole')
+    console.log('ProjectsList - User role:', userRole)
+
+    // Seuls les administrateurs peuvent supprimer des projets
+    if (userRole !== 'Admin') {
+      toast.error('Seuls les administrateurs peuvent supprimer des projets')
+      return
+    }
+
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
       try {
         await axios.delete(`/projects/${id}`)
@@ -51,9 +61,11 @@ const ProjectsList = () => {
     <CCard>
       <CCardHeader>
         <strong>Liste des projets</strong>
-        <CButton color="primary" className="float-end" onClick={() => navigate('/projects/new')}>
-          Nouveau projet
-        </CButton>
+        {localStorage.getItem('userRole') === 'Admin' && (
+          <CButton color="primary" className="float-end" onClick={() => navigate('/projects/new')}>
+            Nouveau projet
+          </CButton>
+        )}
       </CCardHeader>
       <CCardBody>
         <CTable hover>
@@ -78,22 +90,26 @@ const ProjectsList = () => {
                   >
                     Détails
                   </CButton>
-                  <CButton
-                    color="warning"
-                    size="sm"
-                    className="ms-2"
-                    onClick={() => navigate(`/projects/edit/${project._id}`)}
-                  >
-                    Modifier
-                  </CButton>
-                  <CButton
-                    color="danger"
-                    size="sm"
-                    className="ms-2"
-                    onClick={() => handleDelete(project._id)} // Appel à la fonction de suppression
-                  >
-                    Supprimer
-                  </CButton>
+                  {localStorage.getItem('userRole') === 'Admin' && (
+                    <>
+                      <CButton
+                        color="warning"
+                        size="sm"
+                        className="ms-2"
+                        onClick={() => navigate(`/projects/edit/${project._id}`)}
+                      >
+                        Modifier
+                      </CButton>
+                      <CButton
+                        color="danger"
+                        size="sm"
+                        className="ms-2"
+                        onClick={() => handleDelete(project._id)} // Appel à la fonction de suppression
+                      >
+                        Supprimer
+                      </CButton>
+                    </>
+                  )}
                 </CTableDataCell>
               </CTableRow>
             ))}

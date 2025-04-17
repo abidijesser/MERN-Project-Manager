@@ -62,12 +62,9 @@ export default function AuthLogin({ isDemo = false }) {
           console.log('Redirecting to admin dashboard (2FA)');
           navigate('/dashboard/default');
         } else {
-          // Non-admin users are not allowed to access the admin dashboard
-          console.log('Access denied - not an admin user (2FA)');
-          setLoginError('Access denied. Only Admin users can access this dashboard.');
-
-          // Remove the token since we're denying access
-          localStorage.removeItem('token');
+          // Non-admin users are redirected to the client dashboard
+          console.log('Redirecting to client dashboard (2FA)');
+          window.location.href = 'http://localhost:3000/#/dashboard';
         }
       } else {
         setLoginError(result.error || 'Invalid 2FA code');
@@ -140,14 +137,9 @@ export default function AuthLogin({ isDemo = false }) {
                   console.log('Redirecting to admin dashboard');
                   navigate('/dashboard/default');
                 } else {
-                  // Non-admin users are not allowed to access the admin dashboard
-                  console.log('Access denied - not an admin user');
-                  setStatus({ success: false });
-                  setErrors({ submit: 'Access denied. Only Admin users can access this dashboard.' });
-                  setLoginError('Access denied. Only Admin users can access this dashboard.');
-
-                  // Remove the token since we're denying access
-                  localStorage.removeItem('token');
+                  // Non-admin users are redirected to the client dashboard
+                  console.log('Redirecting to client dashboard');
+                  window.location.href = 'http://localhost:3000/#/dashboard';
                 }
               } else if (result.requires2FA) {
                 setShowTwoFactorInput(true);

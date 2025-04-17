@@ -25,7 +25,15 @@ export default function Unauthorized() {
                 You do not have permission to access this page. This area is restricted to administrators only.
               </Typography>
               <AnimateButton>
-                <Button component={Link} to="/login" variant="contained" color="primary" sx={{ mt: 3 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  sx={{ mt: 3 }}
+                  onClick={() => {
+                    // Redirect to client login page
+                    window.location.href = 'http://localhost:3000/#/login';
+                  }}
+                >
                   Back to Login
                 </Button>
               </AnimateButton>

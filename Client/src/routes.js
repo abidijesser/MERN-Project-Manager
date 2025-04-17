@@ -20,12 +20,14 @@ const ForgotPassword = React.lazy(() => import('./views/pages/forgot-password/Fo
 const ResetPassword = React.lazy(() => import('./views/pages/reset-password/ResetPassword'))
 const VerifyEmail = React.lazy(() => import('./views/pages/verify-email/VerifyEmail'))
 const Performances = React.lazy(() => import('./views/Performances/Performances'))
+const AdminRedirect = React.lazy(() => import('./views/pages/admin-redirect/AdminRedirect'))
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
   { path: '/dashboard', name: 'Dashboard', element: Dashboard },
   { path: '/login', name: 'Login', element: Login },
   { path: '/register', name: 'Register', element: Register },
+  { path: '/admin-redirect', name: 'Admin Redirect', element: AdminRedirect },
   { path: '/404', name: 'Page 404', element: Page404 },
   { path: '/500', name: 'Page 500', element: Page500 },
   { path: '/profile', name: 'Profile', element: Profile },

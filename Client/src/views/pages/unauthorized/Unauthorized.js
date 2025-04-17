@@ -1,13 +1,22 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import {
-  CButton,
-  CCol,
-  CContainer,
-  CRow,
-} from '@coreui/react';
+import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { CButton, CCol, CContainer, CRow } from '@coreui/react'
 
 const Unauthorized = () => {
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    // Check if user is admin
+    const userRole = localStorage.getItem('userRole')
+    console.log('Unauthorized page - User role:', userRole)
+    setIsAdmin(userRole === 'Admin')
+  }, [])
+
+  const handleAdminRedirect = () => {
+    console.log('Redirecting to admin dashboard')
+    window.location.href = 'http://localhost:5173/dashboard/default'
+  }
+
   return (
     <div className="bg-light min-vh-100 d-flex flex-row align-items-center">
       <CContainer>
@@ -21,17 +30,24 @@ const Unauthorized = () => {
               </p>
             </div>
             <CRow className="mt-4">
-              <CCol xs={6}>
+              <CCol xs={isAdmin ? 4 : 6}>
                 <Link to="/login">
                   <CButton color="primary" className="px-4">
                     Back to Login
                   </CButton>
                 </Link>
               </CCol>
-              <CCol xs={6} className="text-end">
+              {isAdmin && (
+                <CCol xs={4} className="text-center">
+                  <CButton color="success" className="px-4" onClick={handleAdminRedirect}>
+                    Admin Dashboard
+                  </CButton>
+                </CCol>
+              )}
+              <CCol xs={isAdmin ? 4 : 6} className="text-end">
                 <Link to="/dashboard">
                   <CButton color="info" className="px-4">
-                    Dashboard
+                    Client Dashboard
                   </CButton>
                 </Link>
               </CCol>
@@ -40,7 +56,7 @@ const Unauthorized = () => {
         </CRow>
       </CContainer>
     </div>
-  );
-};
+  )
+}
 
-export default Unauthorized;
+export default Unauthorized

@@ -3,6 +3,7 @@ const passport = require("passport");
 const router = express.Router();
 const authController = require("../controllers/authController");
 const auth = require("../middleware/auth");
+const adminAuth = require("../middleware/adminAuth");
 const jwt = require("jsonwebtoken");
 
 // Import Facebook strategy
@@ -16,11 +17,12 @@ router.post("/login", authController.login);
 router.get("/profile", auth, authController.getProfile);
 router.get("/profile/:id", auth, authController.getProfileById);
 router.put("/profile/:id", auth, authController.updateProfile);
-// User management routes
-router.get("/users", auth, authController.getAllUsers);
-router.get("/users/:id", auth, authController.getUserById);
-router.put("/users/:id", auth, authController.updateUser);
-router.delete("/users/:id", auth, authController.deleteUser);
+// User management routes - protégées par le middleware adminAuth
+router.get("/users", auth, adminAuth, authController.getAllUsers);
+router.get("/users/:id", auth, adminAuth, authController.getUserById);
+router.post("/users", auth, adminAuth, authController.createUserByAdmin); // Nouvelle route pour créer des utilisateurs par les admins
+router.put("/users/:id", auth, adminAuth, authController.updateUser);
+router.delete("/users/:id", auth, adminAuth, authController.deleteUser);
 
 // Password routes
 router.post("/forgot-password", authController.forgotPassword);

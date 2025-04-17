@@ -23,26 +23,45 @@ api.interceptors.request.use(
 
 // Function to check if user is authenticated
 export const isAuthenticated = () => {
-  return localStorage.getItem('token') !== null;
+  const token = localStorage.getItem('token');
+  console.log('Admin Dashboard - isAuthenticated - Token exists:', !!token);
+  console.log('Admin Dashboard - isAuthenticated - Token value:', token);
+  return token !== null;
 };
 
 // Function to get the current user's information
 export const getCurrentUser = async () => {
   try {
-    console.log('Getting current user...');
+    console.log('Admin Dashboard - Getting current user...');
     const token = localStorage.getItem('token');
-    console.log('Token exists:', !!token);
+    console.log('Admin Dashboard - Token exists:', !!token);
+    console.log('Admin Dashboard - Token value:', token);
+
     if (!token) {
-      console.log('No token found, returning null');
+      console.log('Admin Dashboard - No token found, returning null');
       return null;
     }
 
-    console.log('Fetching user profile...');
-    const response = await api.get('/auth/profile');
-    console.log('Profile response:', response.data);
-    return response.data.user;
+    console.log('Admin Dashboard - Fetching user profile...');
+    try {
+      const response = await api.get('/auth/profile');
+      console.log('Admin Dashboard - Profile response status:', response.status);
+      console.log('Admin Dashboard - Profile response data:', response.data);
+
+      if (response.data && response.data.user) {
+        console.log('Admin Dashboard - User found:', response.data.user);
+        return response.data.user;
+      } else {
+        console.log('Admin Dashboard - No user data in response');
+        return null;
+      }
+    } catch (apiError) {
+      console.error('Admin Dashboard - API error fetching profile:', apiError.message);
+      console.error('Admin Dashboard - API error details:', apiError.response?.status, apiError.response?.data);
+      return null;
+    }
   } catch (error) {
-    console.error('Error fetching current user:', error);
+    console.error('Admin Dashboard - Error fetching current user:', error);
     return null;
   }
 };
@@ -50,14 +69,38 @@ export const getCurrentUser = async () => {
 // Function to check if user has admin role
 export const isAdmin = async () => {
   try {
-    console.log('Checking if user has admin role...');
+    console.log('Admin Dashboard - Checking if user has admin role...');
+    console.log('Admin Dashboard - Token:', localStorage.getItem('token'));
+
+    // D'abord, vérifier le rôle dans localStorage pour une réponse rapide
+    const storedRole = localStorage.getItem('userRole');
+    console.log('Admin Dashboard - Role from localStorage:', storedRole);
+
+    if (storedRole) {
+      const isAdminRole = storedRole === 'Admin';
+      console.log('Admin Dashboard - Is admin based on localStorage:', isAdminRole);
+      return isAdminRole;
+    }
+
+    // Si pas de rôle dans localStorage, faire un appel API
+    console.log('Admin Dashboard - No role in localStorage, checking with server');
     const user = await getCurrentUser();
-    console.log('Current user:', user);
+    console.log('Admin Dashboard - Current user from API:', user);
+
     const isAdminUser = user && user.role === 'Admin';
-    console.log('Is admin user:', isAdminUser);
+    console.log('Admin Dashboard - Is admin user based on API response:', isAdminUser);
+
+    // Stocker le rôle pour les prochaines vérifications
+    if (user && user.role) {
+      console.log('Admin Dashboard - Storing role in localStorage:', user.role);
+      localStorage.setItem('userRole', user.role);
+    } else {
+      console.log('Admin Dashboard - No user or role from API');
+    }
+
     return isAdminUser;
   } catch (error) {
-    console.error('Error checking admin role:', error);
+    console.error('Admin Dashboard - Error checking admin role:', error);
     return false;
   }
 };
@@ -68,6 +111,10 @@ export const login = async (email, password) => {
     const response = await api.post('/auth/login', { email, password });
     if (response.data.success) {
       localStorage.setItem('token', response.data.token);
+      // Store user role in localStorage
+      if (response.data.user && response.data.user.role) {
+        localStorage.setItem('userRole', response.data.user.role);
+      }
       return { success: true, user: response.data.user, token: response.data.token };
     } else if (response.data.message === '2FA required') {
       return { success: false, requires2FA: true };
@@ -90,6 +137,10 @@ export const verify2FA = async (email, password, twoFactorToken) => {
 
     if (response.data.success) {
       localStorage.setItem('token', response.data.token);
+      // Store user role in localStorage
+      if (response.data.user && response.data.user.role) {
+        localStorage.setItem('userRole', response.data.user.role);
+      }
       return { success: true, user: response.data.user, token: response.data.token };
     } else {
       return { success: false, error: response.data.error || 'Verification failed' };
@@ -128,8 +179,9 @@ export const logout = async () => {
     // Call the logout endpoint
     const response = await api.get('/auth/logout');
 
-    // Remove token from localStorage
+    // Remove token and role from localStorage
     localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
 
     return {
       success: true,
@@ -138,8 +190,9 @@ export const logout = async () => {
   } catch (error) {
     console.error('Logout error:', error);
 
-    // Still remove token from localStorage even if the server request fails
+    // Still remove token and role from localStorage even if the server request fails
     localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
 
     return {
       success: true, // Still return success since we've removed the token

@@ -39,10 +39,34 @@ const Login = () => {
       console.log('Login response:', response.data)
 
       if (response.data.success) {
+        console.log('Login successful, full response:', response.data)
         // Store the token in localStorage
         localStorage.setItem('token', response.data.token)
-        console.log('Token stored from login')
-        // Navigate to dashboard
+        console.log('Token stored from login:', response.data.token)
+
+        // Store user role if available
+        if (response.data.user && response.data.user.role) {
+          localStorage.setItem('userRole', response.data.user.role)
+          console.log('User role stored:', response.data.user.role)
+
+          // Redirect based on role
+          if (response.data.user.role === 'Admin') {
+            console.log('Admin user detected, redirecting to admin redirect page')
+            console.log('Admin user details:', response.data.user)
+
+            // Add a small delay before redirecting
+            setTimeout(() => {
+              console.log('Now navigating to admin redirect page')
+              // Navigate to the admin redirect page
+              navigate('/admin-redirect')
+            }, 500)
+            return
+          }
+        } else {
+          console.error('User role not found in response:', response.data)
+        }
+
+        // Navigate to client dashboard
         navigate('/dashboard')
       } else if (response.data.message === '2FA required') {
         const twoFactorToken = prompt('Enter your 2FA token:')
@@ -64,8 +88,27 @@ const Login = () => {
         console.log('2FA response:', finalResponse.data)
 
         if (finalResponse.data.success) {
+          console.log('2FA login successful, full response:', finalResponse.data)
           localStorage.setItem('token', finalResponse.data.token)
-          console.log('Token stored from 2FA login')
+          console.log('Token stored from 2FA login:', finalResponse.data.token)
+
+          // Store user role if available
+          if (finalResponse.data.user && finalResponse.data.user.role) {
+            localStorage.setItem('userRole', finalResponse.data.user.role)
+            console.log('User role stored from 2FA:', finalResponse.data.user.role)
+
+            // Redirect based on role
+            if (finalResponse.data.user.role === 'Admin') {
+              console.log('Admin user detected from 2FA, redirecting to admin redirect page')
+              // Navigate to the admin redirect page
+              navigate('/admin-redirect')
+              return
+            }
+          } else {
+            console.error('User role not found in 2FA response:', finalResponse.data)
+          }
+
+          // Navigate to client dashboard
           navigate('/dashboard')
         } else {
           setError(finalResponse.data.error || 'Login failed')

@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 // material-ui
 import Avatar from '@mui/material/Avatar';
 import AvatarGroup from '@mui/material/AvatarGroup';
@@ -51,6 +53,48 @@ const actionSX = {
 // ==============================|| DASHBOARD - DEFAULT ||============================== //
 
 export default function DashboardDefault() {
+  useEffect(() => {
+    console.log('Dashboard - Component mounted');
+
+    // Check if there are token and role in URL parameters (from auth transfer)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('token');
+    const urlRole = urlParams.get('role');
+
+    if (urlToken && urlRole) {
+      console.log('Dashboard - Found token and role in URL parameters');
+      // Store token and role in localStorage
+      localStorage.setItem('token', urlToken);
+      localStorage.setItem('userRole', urlRole);
+      console.log('Dashboard - Stored token and role from URL parameters');
+
+      // Remove parameters from URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+
+    // Check if user is authenticated and has admin role
+    const token = localStorage.getItem('token');
+    const userRole = localStorage.getItem('userRole');
+
+    console.log('Dashboard - Token exists:', !!token);
+    console.log('Dashboard - User role:', userRole);
+
+    if (!token) {
+      console.log('Dashboard - No token found, will redirect');
+      window.location.href = 'http://localhost:3000/#/login';
+      return;
+    }
+
+    if (userRole !== 'Admin') {
+      console.log('Dashboard - Not admin, will redirect');
+      window.location.href = '/unauthorized';
+      return;
+    }
+
+    console.log('Dashboard - Authentication verified');
+  }, []);
+
   return (
     <Grid container rowSpacing={4.5} columnSpacing={2.75}>
       {/* row 1 */}

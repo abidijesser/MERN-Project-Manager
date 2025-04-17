@@ -4,6 +4,7 @@ import { lazy } from 'react';
 import Loadable from 'components/Loadable';
 import DashboardLayout from 'layout/Dashboard';
 import ProtectedRoute from 'components/ProtectedRoute';
+import AuthVerifier from 'components/AuthVerifier';
 
 // render- Dashboard
 const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/default')));
@@ -30,9 +31,9 @@ const StatisticsPage = Loadable(lazy(() => import('pages/statistics')));
 const MainRoutes = {
   path: '/',
   element: (
-    <ProtectedRoute>
+    <AuthVerifier>
       <DashboardLayout />
-    </ProtectedRoute>
+    </AuthVerifier>
   ),
   children: [
     {

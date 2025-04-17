@@ -48,19 +48,44 @@ const TaskForm = () => {
         return
       }
 
-      // Récupérer les projets et utilisateurs
-      const [projectsRes, usersRes] = await Promise.all([
-        axios.get('http://localhost:3001/api/projects', {
+      // Vérifier le rôle de l'utilisateur
+      const userRole = localStorage.getItem('userRole')
+      console.log('TaskForm - User role:', userRole)
+
+      // Récupérer les projets
+      const projectsRes = await axios.get('http://localhost:3001/api/projects', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      let usersRes = { data: [] }
+
+      // Seuls les administrateurs peuvent récupérer la liste des utilisateurs
+      if (userRole === 'Admin') {
+        try {
+          usersRes = await axios.get('http://localhost:3001/api/auth/users', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+        } catch (error) {
+          console.error('Error fetching users:', error)
+          // Continuer même si la récupération des utilisateurs échoue
+        }
+      } else {
+        console.log('User is not an admin, using current user only')
+        // Pour les utilisateurs non-admin, utiliser uniquement l'utilisateur actuel
+        const profileRes = await axios.get('http://localhost:3001/api/auth/profile', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }),
-        axios.get('http://localhost:3001/api/auth/users', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }),
-      ])
+        })
+
+        if (profileRes.data && profileRes.data.user) {
+          usersRes.data = [profileRes.data.user]
+        }
+      }
 
       if (projectsRes.data.success) {
         setProjects(projectsRes.data.projects)

@@ -118,9 +118,9 @@ export default function Profile() {
         setSnackbarSeverity('success');
         setOpenSnackbar(true);
 
-        // Redirect to login page after a short delay
+        // Redirect to client login page after a short delay
         setTimeout(() => {
-          navigate('/login');
+          window.location.href = 'http://localhost:3000/#/login';
         }, 1500);
       } else {
         // Show error message

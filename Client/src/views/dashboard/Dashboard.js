@@ -71,11 +71,23 @@ const Dashboard = () => {
           return
         }
 
-        const response = await axios.get('/auth/users')
+        // Vérifier le rôle de l'utilisateur
+        const userRole = localStorage.getItem('userRole')
+        console.log('Dashboard - User role:', userRole)
 
-        setUsers(response.data)
+        // Seuls les administrateurs peuvent récupérer la liste des utilisateurs
+        if (userRole === 'Admin') {
+          try {
+            const response = await axios.get('/auth/users')
+            setUsers(response.data)
+          } catch (error) {
+            console.error('There was an error fetching the users!', error)
+          }
+        } else {
+          console.log('User is not an admin, skipping user fetch')
+        }
       } catch (error) {
-        console.error('There was an error fetching the users!', error)
+        console.error('Error in fetchUsers:', error)
       }
     }
 

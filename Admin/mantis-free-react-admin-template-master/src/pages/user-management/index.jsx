@@ -129,7 +129,8 @@ const UserManagement = () => {
 
   const handleAddUser = async () => {
     try {
-      const response = await api.post('/auth/register', newUser);
+      // Utiliser la nouvelle route pour créer des utilisateurs par les administrateurs
+      const response = await api.post('/auth/users', newUser);
       if (response.data.success) {
         setSnackbar({
           open: true,
@@ -159,7 +160,7 @@ const UserManagement = () => {
     try {
       // Create a copy of the user object without the _id field
       const { _id, ...userData } = currentUser;
-      
+
       // Only include password if it's not empty
       if (!userData.password) {
         delete userData.password;
@@ -230,12 +231,7 @@ const UserManagement = () => {
     <MainCard title="User Management">
       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h6">Manage Users</Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={handleOpenAddDialog}
-        >
+        <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={handleOpenAddDialog}>
           Add User
         </Button>
       </Box>
@@ -264,28 +260,26 @@ const UserManagement = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              users
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((user) => (
-                  <TableRow key={user._id}>
-                    <TableCell>{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.role}</TableCell>
-                    <TableCell>
-                      <IconButton color="primary" onClick={() => handleOpenEditDialog(user)}>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton color="error" onClick={() => handleOpenDeleteDialog(user)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))
+              users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user) => (
+                <TableRow key={user._id}>
+                  <TableCell>{user.name}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.role}</TableCell>
+                  <TableCell>
+                    <IconButton color="primary" onClick={() => handleOpenEditDialog(user)}>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton color="error" onClick={() => handleOpenDeleteDialog(user)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))
             )}
           </TableBody>
         </Table>
       </TableContainer>
-      
+
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
@@ -302,12 +296,7 @@ const UserManagement = () => {
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Name"
-                value={newUser.name}
-                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-              />
+              <TextField fullWidth label="Name" value={newUser.name} onChange={(e) => setNewUser({ ...newUser, name: e.target.value })} />
             </Grid>
             <Grid item xs={12}>
               <TextField
@@ -330,12 +319,9 @@ const UserManagement = () => {
             <Grid item xs={12}>
               <FormControl fullWidth>
                 <InputLabel>Role</InputLabel>
-                <Select
-                  value={newUser.role}
-                  label="Role"
-                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-                >
-                  <MenuItem value="Admin">Admin</MenuItem>
+                <Select value={newUser.role} label="Role" onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}>
+                  {/* Afficher l'option Admin uniquement pour les super admins */}
+                  {localStorage.getItem('userRole') === 'Admin' && <MenuItem value="Admin">Admin</MenuItem>}
                   <MenuItem value="Client">Client</MenuItem>
                 </Select>
               </FormControl>
@@ -385,12 +371,9 @@ const UserManagement = () => {
               <Grid item xs={12}>
                 <FormControl fullWidth>
                   <InputLabel>Role</InputLabel>
-                  <Select
-                    value={currentUser.role}
-                    label="Role"
-                    onChange={(e) => setCurrentUser({ ...currentUser, role: e.target.value })}
-                  >
-                    <MenuItem value="Admin">Admin</MenuItem>
+                  <Select value={currentUser.role} label="Role" onChange={(e) => setCurrentUser({ ...currentUser, role: e.target.value })}>
+                    {/* Afficher l'option Admin uniquement pour les super admins */}
+                    {localStorage.getItem('userRole') === 'Admin' && <MenuItem value="Admin">Admin</MenuItem>}
                     <MenuItem value="Client">Client</MenuItem>
                   </Select>
                 </FormControl>

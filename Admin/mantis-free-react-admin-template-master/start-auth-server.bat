@@ -1,0 +1,6 @@
+@echo off
+echo Installing dependencies for auth transfer server...
+npm install express body-parser cors nodemon --save
+
+echo Starting auth transfer server...
+node server.js

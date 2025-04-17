@@ -18,12 +18,17 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
           return
         }
 
-        // If adminOnly is true, check if user has admin role
-        // Otherwise, check if user has client role
-        const hasCorrectRole = adminOnly ? await isAdmin() : await isClient()
+        // Check if user is admin first
+        const isAdminUser = await isAdmin()
+        console.log('Is admin user:', isAdminUser)
+
+        // If user is admin, they can access all routes
+        // If adminOnly is true, only admins can access
+        // If adminOnly is false, both admins and clients can access
+        const hasCorrectRole = isAdminUser || (!adminOnly && (await isClient()))
 
         // Log the role check for monitoring
-        console.log('Role check:', { adminOnly, hasCorrectRole })
+        console.log('Role check:', { adminOnly, isAdminUser, hasCorrectRole })
 
         // Restore strict role verification
         setAuthorized(hasCorrectRole)

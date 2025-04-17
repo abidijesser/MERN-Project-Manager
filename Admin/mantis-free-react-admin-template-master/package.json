@@ -16,7 +16,9 @@
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:fix": "eslint --fix \"src/**/*.{js,jsx,ts,tsx}\"",
     "prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
-    "knip": "knip"
+    "knip": "knip",
+    "server": "node server.js",
+    "dev-server": "nodemon server.js"
   },
   "dependencies": {
     "@ant-design/colors": "7.2.0",
@@ -28,6 +30,10 @@
     "@fontsource/poppins": "5.1.1",
     "@fontsource/public-sans": "5.1.2",
     "@fontsource/roboto": "5.1.1",
+    "express": "^4.18.2",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "nodemon": "^3.0.1",
     "@mui/base": "5.0.0-beta.69",
     "@mui/lab": "6.0.0-beta.24",
     "@mui/material": "6.4.1",
