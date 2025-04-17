@@ -99,16 +99,28 @@ const TaskDetail = () => {
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <h5>Détails de la tâche</h5>
             <div>
-              <CButton
-                color="primary"
-                className="me-2"
-                onClick={() => navigate(`/tasks/edit/${id}`)}
-              >
-                Modifier
-              </CButton>
-              <CButton color="danger" className="me-2" onClick={handleDelete}>
-                Supprimer
-              </CButton>
+              {localStorage.getItem('userRole') === 'Admin' ? (
+                <>
+                  <CButton
+                    color="primary"
+                    className="me-2"
+                    onClick={() => navigate(`/tasks/edit/${id}`)}
+                  >
+                    Modifier
+                  </CButton>
+                  <CButton color="danger" className="me-2" onClick={handleDelete}>
+                    Supprimer
+                  </CButton>
+                </>
+              ) : (
+                <CButton
+                  color="warning"
+                  className="me-2"
+                  onClick={() => navigate(`/tasks/status/${id}`)}
+                >
+                  Modifier statut
+                </CButton>
+              )}
               <CButton color="secondary" onClick={() => navigate('/tasks')}>
                 Retour
               </CButton>

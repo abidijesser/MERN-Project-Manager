@@ -5,7 +5,16 @@ const speakeasy = require("speakeasy");
 module.exports = async (req, res, next) => {
   try {
     console.log("Auth middleware - Request path:", req.path);
+    console.log("Auth middleware - Method:", req.method);
     console.log("Auth middleware - Headers:", req.headers);
+
+    // Log request body for status update requests
+    if (req.path.includes("/status") && req.method === "PUT") {
+      console.log(
+        "Auth middleware - Request body for status update:",
+        req.body
+      );
+    }
 
     // Get token from Authorization header
     const token = req.headers.authorization?.split(" ")[1];

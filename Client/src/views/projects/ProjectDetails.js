@@ -44,11 +44,22 @@ const ProjectDetails = () => {
     <CRow>
       <CCol>
         <CCard>
-          <CCardHeader>
+          <CCardHeader className="d-flex justify-content-between align-items-center">
             <strong>Détails du projet</strong>
-            <CButton color="secondary" className="float-end" onClick={() => navigate('/projects')}>
-              Retour
-            </CButton>
+            <div>
+              {localStorage.getItem('userRole') === 'Admin' && (
+                <CButton
+                  color="primary"
+                  className="me-2"
+                  onClick={() => navigate(`/projects/edit/${id}`)}
+                >
+                  Modifier
+                </CButton>
+              )}
+              <CButton color="secondary" onClick={() => navigate('/projects')}>
+                Retour
+              </CButton>
+            </div>
           </CCardHeader>
           <CCardBody>
             <h2>{project.projectName}</h2>

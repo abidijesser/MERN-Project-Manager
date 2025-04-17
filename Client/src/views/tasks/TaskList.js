@@ -163,7 +163,8 @@ const TaskList = () => {
                   >
                     Détails
                   </CButton>
-                  {localStorage.getItem('userRole') === 'Admin' && (
+
+                  {localStorage.getItem('userRole') === 'Admin' ? (
                     <>
                       <CButton
                         color="primary"
@@ -177,6 +178,15 @@ const TaskList = () => {
                         Supprimer
                       </CButton>
                     </>
+                  ) : (
+                    <CButton
+                      color="warning"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => navigate(`/tasks/status/${task._id}`)}
+                    >
+                      Modifier statut
+                    </CButton>
                   )}
                 </CTableDataCell>
               </CTableRow>

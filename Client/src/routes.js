@@ -4,6 +4,7 @@ import Profile from './views/pages/profile/Profile'
 import TaskList from './views/tasks/TaskList'
 import TaskForm from './views/tasks/TaskForm'
 import TaskDetail from './views/tasks/TaskDetail'
+import TaskStatusForm from './views/tasks/TaskStatusForm'
 import ProjectsList from './views/projects/ProjectsList'
 import CreateProject from './views/projects/CreateProject'
 import ProjectDetails from './views/projects/ProjectDetails'
@@ -39,6 +40,7 @@ const routes = [
   { path: '/tasks', exact: true, name: 'Tâches', element: TaskList },
   { path: '/tasks/new', exact: true, name: 'Nouvelle tâche', element: TaskForm },
   { path: '/tasks/edit/:id', exact: true, name: 'Modifier tâche', element: TaskForm },
+  { path: '/tasks/status/:id', exact: true, name: 'Modifier statut', element: TaskStatusForm },
   { path: '/tasks/:id', exact: true, name: 'Détails tâche', element: TaskDetail },
   { path: '/projects', exact: true, name: 'Projets', element: ProjectsList },
   { path: '/projects/new', exact: true, name: 'Créer un projet', element: CreateProject },
