@@ -8,33 +8,144 @@ const speakeasy = require("speakeasy");
 const qrcode = require("qrcode");
 require("dotenv").config();
 
-exports.generate2FA = async (req, res) => {
-  const secret = speakeasy.generateSecret({ length: 20 });
-  const user = await User.findById(req.user.id);
-  user.twoFactorSecret = secret.base32;
-  await user.save();
+// Fonction pour générer le QR code pour l'authentification à deux facteurs
+const generate2FA = async (req, res) => {
+  try {
+    console.log("generate2FA - Request received");
+    console.log("generate2FA - User ID:", req.user.id);
 
-  qrcode.toDataURL(secret.otpauth_url, (err, data_url) => {
-    res.json({ success: true, qrCode: data_url });
-  });
+    const secret = speakeasy.generateSecret({ length: 20 });
+    console.log("generate2FA - Secret generated");
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      console.log("generate2FA - User not found");
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    user.twoFactorSecret = secret.base32;
+    await user.save();
+    console.log("generate2FA - Secret saved to user");
+
+    qrcode.toDataURL(secret.otpauth_url, (err, data_url) => {
+      if (err) {
+        console.error("generate2FA - Error generating QR code:", err);
+        return res
+          .status(500)
+          .json({ success: false, error: "Error generating QR code" });
+      }
+
+      console.log("generate2FA - QR code generated successfully");
+      res.json({ success: true, qrCode: data_url });
+    });
+  } catch (error) {
+    console.error("generate2FA - Error:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Error generating 2FA setup" });
+  }
 };
 
-exports.verify2FA = async (req, res) => {
-  const { token } = req.body;
-  const user = await User.findById(req.user.id);
+// Fonction pour vérifier le code d'authentification à deux facteurs
+const verify2FA = async (req, res) => {
+  try {
+    console.log("verify2FA - Request received");
+    console.log("verify2FA - User ID:", req.user.id);
+    console.log("verify2FA - Request body:", req.body);
 
-  const verified = speakeasy.totp.verify({
-    secret: user.twoFactorSecret,
-    encoding: "base32",
-    token,
-  });
+    const { token } = req.body;
+    console.log("verify2FA - Token received:", token);
 
-  if (verified) {
-    user.twoFactorEnabled = true;
-    await user.save();
-    res.json({ success: true, message: "2FA enabled successfully" });
-  } else {
-    res.status(401).json({ success: false, error: "Invalid 2FA token" });
+    if (!token) {
+      console.log("verify2FA - No token provided");
+      return res
+        .status(400)
+        .json({ success: false, error: "Verification token is required" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      console.log("verify2FA - User not found");
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    if (!user.twoFactorSecret) {
+      console.log("verify2FA - No 2FA secret found for user");
+      return res
+        .status(400)
+        .json({ success: false, error: "No 2FA setup found for this user" });
+    }
+
+    console.log("verify2FA - Verifying token with details:");
+    console.log("verify2FA - Secret:", user.twoFactorSecret);
+    console.log("verify2FA - Token:", token);
+
+    // Nettoyer le token
+    const cleanToken = token.toString().replace(/\s+/g, "");
+    console.log("verify2FA - Cleaned token:", cleanToken);
+
+    // Générer le token actuel pour comparaison
+    const currentToken = speakeasy.totp({
+      secret: user.twoFactorSecret,
+      encoding: "base32",
+    });
+    console.log("verify2FA - Current expected token:", currentToken);
+
+    // Essayer avec différentes fenêtres de temps
+    let verified = false;
+    let usedWindow = 0;
+
+    // Essayer avec des fenêtres de plus en plus grandes
+    for (let window = 0; window <= 4; window++) {
+      const result = speakeasy.totp.verify({
+        secret: user.twoFactorSecret,
+        encoding: "base32",
+        token: cleanToken,
+        window: window,
+      });
+
+      console.log(
+        `verify2FA - Verification with window ${window} (${
+          window * 30
+        } seconds): ${result}`
+      );
+
+      if (result) {
+        verified = true;
+        usedWindow = window;
+        break;
+      }
+    }
+
+    console.log(
+      "verify2FA - Final verification result:",
+      verified,
+      "with window:",
+      usedWindow
+    );
+
+    if (verified) {
+      user.twoFactorEnabled = true;
+      await user.save();
+      console.log("verify2FA - 2FA enabled successfully");
+      res.json({ success: true, message: "2FA enabled successfully" });
+    } else {
+      console.log("verify2FA - Invalid token");
+      res.status(401).json({
+        success: false,
+        error:
+          "Invalid 2FA token. Please make sure you are entering the current code from your authenticator app.",
+        debug: {
+          expectedToken: currentToken,
+          receivedToken: cleanToken,
+        },
+      });
+    }
+  } catch (error) {
+    console.error("verify2FA - Error:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Error verifying 2FA token" });
   }
 };
 
@@ -103,7 +214,7 @@ async function register(req, res) {
 async function login(req, res) {
   try {
     console.log("Login request received:", req.body);
-    const { email, password } = req.body;
+    const { email, password, twoFactorCode } = req.body;
     console.log("Login attempt for email:", email);
 
     // Validation
@@ -141,12 +252,57 @@ async function login(req, res) {
       });
     }
 
+    // Check if 2FA is enabled for this user
+    if (user.twoFactorEnabled) {
+      console.log("User has 2FA enabled:", user.email);
+
+      // If 2FA code is not provided, return a response indicating 2FA is required
+      if (!twoFactorCode) {
+        console.log("2FA code not provided, requesting 2FA verification");
+        return res.status(200).json({
+          success: true,
+          requireTwoFactor: true,
+          userId: user._id,
+          message: "Veuillez entrer le code d'authentification à deux facteurs",
+        });
+      }
+
+      // Verify the 2FA code
+      console.log("Verifying 2FA code:", twoFactorCode);
+      console.log("2FA secret for user:", user.twoFactorSecret);
+
+      // Nettoyer le code et ajouter une fenêtre de tolérance
+      const cleanCode = twoFactorCode.toString().replace(/\s+/g, "");
+      console.log("Cleaned 2FA code:", cleanCode);
+
+      const verified = speakeasy.totp.verify({
+        secret: user.twoFactorSecret,
+        encoding: "base32",
+        token: cleanCode,
+        window: 2, // Ajouter une fenêtre de tolérance de 90 secondes
+      });
+
+      console.log("2FA verification result:", verified);
+
+      if (!verified) {
+        console.log("2FA verification failed for user:", user.email);
+        return res.status(400).json({
+          success: false,
+          error: "Code d'authentification à deux facteurs invalide",
+        });
+      }
+
+      console.log("2FA verification successful for user:", user.email);
+    } else {
+      console.log("User does not have 2FA enabled:", user.email);
+    }
+
     // Generate JWT and send response
     console.log("Generating JWT token for user:", user.email);
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "24h", // Augmenter la durée de validité du token à 24 heures
     });
-    console.log("JWT token generated successfully");
+    console.log("JWT token generated successfully with 24h expiration");
 
     console.log("Login successful for user:", user.email);
     // Return user data (excluding password) along with the token
@@ -155,6 +311,7 @@ async function login(req, res) {
       name: user.name,
       email: user.email,
       role: user.role,
+      twoFactorEnabled: user.twoFactorEnabled || false,
     };
     console.log("Returning user data:", userData);
     res.status(200).json({ success: true, token, user: userData });
@@ -637,4 +794,6 @@ module.exports = {
   deleteUser,
   changePassword,
   createUserByAdmin,
+  generate2FA,
+  verify2FA,
 };

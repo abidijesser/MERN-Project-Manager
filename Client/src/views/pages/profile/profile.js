@@ -48,29 +48,93 @@ const Profile = () => {
 
   const handleEnable2FA = async () => {
     try {
-      const response = await axios.post('/auth/generate-2fa')
-      if (response.data.success) {
-        setQrCode(response.data.qrCode)
-        setShow2FASetup(true)
+      console.log('Profile - Enabling 2FA')
+      console.log('Profile - Token exists:', !!localStorage.getItem('token'))
+
+      // Log the full URL being called
+      const url = 'http://localhost:3001/api/auth/generate-2fa'
+      console.log('Profile - Calling URL:', url)
+
+      // Use fetch instead of axios for debugging
+      const token = localStorage.getItem('token')
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      console.log('Profile - Response status:', response.status)
+
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Profile - Response data:', data)
+
+        if (data.success) {
+          setQrCode(data.qrCode)
+          setShow2FASetup(true)
+          toast.success('2FA setup generated successfully')
+        } else {
+          console.error('Profile - Server returned error:', data.error)
+          toast.error(data.error || 'Error generating 2FA setup')
+        }
+      } else {
+        console.error('Profile - HTTP error:', response.status)
+        toast.error(`Error ${response.status}: ${response.statusText}`)
       }
     } catch (error) {
-      console.error('Error generating 2FA:', error)
-      toast.error('Error generating 2FA setup')
+      console.error('Profile - Error generating 2FA:', error)
+      toast.error('Error generating 2FA setup: ' + error.message)
     }
   }
 
   const handleVerify2FA = async () => {
     try {
-      const response = await axios.post('/auth/verify-2fa', { token: verificationCode })
-      if (response.data.success) {
+      console.log('Profile - Verifying 2FA code:', verificationCode)
+
+      // Nettoyer le code (supprimer les espaces)
+      const cleanCode = verificationCode.toString().replace(/\s+/g, '')
+      console.log('Profile - Cleaned 2FA code:', cleanCode)
+
+      // Utiliser fetch pour plus de détails sur la réponse
+      const token = localStorage.getItem('token')
+      const url = 'http://localhost:3001/api/auth/verify-2fa'
+      console.log('Profile - Calling URL:', url)
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ token: cleanCode }),
+      })
+
+      console.log('Profile - Verify 2FA response status:', response.status)
+
+      const data = await response.json()
+      console.log('Profile - Verify 2FA response data:', data)
+
+      if (data.success) {
         toast.success('2FA enabled successfully')
         setUser((prev) => ({ ...prev, twoFactorEnabled: true }))
         setShow2FASetup(false)
         setVerificationCode('')
+      } else {
+        console.error('Profile - 2FA verification failed:', data.error)
+        toast.error(data.error || 'Invalid verification code')
+
+        // Afficher des informations de débogage si disponibles
+        if (data.debug) {
+          console.log('Profile - 2FA debug info:', data.debug)
+          console.log('Profile - Expected token:', data.debug.expectedToken)
+          console.log('Profile - Received token:', data.debug.receivedToken)
+        }
       }
     } catch (error) {
-      console.error('Error verifying 2FA:', error)
-      toast.error('Invalid verification code')
+      console.error('Profile - Error verifying 2FA:', error)
+      toast.error('Error verifying 2FA code: ' + (error.message || 'Unknown error'))
     }
   }
 

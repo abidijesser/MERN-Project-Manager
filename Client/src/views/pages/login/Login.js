@@ -12,9 +12,14 @@ import {
   CInputGroup,
   CInputGroupText,
   CRow,
+  CModal,
+  CModalHeader,
+  CModalTitle,
+  CModalBody,
+  CModalFooter,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilLockLocked, cilUser } from '@coreui/icons'
+import { cilLockLocked, cilUser, cilShieldAlt } from '@coreui/icons'
 import axios from '../../../utils/axios'
 import { toast } from 'react-toastify'
 
@@ -22,11 +27,16 @@ const Login = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [showTwoFactorModal, setShowTwoFactorModal] = useState(false)
+  const [twoFactorCode, setTwoFactorCode] = useState('')
+  const [twoFactorError, setTwoFactorError] = useState('')
+  const [tempUserData, setTempUserData] = useState(null)
   const navigate = useNavigate()
 
   async function handleSubmit(event) {
     event.preventDefault()
     setError('') // Clear any previous errors
+    setTwoFactorError('') // Clear any previous 2FA errors
     console.log('Attempting to login with email:', email)
 
     try {
@@ -39,6 +49,20 @@ const Login = () => {
       console.log('Login response:', response.data)
 
       if (response.data.success) {
+        // Check if 2FA is required
+        if (response.data.requireTwoFactor) {
+          console.log('2FA is required for this account')
+          // Store temporary user data for 2FA verification
+          setTempUserData({
+            email: email,
+            password: password,
+            userId: response.data.userId,
+          })
+          // Show 2FA modal
+          setShowTwoFactorModal(true)
+          return
+        }
+
         console.log('Login successful, full response:', response.data)
         // Store the token in localStorage
         localStorage.setItem('token', response.data.token)
@@ -68,51 +92,8 @@ const Login = () => {
 
         // Navigate to client dashboard
         navigate('/dashboard')
-      } else if (response.data.message === '2FA required') {
-        const twoFactorToken = prompt('Enter your 2FA token:')
-
-        console.log('Sending 2FA verification request')
-        const finalResponse = await axios.post(
-          '/auth/login',
-          {
-            email: email,
-            password: password,
-          },
-          {
-            headers: {
-              'x-2fa-token': twoFactorToken,
-            },
-          },
-        )
-
-        console.log('2FA response:', finalResponse.data)
-
-        if (finalResponse.data.success) {
-          console.log('2FA login successful, full response:', finalResponse.data)
-          localStorage.setItem('token', finalResponse.data.token)
-          console.log('Token stored from 2FA login:', finalResponse.data.token)
-
-          // Store user role if available
-          if (finalResponse.data.user && finalResponse.data.user.role) {
-            localStorage.setItem('userRole', finalResponse.data.user.role)
-            console.log('User role stored from 2FA:', finalResponse.data.user.role)
-
-            // Redirect based on role
-            if (finalResponse.data.user.role === 'Admin') {
-              console.log('Admin user detected from 2FA, redirecting to admin redirect page')
-              // Navigate to the admin redirect page
-              navigate('/admin-redirect')
-              return
-            }
-          } else {
-            console.error('User role not found in 2FA response:', finalResponse.data)
-          }
-
-          // Navigate to client dashboard
-          navigate('/dashboard')
-        } else {
-          setError(finalResponse.data.error || 'Login failed')
-        }
+      } else {
+        setError(response.data.error || 'Login failed')
       }
     } catch (error) {
       console.error('Login error details:', {
@@ -121,6 +102,84 @@ const Login = () => {
         status: error.response?.status,
       })
       setError(error.response?.data?.error || 'An error occurred during login')
+    }
+  }
+
+  // Function to handle 2FA verification
+  async function handleTwoFactorVerification() {
+    setTwoFactorError('') // Clear any previous errors
+
+    if (!twoFactorCode) {
+      setTwoFactorError('Please enter the verification code')
+      return
+    }
+
+    try {
+      console.log('Sending 2FA verification request')
+      console.log('2FA code entered:', twoFactorCode)
+      console.log('User data:', tempUserData)
+
+      // Nettoyer le code 2FA (supprimer les espaces)
+      const cleanCode = twoFactorCode.toString().replace(/\s+/g, '')
+      console.log('Cleaned 2FA code:', cleanCode)
+
+      const response = await axios.post('/auth/login', {
+        email: tempUserData.email,
+        password: tempUserData.password,
+        twoFactorCode: cleanCode,
+      })
+
+      console.log('2FA response:', response.data)
+
+      if (response.data.success) {
+        console.log('2FA login successful, full response:', response.data)
+        // Close the 2FA modal
+        setShowTwoFactorModal(false)
+
+        // Store the token in localStorage
+        localStorage.setItem('token', response.data.token)
+        console.log('Token stored from 2FA login:', response.data.token)
+
+        // Store user role if available
+        if (response.data.user && response.data.user.role) {
+          localStorage.setItem('userRole', response.data.user.role)
+          console.log('User role stored from 2FA:', response.data.user.role)
+
+          // Redirect based on role
+          if (response.data.user.role === 'Admin') {
+            console.log('Admin user detected from 2FA, redirecting to admin redirect page')
+            // Navigate to the admin redirect page
+            navigate('/admin-redirect')
+            return
+          }
+        } else {
+          console.error('User role not found in 2FA response:', response.data)
+        }
+
+        // Navigate to client dashboard
+        navigate('/dashboard')
+      } else {
+        setTwoFactorError(response.data.error || 'Verification failed')
+      }
+    } catch (error) {
+      console.error('2FA verification error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      })
+
+      // Afficher un message d'erreur plus détaillé
+      const errorMessage = error.response?.data?.error || 'An error occurred during verification'
+      console.error('2FA error message:', errorMessage)
+      setTwoFactorError(errorMessage)
+
+      // Ajouter un message d'aide
+      if (errorMessage.includes('invalid')) {
+        setTwoFactorError(
+          errorMessage +
+            '. Please make sure you are entering the current code from your authenticator app.',
+        )
+      }
     }
   }
 
@@ -235,6 +294,36 @@ const Login = () => {
           </CCol>
         </CRow>
       </CContainer>
+
+      {/* Two-Factor Authentication Modal */}
+      <CModal visible={showTwoFactorModal} onClose={() => setShowTwoFactorModal(false)}>
+        <CModalHeader>
+          <CModalTitle>Two-Factor Authentication</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <p>Please enter the verification code from your authenticator app:</p>
+          {twoFactorError && <div className="alert alert-danger">{twoFactorError}</div>}
+          <CInputGroup className="mb-3">
+            <CInputGroupText>
+              <CIcon icon={cilShieldAlt} />
+            </CInputGroupText>
+            <CFormInput
+              type="text"
+              placeholder="Verification Code"
+              value={twoFactorCode}
+              onChange={(e) => setTwoFactorCode(e.target.value)}
+            />
+          </CInputGroup>
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setShowTwoFactorModal(false)}>
+            Cancel
+          </CButton>
+          <CButton color="primary" onClick={handleTwoFactorVerification}>
+            Verify
+          </CButton>
+        </CModalFooter>
+      </CModal>
     </div>
   )
 }

@@ -33,37 +33,46 @@ const AppHeaderDropdown = () => {
 
   const handleLogout = async () => {
     try {
+      console.log('Logout - Starting logout process')
       const token = localStorage.getItem('token')
-      if (!token) {
-        navigate('/login')
-        return
-      }
 
-      const response = await axios.get('http://localhost:3001/api/auth/logout', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (response.data.success) {
-        // Clear local storage
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-
-        // Show success message
-        toast.success('Déconnexion réussie')
-
-        // Navigate to login page
-        navigate('/login')
-      } else {
-        throw new Error(response.data.error || 'Erreur lors de la déconnexion')
-      }
-    } catch (error) {
-      console.error('Logout error:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la déconnexion')
-      // Still clear local storage and redirect to login
+      // Clear local storage first to ensure the user is logged out even if the server request fails
       localStorage.removeItem('token')
       localStorage.removeItem('user')
+
+      // Show success message
+      toast.success('Déconnexion réussie')
+
+      // Try to call the server logout endpoint, but don't wait for it
+      if (token) {
+        try {
+          console.log('Logout - Calling server logout endpoint')
+          await fetch('http://localhost:3001/api/auth/logout', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          })
+          console.log('Logout - Server logout successful')
+        } catch (serverError) {
+          // Ignore server errors since we've already cleared local storage
+          console.log('Logout - Server logout failed, but local logout successful')
+          console.error('Server logout error:', serverError)
+        }
+      }
+
+      // Navigate to login page
+      console.log('Logout - Redirecting to login page')
+      navigate('/login')
+    } catch (error) {
+      console.error('Logout error:', error)
+
+      // Ensure logout even if there's an error
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+
+      toast.error('Erreur lors de la déconnexion, mais vous avez été déconnecté')
       navigate('/login')
     }
   }

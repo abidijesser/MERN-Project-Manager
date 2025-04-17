@@ -57,24 +57,21 @@ module.exports = async (req, res, next) => {
       await user.save();
     }
 
-    // Check if 2FA is enabled and verify the token
-    if (user.twoFactorEnabled) {
-      const twoFactorToken = req.headers["x-2fa-token"]; // Assume 2FA token is sent in a custom header
-      const verified = speakeasy.totp.verify({
-        secret: user.twoFactorSecret,
-        encoding: "base32",
-        token: twoFactorToken,
-      });
-
-      if (!verified) {
-        return res
-          .status(401)
-          .json({ success: false, error: "Invalid 2FA token" });
-      }
-    }
+    // Note: We no longer check 2FA token for every request
+    // 2FA is only verified during login
+    // This comment is kept to document the change
 
     // Add user to request
     req.user = user;
+    console.log(
+      "Auth middleware - Authentication successful for user:",
+      user.email
+    );
+    console.log("Auth middleware - User role:", user.role);
+    console.log(
+      "Auth middleware - 2FA enabled:",
+      user.twoFactorEnabled || false
+    );
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
