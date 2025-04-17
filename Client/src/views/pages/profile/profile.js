@@ -8,6 +8,11 @@ import {
   CForm,
   CFormInput,
   CButton,
+  CModal,
+  CModalHeader,
+  CModalTitle,
+  CModalBody,
+  CModalFooter,
 } from '@coreui/react'
 import { Link } from 'react-router-dom'
 import axios from '../../../utils/axios'
@@ -25,6 +30,8 @@ const Profile = () => {
   const [qrCode, setQrCode] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
   const [show2FASetup, setShow2FASetup] = useState(false)
+  const [showDisable2FA, setShowDisable2FA] = useState(false)
+  const [disableCode, setDisableCode] = useState('')
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -138,6 +145,57 @@ const Profile = () => {
     }
   }
 
+  const handleShowDisable2FA = () => {
+    setShowDisable2FA(true)
+  }
+
+  const handleCancelDisable2FA = () => {
+    setShowDisable2FA(false)
+    setDisableCode('')
+  }
+
+  const handleDisable2FA = async () => {
+    try {
+      console.log('Profile - Disabling 2FA with code:', disableCode)
+
+      // Nettoyer le code (supprimer les espaces)
+      const cleanCode = disableCode.toString().replace(/\s+/g, '')
+      console.log('Profile - Cleaned disable code:', cleanCode)
+
+      // Utiliser fetch pour plus de détails sur la réponse
+      const token = localStorage.getItem('token')
+      const url = 'http://localhost:3001/api/auth/disable-2fa'
+      console.log('Profile - Calling URL:', url)
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ token: cleanCode }),
+      })
+
+      console.log('Profile - Disable 2FA response status:', response.status)
+
+      const data = await response.json()
+      console.log('Profile - Disable 2FA response data:', data)
+
+      if (data.success) {
+        toast.success('2FA disabled successfully')
+        setUser((prev) => ({ ...prev, twoFactorEnabled: false }))
+        setShowDisable2FA(false)
+        setDisableCode('')
+      } else {
+        console.error('Profile - 2FA disabling failed:', data.error)
+        toast.error(data.error || 'Invalid verification code')
+      }
+    } catch (error) {
+      console.error('Profile - Error disabling 2FA:', error)
+      toast.error('Error disabling 2FA: ' + (error.message || 'Unknown error'))
+    }
+  }
+
   if (loading) {
     return <div>Loading...</div>
   }
@@ -151,6 +209,30 @@ const Profile = () => {
           </CCardHeader>
           <CCardBody>
             {error && <div className="alert alert-danger">{error}</div>}
+
+            {/* Modal pour désactiver 2FA */}
+            <CModal visible={showDisable2FA} onClose={handleCancelDisable2FA}>
+              <CModalHeader>
+                <CModalTitle>Disable Two-Factor Authentication</CModalTitle>
+              </CModalHeader>
+              <CModalBody>
+                <p>Please enter the verification code from your authenticator app to confirm:</p>
+                <CFormInput
+                  type="text"
+                  placeholder="Verification Code"
+                  value={disableCode}
+                  onChange={(e) => setDisableCode(e.target.value)}
+                />
+              </CModalBody>
+              <CModalFooter>
+                <CButton color="secondary" onClick={handleCancelDisable2FA}>
+                  Cancel
+                </CButton>
+                <CButton color="danger" onClick={handleDisable2FA}>
+                  Disable 2FA
+                </CButton>
+              </CModalFooter>
+            </CModal>
             <CForm>
               <div className="mb-3">
                 <label className="form-label">Name</label>
@@ -167,7 +249,12 @@ const Profile = () => {
               <div className="mb-3">
                 <label className="form-label">Two-Factor Authentication</label>
                 {user.twoFactorEnabled ? (
-                  <div className="text-success">Enabled</div>
+                  <div>
+                    <div className="text-success mb-2">Enabled</div>
+                    <CButton color="danger" onClick={handleShowDisable2FA}>
+                      Disable 2FA
+                    </CButton>
+                  </div>
                 ) : (
                   <CButton color="primary" onClick={handleEnable2FA}>
                     Enable 2FA

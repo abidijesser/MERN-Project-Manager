@@ -32,6 +32,7 @@ router.post("/change-password", auth, authController.changePassword);
 // Two-Factor Authentication routes
 router.post("/generate-2fa", auth, authController.generate2FA);
 router.post("/verify-2fa", auth, authController.verify2FA);
+router.post("/disable-2fa", auth, authController.disable2FA);
 
 // Logout route - version simplifiée sans session
 router.get("/logout", (req, res) => {

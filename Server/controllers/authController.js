@@ -149,6 +149,82 @@ const verify2FA = async (req, res) => {
   }
 };
 
+// Fonction pour désactiver l'authentification à deux facteurs
+const disable2FA = async (req, res) => {
+  try {
+    console.log("disable2FA - Request received");
+    console.log("disable2FA - User ID:", req.user.id);
+    console.log("disable2FA - Request body:", req.body);
+
+    const { token } = req.body;
+    console.log("disable2FA - Token received:", token);
+
+    // Vérifier si un token est fourni (pour confirmer la désactivation)
+    if (!token) {
+      console.log("disable2FA - No token provided");
+      return res.status(400).json({
+        success: false,
+        error: "Verification token is required to disable 2FA",
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      console.log("disable2FA - User not found");
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    // Vérifier si 2FA est activé
+    if (!user.twoFactorEnabled || !user.twoFactorSecret) {
+      console.log("disable2FA - 2FA not enabled for user");
+      return res.status(400).json({
+        success: false,
+        error: "Two-factor authentication is not enabled for this user",
+      });
+    }
+
+    // Nettoyer le token
+    const cleanToken = token.toString().replace(/\s+/g, "");
+    console.log("disable2FA - Cleaned token:", cleanToken);
+
+    // Vérifier le token pour confirmer la désactivation
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: "base32",
+      token: cleanToken,
+      window: 4, // Utiliser une fenêtre de tolérance plus large
+    });
+
+    console.log("disable2FA - Token verification result:", verified);
+
+    if (verified) {
+      // Désactiver 2FA
+      user.twoFactorEnabled = false;
+      user.twoFactorSecret = undefined; // Supprimer le secret
+      await user.save();
+
+      console.log("disable2FA - 2FA disabled successfully");
+      res.json({
+        success: true,
+        message: "Two-factor authentication has been disabled",
+      });
+    } else {
+      console.log("disable2FA - Invalid token");
+      res.status(401).json({
+        success: false,
+        error:
+          "Invalid verification code. Please enter the current code from your authenticator app.",
+      });
+    }
+  } catch (error) {
+    console.error("disable2FA - Error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error disabling two-factor authentication",
+    });
+  }
+};
+
 async function register(req, res) {
   try {
     console.log("Registration request received:", req.body);
@@ -796,4 +872,5 @@ module.exports = {
   createUserByAdmin,
   generate2FA,
   verify2FA,
+  disable2FA,
 };
