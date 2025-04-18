@@ -28,42 +28,42 @@ const CreateProject = () => {
   const navigate = useNavigate()
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setProject(prev => ({
+    const { name, value } = e.target
+    setProject((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }))
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     // Validation des dates
-    const startDate = new Date(project.startDate);
-    const endDate = new Date(project.endDate);
-    
+    const startDate = new Date(project.startDate)
+    const endDate = new Date(project.endDate)
+
     if (startDate > endDate) {
-      toast.error('La date de début doit être antérieure à la date de fin');
-      return;
+      toast.error('La date de début doit être antérieure à la date de fin')
+      return
     }
 
     try {
-      console.log("Données envoyées :", project)
-      const response = await axios.post('/api/projects', project)
-      
+      console.log('Données envoyées :', project)
+      const response = await axios.post('/projects', project)
+
       if (response.data.message) {
         toast.success(response.data.message)
       } else {
         toast.success('Projet créé avec succès !')
       }
-      
+
       navigate('/projects')
     } catch (error) {
       console.error('Erreur lors de la création du projet :', error)
       if (error.response?.data?.details) {
         // Afficher les détails de l'erreur de validation
         if (Array.isArray(error.response.data.details)) {
-          error.response.data.details.forEach(detail => {
+          error.response.data.details.forEach((detail) => {
             toast.error(detail)
           })
         } else {

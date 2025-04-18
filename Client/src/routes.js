@@ -4,6 +4,7 @@ import Profile from './views/pages/profile/Profile'
 import TaskList from './views/tasks/TaskList'
 import TaskForm from './views/tasks/TaskForm'
 import TaskDetail from './views/tasks/TaskDetail'
+import TaskStatusForm from './views/tasks/TaskStatusForm'
 import ProjectsList from './views/projects/ProjectsList'
 import CreateProject from './views/projects/CreateProject'
 import ProjectDetails from './views/projects/ProjectDetails'
@@ -21,12 +22,14 @@ const ResetPassword = React.lazy(() => import('./views/pages/reset-password/Rese
 const VerifyEmail = React.lazy(() => import('./views/pages/verify-email/VerifyEmail'))
 const Performances = React.lazy(() => import('./views/Performances/Performances'))
 const EditTask = React.lazy(() => import('./views/tasks/EditTask'))
+const AdminRedirect = React.lazy(() => import('./views/pages/admin-redirect/AdminRedirect'))
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
   { path: '/dashboard', name: 'Dashboard', element: Dashboard },
   { path: '/login', name: 'Login', element: Login },
   { path: '/register', name: 'Register', element: Register },
+  { path: '/admin-redirect', name: 'Admin Redirect', element: AdminRedirect },
   { path: '/404', name: 'Page 404', element: Page404 },
   { path: '/500', name: 'Page 500', element: Page500 },
   { path: '/profile', name: 'Profile', element: Profile },
@@ -37,7 +40,8 @@ const routes = [
   { path: '/verify-email/:token', name: 'Verify Email', element: VerifyEmail },
   { path: '/tasks', exact: true, name: 'Tâches', element: TaskList },
   { path: '/tasks/new', exact: true, name: 'Nouvelle tâche', element: TaskForm },
-  { path: '/tasks/edit/:id', exact: true, name: 'Modifier tâche', element: EditTask },
+  { path: '/tasks/edit/:id', exact: true, name: 'Modifier tâche', element: TaskForm },
+  { path: '/tasks/status/:id', exact: true, name: 'Modifier statut', element: TaskStatusForm },
   { path: '/tasks/:id', exact: true, name: 'Détails tâche', element: TaskDetail },
   { path: '/projects', exact: true, name: 'Projets', element: ProjectsList },
   { path: '/projects/new', exact: true, name: 'Créer un projet', element: CreateProject },

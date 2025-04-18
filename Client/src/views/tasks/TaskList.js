@@ -61,6 +61,16 @@ const TaskList = () => {
   }
 
   const handleDelete = async (id) => {
+    // Vérifier le rôle de l'utilisateur
+    const userRole = localStorage.getItem('userRole')
+    console.log('TaskList - User role:', userRole)
+
+    // Seuls les administrateurs peuvent supprimer des tâches
+    if (userRole !== 'Admin') {
+      toast.error('Seuls les administrateurs peuvent supprimer des tâches')
+      return
+    }
+
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
       try {
         const token = localStorage.getItem('token')
@@ -111,9 +121,11 @@ const TaskList = () => {
     <CCard>
       <CCardHeader className="d-flex justify-content-between align-items-center">
         <h5>Liste des tâches</h5>
-        <CButton color="primary" onClick={() => navigate('/tasks/new')}>
-          Nouvelle tâche
-        </CButton>
+        {localStorage.getItem('userRole') === 'Admin' && (
+          <CButton color="primary" onClick={() => navigate('/tasks/new')}>
+            Nouvelle tâche
+          </CButton>
+        )}
       </CCardHeader>
       <CCardBody>
         <div className="d-flex flex-wrap">

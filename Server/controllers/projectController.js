@@ -54,6 +54,7 @@ const createProject = async (req, res) => {
     // Validation des champs requis
     if (!projectName || !description || !startDate || !endDate) {
       return res.status(400).json({
+        success: false,
         error: "Tous les champs obligatoires doivent être remplis",
         details: {
           projectName: !projectName ? "Le nom du projet est requis" : null,
@@ -69,6 +70,7 @@ const createProject = async (req, res) => {
     const end = new Date(endDate);
     if (start > end) {
       return res.status(400).json({
+        success: false,
         error: "La date de début doit être antérieure à la date de fin",
       });
     }
@@ -77,11 +79,15 @@ const createProject = async (req, res) => {
     const project = new Project({
       ...req.body,
       owner: req.user.id,
-      status: "Active", // Statut par défaut
+      status: req.body.status || "Active", // Utiliser le statut fourni ou "Active" par défaut
+      // S'assurer que tasks et members sont des tableaux
+      tasks: req.body.tasks || [],
+      members: req.body.members || [],
     });
 
     await project.save();
     res.status(201).json({
+      success: true,
       message: "Projet créé avec succès",
       project,
     });
@@ -89,11 +95,13 @@ const createProject = async (req, res) => {
     console.error("Erreur lors de la création du projet :", error);
     if (error.name === "ValidationError") {
       return res.status(400).json({
+        success: false,
         error: "Erreur de validation",
         details: Object.values(error.errors).map((err) => err.message),
       });
     }
     res.status(500).json({
+      success: false,
       error: "Erreur lors de la création du projet",
       details: error.message,
     });
@@ -152,7 +160,6 @@ const deleteProject = async (req, res) => {
     res.status(500).json({ error: "Erreur lors de la suppression du projet" });
   }
 };
-
 module.exports = {
   getAllProjects,
   getProjectById,

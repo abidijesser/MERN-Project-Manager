@@ -1,8 +1,8 @@
 // filepath: c:\Users\Lenovo\Desktop\pi1\MERN-Project-Manager\Client\src\views\dashboard\Dashboard.js
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Link } from 'react-router-dom';
-import classNames from 'classnames';
+import React, { useEffect, useState } from 'react'
+import axios from '../../utils/axios'
+import { Link } from 'react-router-dom'
+import classNames from 'classnames'
 
 import {
   CAvatar,
@@ -21,8 +21,8 @@ import {
   CTableHead,
   CTableHeaderCell,
   CTableRow,
-} from '@coreui/react';
-import CIcon from '@coreui/icons-react';
+} from '@coreui/react'
+import CIcon from '@coreui/icons-react'
 import {
   cibCcAmex,
   cibCcApplePay,
@@ -44,47 +44,75 @@ import {
   cilPeople,
   cilUser,
   cilUserFemale,
-} from '@coreui/icons';
+} from '@coreui/icons'
 
-import avatar1 from 'src/assets/images/avatars/1.jpg';
-import avatar2 from 'src/assets/images/avatars/2.jpg';
-import avatar3 from 'src/assets/images/avatars/3.jpg';
-import avatar4 from 'src/assets/images/avatars/4.jpg';
-import avatar5 from 'src/assets/images/avatars/5.jpg';
-import avatar6 from 'src/assets/images/avatars/6.jpg';
+import avatar1 from 'src/assets/images/avatars/1.jpg'
+import avatar2 from 'src/assets/images/avatars/2.jpg'
+import avatar3 from 'src/assets/images/avatars/3.jpg'
+import avatar4 from 'src/assets/images/avatars/4.jpg'
+import avatar5 from 'src/assets/images/avatars/5.jpg'
+import avatar6 from 'src/assets/images/avatars/6.jpg'
 
-import projectManagementImage from 'src/assets/images/gestion_projet.png';
+import projectManagementImage from 'src/assets/images/gestion_projet.png'
 
-import WidgetsBrand from '../widgets/WidgetsBrand';
-import WidgetsDropdown from '../widgets/WidgetsDropdown';
-import MainChart from './MainChart';
+import WidgetsBrand from '../widgets/WidgetsBrand'
+import WidgetsDropdown from '../widgets/WidgetsDropdown'
+import MainChart from './MainChart'
 
 const Dashboard = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState([])
 
   useEffect(() => {
-    axios.get('http://localhost:3001/admin/users')
-      .then(response => {
-        setUsers(response.data);
-      })
-      .catch(error => {
-        console.error('There was an error fetching the users!', error);
-      });
-  }, []);
+    const fetchUsers = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) {
+          console.error('No authentication token found')
+          return
+        }
+
+        // Vérifier le rôle de l'utilisateur
+        const userRole = localStorage.getItem('userRole')
+        console.log('Dashboard - User role:', userRole)
+
+        // Seuls les administrateurs peuvent récupérer la liste des utilisateurs
+        if (userRole === 'Admin') {
+          try {
+            const response = await axios.get('/auth/users')
+            setUsers(response.data)
+          } catch (error) {
+            console.error('There was an error fetching the users!', error)
+          }
+        } else {
+          console.log('User is not an admin, skipping user fetch')
+        }
+      } catch (error) {
+        console.error('Error in fetchUsers:', error)
+      }
+    }
+
+    fetchUsers()
+  }, [])
 
   return (
     <>
       {/* Section Héro */}
       <section className="hero-section text-center py-5 bg-primary text-white">
         <div className="container">
-          <h1 className="display-4 fw-bold">Optimisez vos projets, anticipez les risques, réussissez en toute sérénité !</h1>
+          <h1 className="display-4 fw-bold">
+            Optimisez vos projets, anticipez les risques, réussissez en toute sérénité !
+          </h1>
           <p className="lead mt-3">
-            Notre plateforme utilise l’IA pour vous aider à gérer vos projets de manière efficace, 
+            Notre plateforme utilise l’IA pour vous aider à gérer vos projets de manière efficace,
             en identifiant les risques et en optimisant vos ressources.
           </p>
           <div className="d-flex justify-content-center gap-3 mt-4">
-            <CButton color="light" size="lg" href="/signup" className="fw-bold">Commencer gratuitement</CButton>
-            <CButton color="secondary" size="lg" href="/demo" className="fw-bold">Voir une démo</CButton>
+            <CButton color="light" size="lg" href="/signup" className="fw-bold">
+              Commencer gratuitement
+            </CButton>
+            <CButton color="secondary" size="lg" href="/demo" className="fw-bold">
+              Voir une démo
+            </CButton>
           </div>
           <img
             src={projectManagementImage}
@@ -101,17 +129,27 @@ const Dashboard = () => {
           <h2 className="text-center mb-5 fw-bold">Fonctionnalités Clés</h2>
           <CRow className="text-center">
             {[
-              { icon: '📌', title: 'Planification intelligente', description: 'Gantt, Kanban, Sprints' },
+              {
+                icon: '📌',
+                title: 'Planification intelligente',
+                description: 'Gantt, Kanban, Sprints',
+              },
               { icon: '📌', title: 'Suivi des tâches et jalons', description: '' },
               { icon: '📌', title: 'Prédiction des délais grâce à l’IA', description: '' },
               { icon: '📌', title: 'Optimisation des ressources', description: '' },
-              { icon: '📌', title: 'Collaboration en équipe', description: 'Messagerie, documents partagés' },
+              {
+                icon: '📌',
+                title: 'Collaboration en équipe',
+                description: 'Messagerie, documents partagés',
+              },
             ].map((feature, index) => (
               <CCol key={index} md={4} className="mb-4">
                 <div className="feature-icon display-4 text-primary">{feature.icon}</div>
                 <h5 className="mt-3 fw-bold">{feature.title}</h5>
                 <p className="text-muted">{feature.description}</p>
-                <CButton color="link" href="/features" className="text-primary fw-bold">En savoir plus</CButton>
+                <CButton color="link" href="/features" className="text-primary fw-bold">
+                  En savoir plus
+                </CButton>
               </CCol>
             ))}
           </CRow>
@@ -124,8 +162,16 @@ const Dashboard = () => {
           <h2 className="text-center mb-5 fw-bold">Témoignages & Avis Clients</h2>
           <CRow>
             {[
-              { name: 'Alice Dupont', company: 'Entreprise A', feedback: 'Une plateforme révolutionnaire !' },
-              { name: 'Jean Martin', company: 'Entreprise B', feedback: 'Gestion simplifiée et efficace.' },
+              {
+                name: 'Alice Dupont',
+                company: 'Entreprise A',
+                feedback: 'Une plateforme révolutionnaire !',
+              },
+              {
+                name: 'Jean Martin',
+                company: 'Entreprise B',
+                feedback: 'Gestion simplifiée et efficace.',
+              },
             ].map((testimonial, index) => (
               <CCol key={index} md={6} className="mb-4">
                 <blockquote className="blockquote p-4 bg-light rounded shadow">
@@ -178,7 +224,9 @@ const Dashboard = () => {
                       <li key={i}>{feature}</li>
                     ))}
                   </ul>
-                  <CButton color="primary" href="/pricing" className="fw-bold">Choisir</CButton>
+                  <CButton color="primary" href="/pricing" className="fw-bold">
+                    Choisir
+                  </CButton>
                 </div>
               </CCol>
             ))}
@@ -261,7 +309,8 @@ const Dashboard = () => {
                       <CTableDataCell>
                         <div>{user.name}</div>
                         <div className="small text-body-secondary text-nowrap">
-                          <span>{user.new ? 'New' : 'Recurring'}</span> | Registered: {user.registered}
+                          <span>{user.new ? 'New' : 'Recurring'}</span> | Registered:{' '}
+                          {user.registered}
                         </div>
                       </CTableDataCell>
                       <CTableDataCell className="text-center">
@@ -271,7 +320,9 @@ const Dashboard = () => {
                         <div className="d-flex justify-content-between text-nowrap">
                           <div className="fw-semibold">50%</div>
                           <div className="ms-3">
-                            <small className="text-body-secondary">Jun 11, 2023 - Jul 10, 2023</small>
+                            <small className="text-body-secondary">
+                              Jun 11, 2023 - Jul 10, 2023
+                            </small>
                           </div>
                         </div>
                         <CProgress thin color="success" value={50} />
@@ -295,7 +346,6 @@ const Dashboard = () => {
         </CCol>
       </CRow>
     </>
-  );
-};
-
-export default Dashboard;
+  )
+}
+export default Dashboard

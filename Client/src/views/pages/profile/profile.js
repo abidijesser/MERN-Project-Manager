@@ -10,33 +10,26 @@ import {
   CButton,
 } from '@coreui/react'
 import { Link } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../../../utils/axios'
+import { toast } from 'react-toastify'
 
 const Profile = () => {
   const [user, setUser] = useState({
     name: '',
     email: '',
     role: '',
+    twoFactorEnabled: false,
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [qrCode, setQrCode] = useState('')
+  const [verificationCode, setVerificationCode] = useState('')
+  const [show2FASetup, setShow2FASetup] = useState(false)
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = localStorage.getItem('token')
-        if (!token) {
-          setError('No authentication token found')
-          setLoading(false)
-          return
-        }
-
-        const response = await axios.get('http://localhost:3001/api/auth/profile', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
+        const response = await axios.get('/auth/profile')
         if (response.data.success && response.data.user) {
           setUser(response.data.user)
         } else {
@@ -52,6 +45,34 @@ const Profile = () => {
 
     fetchProfile()
   }, [])
+
+  const handleEnable2FA = async () => {
+    try {
+      const response = await axios.post('/auth/generate-2fa')
+      if (response.data.success) {
+        setQrCode(response.data.qrCode)
+        setShow2FASetup(true)
+      }
+    } catch (error) {
+      console.error('Error generating 2FA:', error)
+      toast.error('Error generating 2FA setup')
+    }
+  }
+
+  const handleVerify2FA = async () => {
+    try {
+      const response = await axios.post('/auth/verify-2fa', { token: verificationCode })
+      if (response.data.success) {
+        toast.success('2FA enabled successfully')
+        setUser((prev) => ({ ...prev, twoFactorEnabled: true }))
+        setShow2FASetup(false)
+        setVerificationCode('')
+      }
+    } catch (error) {
+      console.error('Error verifying 2FA:', error)
+      toast.error('Invalid verification code')
+    }
+  }
 
   if (loading) {
     return <div>Loading...</div>
@@ -79,6 +100,34 @@ const Profile = () => {
                 <label className="form-label">Role</label>
                 <CFormInput type="text" value={user.role || ''} disabled />
               </div>
+              <div className="mb-3">
+                <label className="form-label">Two-Factor Authentication</label>
+                {user.twoFactorEnabled ? (
+                  <div className="text-success">Enabled</div>
+                ) : (
+                  <CButton color="primary" onClick={handleEnable2FA}>
+                    Enable 2FA
+                  </CButton>
+                )}
+              </div>
+              {show2FASetup && (
+                <div className="mb-3">
+                  <h5>Setup Two-Factor Authentication</h5>
+                  <p>Scan this QR code with your authenticator app:</p>
+                  {qrCode && <img src={qrCode} alt="QR Code" />}
+                  <div className="mt-3">
+                    <CFormInput
+                      type="text"
+                      placeholder="Enter verification code"
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value)}
+                    />
+                    <CButton color="success" className="mt-2" onClick={handleVerify2FA}>
+                      Verify
+                    </CButton>
+                  </div>
+                </div>
+              )}
               {user._id && (
                 <Link to={`/profile/edit/${user._id}`}>
                   <CButton color="primary">Edit Profile</CButton>

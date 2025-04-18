@@ -4,14 +4,48 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const transporter = require("../config/emailConfig");
+const speakeasy = require("speakeasy");
+const qrcode = require("qrcode");
 require("dotenv").config();
+
+exports.generate2FA = async (req, res) => {
+  const secret = speakeasy.generateSecret({ length: 20 });
+  const user = await User.findById(req.user.id);
+  user.twoFactorSecret = secret.base32;
+  await user.save();
+
+  qrcode.toDataURL(secret.otpauth_url, (err, data_url) => {
+    res.json({ success: true, qrCode: data_url });
+  });
+};
+
+exports.verify2FA = async (req, res) => {
+  const { token } = req.body;
+  const user = await User.findById(req.user.id);
+
+  const verified = speakeasy.totp.verify({
+    secret: user.twoFactorSecret,
+    encoding: "base32",
+    token,
+  });
+
+  if (verified) {
+    user.twoFactorEnabled = true;
+    await user.save();
+    res.json({ success: true, message: "2FA enabled successfully" });
+  } else {
+    res.status(401).json({ success: false, error: "Invalid 2FA token" });
+  }
+};
 
 async function register(req, res) {
   try {
-    const { name, email, password } = req.body;
+    console.log("Registration request received:", req.body);
+    const { name, email, password, role } = req.body;
 
     // Validation
     if (!name || !email || !password) {
+      console.log("Registration validation failed - missing fields");
       return res.status(400).json({
         success: false,
         error: "Tous les champs sont obligatoires",
@@ -21,6 +55,7 @@ async function register(req, res) {
     // Vérifier si l'email existe déjà
     const emailExist = await User.findOne({ email });
     if (emailExist) {
+      console.log("Registration failed - email already exists:", email);
       return res.status(400).json({
         success: false,
         error: "Email existe déjà",
@@ -29,27 +64,37 @@ async function register(req, res) {
 
     // Hasher le mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
+    console.log("Password hashed successfully");
 
     // Créer le nouvel utilisateur
     const user = new User({
       name,
       email,
       password: hashedPassword,
+      role: "Client", // Force le rôle Client pour l'inscription publique
       isVerified: true, // Pour le moment, on skip la vérification email
     });
 
+    console.log("User created with Client role");
+
+    console.log("Attempting to save new user:", { name, email });
     await user.save();
+    console.log("User saved successfully with ID:", user._id);
 
-    // Créer le token JWT
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    }); // Utilisez process.env.JWT_SECRET
+    // We're not automatically logging in the user after registration anymore
+    // So we don't need to generate a token here
+    console.log("User registered successfully");
 
-    // Envoyer la réponse
-    res.status(201).json({ token });
+    // Envoyer la réponse sans token
+    console.log("Sending successful registration response");
+    res.status(201).json({
+      success: true,
+      message: "Registration successful. Please log in with your credentials.",
+    });
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({
+      success: false,
       error: "Erreur lors de l'enregistrement",
     });
   }
@@ -57,52 +102,66 @@ async function register(req, res) {
 
 async function login(req, res) {
   try {
+    console.log("Login request received:", req.body);
     const { email, password } = req.body;
+    console.log("Login attempt for email:", email);
 
     // Validation
     if (!email || !password) {
+      console.log("Login validation failed - missing email or password");
       return res.status(400).json({
         success: false,
         error: "Email et mot de passe sont requis",
       });
     }
 
-    // Trouver l'utilisateur
+    // Find the user
+    console.log("Searching for user with email:", email);
     const user = await User.findOne({ email });
+    console.log("User found:", user ? "Yes" : "No");
+
     if (!user) {
+      console.log("Login failed - email not found:", email);
       return res.status(400).json({
         success: false,
         error: "Email non trouvé",
       });
     }
 
-    // Vérifier si l'utilisateur a été créé via Google
-    if (user.googleId) {
-      return res.status(400).json({
-        success: false,
-        error: "Cet email est associé à un compte Google. Veuillez vous connecter avec Google.",
-      });
-    }
-
-    // Vérifier le mot de passe
+    // Verify the password
+    console.log("Verifying password for user:", user.email);
     const isMatched = await bcrypt.compare(password, user.password);
+    console.log("Password match:", isMatched ? "Yes" : "No");
+
     if (!isMatched) {
+      console.log("Login failed - incorrect password for user:", user.email);
       return res.status(400).json({
         success: false,
         error: "Mot de passe incorrect",
       });
     }
 
-    // Créer le token JWT
+    // Generate JWT and send response
+    console.log("Generating JWT token for user:", user.email);
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
+    console.log("JWT token generated successfully");
 
-    // Envoyer la réponse
-    res.status(200).json({ token });
+    console.log("Login successful for user:", user.email);
+    // Return user data (excluding password) along with the token
+    const userData = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
+    console.log("Returning user data:", userData);
+    res.status(200).json({ success: true, token, user: userData });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({
+      success: false,
       error: "Erreur lors de la connexion",
     });
   }
@@ -207,8 +266,15 @@ const forgotPassword = async (req, res) => {
 
     await user.save();
 
-    // Construct reset URL (adjust frontend URL as needed)
-    const resetUrl = `http://localhost:3000/#/reset-password/${resetToken}`;
+    // Construct reset URL based on user role
+    let resetUrl;
+    if (user.role === "Admin") {
+      // Admin users get the admin application reset URL
+      resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+    } else {
+      // Regular users get the client application reset URL
+      resetUrl = `http://localhost:3000/#/reset-password/${resetToken}`;
+    }
 
     // Email content
     const mailOptions = {
@@ -217,7 +283,8 @@ const forgotPassword = async (req, res) => {
       subject: "Password Reset Request",
       html: `
         <p>You requested a password reset.</p>
-        <p>Click this <a href="${resetUrl}">link</a> to set a new password.</p>
+        <p>Click the link below to set a new password:</p>
+        <p><a href="${resetUrl}">Reset Password</a></p>
         <p>This link will expire in 1 hour.</p>
         <p>If you didn't request this, please ignore this email.</p>
       `,
@@ -236,8 +303,7 @@ const forgotPassword = async (req, res) => {
       console.log("✅ Password reset email sent: %s", info.messageId);
       res.json({
         success: true,
-        message:
-          "If an account with that email exists, a password reset link has been sent.",
+        message: "Password reset link has been sent to your email.",
       });
     });
   } catch (error) {
@@ -288,10 +354,12 @@ const resetPassword = async (req, res) => {
     await user.save();
 
     // Optionally log the user in or send a confirmation email
+    console.log("Password reset successful for user:", user.email);
 
     res.json({
       success: true,
-      message: "Password has been reset successfully.",
+      message:
+        "Password reset successful. You can now log in with your new password.",
     });
   } catch (error) {
     console.error("❌ Error in resetPassword:", error);
@@ -334,15 +402,222 @@ const verifyEmail = async (req, res) => {
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password");
-    res.json({
-      success: true,
-      users,
-    });
+    res.json(users);
   } catch (error) {
     console.error("Error in getAllUsers:", error);
     res.status(500).json({
       success: false,
       error: "Error fetching users",
+    });
+  }
+};
+
+// Fonction spécifique pour l'ajout d'utilisateurs par les administrateurs
+const createUserByAdmin = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+
+    // Validation
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: "All fields are required",
+      });
+    }
+
+    // Vérifier si l'email existe déjà
+    const emailExist = await User.findOne({ email });
+    if (emailExist) {
+      return res.status(400).json({
+        success: false,
+        error: "Email already exists",
+      });
+    }
+
+    // Vérifier les permissions de rôle
+    // Seul un admin peut créer un utilisateur admin
+    if (role === "Admin" && req.user.role !== "Admin") {
+      return res.status(403).json({
+        success: false,
+        error: "Only admins can create admin users",
+      });
+    }
+
+    // Hasher le mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Créer le nouvel utilisateur
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role: role || "Client", // Par défaut, le rôle est Client
+      isVerified: true,
+    });
+
+    await user.save();
+
+    res.status(201).json({
+      success: true,
+      message: "User created successfully",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("Error creating user by admin:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error creating user",
+    });
+  }
+};
+
+const getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("-password");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+    res.json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error("Error in getUserById:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error fetching user",
+    });
+  }
+};
+
+const updateUser = async (req, res) => {
+  try {
+    const { name, email, role, password } = req.body;
+
+    // Find the user
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    // Vérifier les permissions de rôle
+    // Seul un super admin peut modifier un utilisateur en admin
+    if (role === "Admin" && req.user.role !== "Admin") {
+      return res.status(403).json({
+        success: false,
+        error: "Only super admins can assign Admin role",
+      });
+    }
+
+    // Update user fields
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (role) user.role = role;
+
+    // Only update password if provided
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
+    }
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "User updated successfully",
+    });
+  } catch (error) {
+    console.error("Error in updateUser:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error updating user",
+    });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+
+    res.json({
+      success: true,
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error in deleteUser:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error deleting user",
+    });
+  }
+};
+// Change password function
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: "Current password and new password are required",
+      });
+    }
+
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        error: "Current password is incorrect",
+      });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    // Save the user with the new password
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    console.error("Error in changePassword:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error changing password",
     });
   }
 };
@@ -357,4 +632,9 @@ module.exports = {
   resetPassword,
   verifyEmail,
   getAllUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
+  changePassword,
+  createUserByAdmin,
 };

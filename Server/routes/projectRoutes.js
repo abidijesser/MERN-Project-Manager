@@ -9,10 +9,10 @@ router.get("/", auth, async (req, res) => {
   try {
     // Filtrer les projets par propriétaire (utilisateur connecté)
     const projects = await Project.find({ owner: req.user.id }).populate("tasks members owner");
-    res.status(200).json({ projects });
+    res.status(200).json({ success: true, projects });
   } catch (error) {
     console.error("Erreur lors de la récupération des projets:", error);
-    res.status(500).json({ error: "Erreur lors de la récupération des projets" });
+    res.status(500).json({ success: false, error: "Erreur lors de la récupération des projets" });
   }
 });
 

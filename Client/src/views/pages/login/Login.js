@@ -15,7 +15,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilLockLocked, cilUser } from '@coreui/icons'
-import axios from 'axios'
+import axios from '../../../utils/axios'
 import { toast } from 'react-toastify'
 
 const Login = () => {
@@ -24,25 +24,103 @@ const Login = () => {
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
+  async function handleSubmit(event) {
+    event.preventDefault()
+    setError('') // Clear any previous errors
+    console.log('Attempting to login with email:', email)
 
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/login', {
-        email,
-        password,
+      console.log('Sending login request to:', axios.defaults.baseURL + '/auth/login')
+      const response = await axios.post('/auth/login', {
+        email: email,
+        password: password,
       })
 
-      if (response.data.token) {
+      console.log('Login response:', response.data)
+
+      if (response.data.success) {
+        console.log('Login successful, full response:', response.data)
+        // Store the token in localStorage
         localStorage.setItem('token', response.data.token)
+        console.log('Token stored from login:', response.data.token)
+
+        // Store user role if available
+        if (response.data.user && response.data.user.role) {
+          localStorage.setItem('userRole', response.data.user.role)
+          console.log('User role stored:', response.data.user.role)
+
+          // Redirect based on role
+          if (response.data.user.role === 'Admin') {
+            console.log('Admin user detected, redirecting to admin redirect page')
+            console.log('Admin user details:', response.data.user)
+
+            // Add a small delay before redirecting
+            setTimeout(() => {
+              console.log('Now navigating to admin redirect page')
+              // Navigate to the admin redirect page
+              navigate('/admin-redirect')
+            }, 500)
+            return
+          }
+        } else {
+          console.error('User role not found in response:', response.data)
+        }
+
+        // Navigate to client dashboard
         navigate('/dashboard')
+      } else if (response.data.message === '2FA required') {
+        const twoFactorToken = prompt('Enter your 2FA token:')
+
+        console.log('Sending 2FA verification request')
+        const finalResponse = await axios.post(
+          '/auth/login',
+          {
+            email: email,
+            password: password,
+          },
+          {
+            headers: {
+              'x-2fa-token': twoFactorToken,
+            },
+          },
+        )
+
+        console.log('2FA response:', finalResponse.data)
+
+        if (finalResponse.data.success) {
+          console.log('2FA login successful, full response:', finalResponse.data)
+          localStorage.setItem('token', finalResponse.data.token)
+          console.log('Token stored from 2FA login:', finalResponse.data.token)
+
+          // Store user role if available
+          if (finalResponse.data.user && finalResponse.data.user.role) {
+            localStorage.setItem('userRole', finalResponse.data.user.role)
+            console.log('User role stored from 2FA:', finalResponse.data.user.role)
+
+            // Redirect based on role
+            if (finalResponse.data.user.role === 'Admin') {
+              console.log('Admin user detected from 2FA, redirecting to admin redirect page')
+              // Navigate to the admin redirect page
+              navigate('/admin-redirect')
+              return
+            }
+          } else {
+            console.error('User role not found in 2FA response:', finalResponse.data)
+          }
+
+          // Navigate to client dashboard
+          navigate('/dashboard')
+        } else {
+          setError(finalResponse.data.error || 'Login failed')
+        }
       }
     } catch (error) {
-      console.error('Login error:', error)
-      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Login failed'
-      setError(errorMessage)
-      toast.error(errorMessage)
+      console.error('Login error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      })
+      setError(error.response?.data?.error || 'An error occurred during login')
     }
   }
 
@@ -66,7 +144,15 @@ const Login = () => {
   const handleGoogleLogin = () => {
     // Clear any existing tokens
     localStorage.removeItem('token')
-    window.location.href = 'http://localhost:3001/auth/google'
+    // Use the full URL for Google auth with explicit scope
+    window.location.href = 'http://localhost:3001/auth/google?scope=profile%20email'
+  }
+
+  const handleFacebookLogin = () => {
+    // Clear any existing tokens
+    localStorage.removeItem('token')
+    // Use the full URL for Facebook auth
+    window.location.href = 'http://localhost:3001/api/auth/facebook'
   }
 
   return (
@@ -120,8 +206,11 @@ const Login = () => {
                     </CRow>
                   </CForm>
                   <div className="mt-3">
-                    <CButton color="danger" className="w-100" onClick={handleGoogleLogin}>
+                    <CButton color="danger" className="w-100 mb-2" onClick={handleGoogleLogin}>
                       Sign in with Google
+                    </CButton>
+                    <CButton color="primary" className="w-100" onClick={handleFacebookLogin}>
+                      Sign in with Facebook
                     </CButton>
                   </div>
                 </CCardBody>

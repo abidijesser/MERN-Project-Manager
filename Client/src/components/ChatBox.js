@@ -1,6 +1,7 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { FaPaperPlane, FaSmile, FaRobot, FaMicrophone, FaPaperclip } from 'react-icons/fa';
 import ChatContext from '../context/ChatContext';
+import { sendMessageToGemini, testGeminiConnection } from '../services/geminiService';
 import './ChatBox.css';
 
 const ChatBox = () => {
@@ -15,25 +16,44 @@ const ChatBox = () => {
   const commonEmojis = ['😊', '👍', '❤️', '🙏', '👋', '🎉', '🔥', '✨', '💪', '👏'];
 
   // Envoie un message
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (newMessage.trim()) {
       setIsTyping(true);
+      // Envoyer le message de l'utilisateur
+      // Utiliser local: true pour éviter les doublons
       sendMessage({
         content: newMessage,
         timestamp: new Date(),
-        type: 'user'
+        type: 'user',
+        local: true
       });
+
+      const userMessage = newMessage;
       setNewMessage('');
-      
-      // Simuler une réponse du bot
-      setTimeout(() => {
+
+      try {
+        // Obtenir une réponse de Gemini
+        const response = await sendMessageToGemini(userMessage);
+
+        // Envoyer la réponse de Gemini
         sendMessage({
-          content: "Je suis votre assistant virtuel. Comment puis-je vous aider ?",
+          content: response.content,
           timestamp: new Date(),
-          type: 'bot'
+          type: 'bot',
+          local: true
         });
+      } catch (error) {
+        console.error('Error getting response from Gemini:', error);
+        // Envoyer un message d'erreur
+        sendMessage({
+          content: "Désolé, je n'ai pas pu traiter votre demande. Veuillez réessayer plus tard.",
+          timestamp: new Date(),
+          type: 'bot',
+          local: true
+        });
+      } finally {
         setIsTyping(false);
-      }, 1000);
+      }
     }
   };
 
@@ -43,7 +63,7 @@ const ChatBox = () => {
   };
 
   // Gère l'envoi avec la touche Entrée
-  const handleKeyPress = (e) => {
+  const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -79,6 +99,37 @@ const ChatBox = () => {
     scrollToBottom();
   }, [messages]);
 
+  // Tester la connexion à l'API Gemini au chargement
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        const result = await testGeminiConnection();
+        if (result.success) {
+          console.log('Gemini API connection successful:', result.message);
+          // Optionnel : Afficher un message de bienvenue
+          sendMessage({
+            content: "Bonjour ! Je suis l'Assistant Gemini. Comment puis-je vous aider aujourd'hui ?",
+            timestamp: new Date(),
+            type: 'bot',
+            local: true
+          });
+        } else {
+          console.error('Gemini API connection failed:', result.error);
+          sendMessage({
+            content: "Désolé, je ne peux pas me connecter à l'API Gemini en ce moment. Veuillez réessayer plus tard.",
+            timestamp: new Date(),
+            type: 'bot',
+            local: true
+          });
+        }
+      } catch (error) {
+        console.error('Error testing Gemini connection:', error);
+      }
+    };
+
+    testConnection();
+  }, []);
+
   const quickReplies = ['Aujourd\'hui', 'Demain', 'Cette semaine', 'Plus tard'];
 
   return (
@@ -88,7 +139,7 @@ const ChatBox = () => {
         <div className="chatbot-header">
           <div className="chatbot-header-left">
             <FaRobot className="chatbot-icon" />
-            <h2 className="chatbot-name">Assistant Virtuel</h2>
+            <h2 className="chatbot-name">Assistant Gemini</h2>
           </div>
           <div className="chatbot-header-right">
             <span className="status-indicator online"></span>
@@ -103,9 +154,9 @@ const ChatBox = () => {
               <div className="message-content">
                 <span className="message-text">{msg.content}</span>
                 <span className="timestamp">
-                  {new Date(msg.timestamp).toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
+                  {new Date(msg.timestamp).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit'
                   })}
                 </span>
               </div>
@@ -136,7 +187,7 @@ const ChatBox = () => {
 
         {/* Zone de saisie */}
         <div className="input-group">
-          <button 
+          <button
             className="action-button"
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
           >
@@ -157,7 +208,7 @@ const ChatBox = () => {
               </div>
             </div>
           )}
-          <button 
+          <button
             className="action-button"
             onClick={() => fileInputRef.current?.click()}
           >
@@ -174,16 +225,16 @@ const ChatBox = () => {
             className="input-field"
             value={newMessage}
             onChange={handleInputChange}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             rows="1"
           />
-          <button 
+          <button
             className="action-button"
             onClick={() => {/* Implémenter l'enregistrement vocal */}}
           >
             <FaMicrophone />
           </button>
-          <button 
+          <button
             className="send-button"
             onClick={handleSendMessage}
             disabled={!newMessage.trim()}

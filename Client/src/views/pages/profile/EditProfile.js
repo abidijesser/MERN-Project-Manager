@@ -9,7 +9,7 @@ import {
   CFormInput,
   CButton,
 } from '@coreui/react'
-import axios from 'axios'
+import axios from '../../../utils/axios'
 import { useParams, useNavigate } from 'react-router-dom'
 
 const EditProfile = () => {
@@ -24,18 +24,7 @@ const EditProfile = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const token = localStorage.getItem('token')
-        if (!token) {
-          setError('No authentication token found')
-          return
-        }
-
-        const response = await axios.get(`http://localhost:3001/api/auth/profile/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        })
+        const response = await axios.get(`/auth/profile/${id}`)
         setUser(response.data)
       } catch (err) {
         setError('Error fetching user data')
@@ -56,18 +45,7 @@ const EditProfile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        setError('No authentication token found')
-        return
-      }
-
-      await axios.put(`http://localhost:3001/api/auth/profile/${id}`, user, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        withCredentials: true,
-      })
+      await axios.put(`/auth/profile/${id}`, user)
       navigate('/profile')
     } catch (err) {
       setError('Error updating profile')
