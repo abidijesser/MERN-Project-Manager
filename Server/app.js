@@ -9,6 +9,8 @@ const { authRouter, googleAuthRouter } = require("./routes/authRoutes");
 const adminRoutes = require("./routes/admin");
 const taskRoutes = require("./routes/taskRoutes");
 const projectRoutes = require("./routes/projectRoutes");
+const projectsRoutes = require("./routes/projectsRoutes"); // Nouvelle route sans préfixe API
+const usersRoutes = require("./routes/usersRoutes"); // Nouvelle route sans préfixe API
 const chatRoutes = require("./routes/chat");
 const notificationRoutes = require("./routes/notificationRoutes");
 const statsRoutes = require("./routes/statsRoutes");
@@ -55,6 +57,8 @@ app.use("/", googleAuthRouter); // This should be before other routes
 app.use("/admin", adminRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/projects", projectsRoutes); // Nouvelle route sans préfixe API
+app.use("/users", usersRoutes); // Nouvelle route sans préfixe API
 app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/stats", statsRoutes);
