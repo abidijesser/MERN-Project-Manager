@@ -24,4 +24,7 @@ router.put("/:id", projectController.updateProject);
 // DELETE a project
 router.delete("/:id", projectController.deleteProject);
 
+// GET project members
+router.get("/:id/members", projectController.getProjectMembers);
+
 module.exports = router;

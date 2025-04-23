@@ -20,11 +20,17 @@ const SamplePage = Loadable(lazy(() => import('pages/extra-pages/sample-page')))
 // render - user management
 const UserManagement = Loadable(lazy(() => import('pages/user-management')));
 
+// render - project management
+const ProjectManagement = Loadable(lazy(() => import('pages/project-management')));
+
 // render - profile
 const ProfilePage = Loadable(lazy(() => import('pages/profile')));
 
 // render - statistics
 const StatisticsPage = Loadable(lazy(() => import('pages/statistics')));
+
+// render - task management
+const TaskManagement = Loadable(lazy(() => import('pages/task-management')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -70,12 +76,20 @@ const MainRoutes = {
       element: <UserManagement />
     },
     {
+      path: 'project-management',
+      element: <ProjectManagement />
+    },
+    {
       path: 'profile',
       element: <ProfilePage />
     },
     {
       path: 'statistics',
       element: <StatisticsPage />
+    },
+    {
+      path: 'task-management',
+      element: <TaskManagement />
     }
   ]
 };

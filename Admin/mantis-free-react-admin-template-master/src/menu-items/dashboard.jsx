@@ -1,12 +1,14 @@
 // assets
-import { DashboardOutlined, UserOutlined, TeamOutlined, PieChartOutlined } from '@ant-design/icons';
+import { DashboardOutlined, UserOutlined, TeamOutlined, PieChartOutlined, ProjectOutlined, CheckSquareOutlined } from '@ant-design/icons';
 
 // icons
 const icons = {
   DashboardOutlined,
   UserOutlined,
   TeamOutlined,
-  PieChartOutlined
+  PieChartOutlined,
+  ProjectOutlined,
+  CheckSquareOutlined
 };
 
 // ==============================|| MENU ITEMS - DASHBOARD ||============================== //
@@ -30,6 +32,22 @@ const dashboard = {
       type: 'item',
       url: '/user-management',
       icon: icons.TeamOutlined,
+      breadcrumbs: false
+    },
+    {
+      id: 'project-management',
+      title: 'Project Management',
+      type: 'item',
+      url: '/project-management',
+      icon: icons.ProjectOutlined,
+      breadcrumbs: false
+    },
+    {
+      id: 'task-management',
+      title: 'Task Management',
+      type: 'item',
+      url: '/task-management',
+      icon: icons.CheckSquareOutlined,
       breadcrumbs: false
     },
     {

@@ -90,6 +90,40 @@ async function getAllProjects(req, res) {
   }
 }
 
+// Get a single project by ID (admin version - no owner restriction)
+async function getProjectById(req, res) {
+  try {
+    const project = await Project.findById(req.params.id)
+      .populate("owner", "name email")
+      .populate("members", "name email role")
+      .populate({
+        path: "tasks",
+        populate: {
+          path: "assignedTo",
+          select: "name email",
+        },
+      });
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        error: "Project not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      project,
+    });
+  } catch (error) {
+    console.error("Error fetching project:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error fetching project",
+    });
+  }
+}
+
 // Task management functions
 async function getAllTasks(req, res) {
   try {
@@ -160,6 +194,7 @@ module.exports = {
   getUserById,
   updateUserById,
   getAllProjects,
+  getProjectById,
   getAllTasks,
   getDashboardStats,
 };

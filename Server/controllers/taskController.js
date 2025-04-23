@@ -1,4 +1,5 @@
 const Task = require("../models/Task");
+const Project = require("../models/Project");
 const mongoose = require("mongoose");
 const notificationService = require("../services/notificationService");
 
@@ -20,19 +21,54 @@ const createTask = async (req, res) => {
       project,
     } = req.body;
 
-    // Validation des IDs si fournis
-    if (assignedTo && !isValidObjectId(assignedTo)) {
+    // Vérifier que tous les champs requis sont présents
+    if (
+      !title ||
+      !description ||
+      !status ||
+      !priority ||
+      !dueDate ||
+      !assignedTo ||
+      !project
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "Tous les champs sont obligatoires",
+      });
+    }
+
+    // Validation des IDs
+    if (!isValidObjectId(assignedTo)) {
       return res.status(400).json({
         success: false,
         error: "ID d'assignation invalide",
       });
     }
 
-    if (project && !isValidObjectId(project)) {
+    if (!isValidObjectId(project)) {
       return res.status(400).json({
         success: false,
         error: "ID de projet invalide",
       });
+    }
+
+    // Vérifier si l'utilisateur assigné est membre du projet
+    if (project && assignedTo) {
+      const projectData = await Project.findById(project);
+      if (!projectData) {
+        return res.status(404).json({
+          success: false,
+          error: "Projet non trouvé",
+        });
+      }
+
+      // Vérifier si l'utilisateur assigné est membre du projet
+      if (!projectData.members.includes(assignedTo)) {
+        return res.status(400).json({
+          success: false,
+          error: "L'utilisateur assigné doit être membre du projet",
+        });
+      }
     }
 
     // Créer la tâche
@@ -153,19 +189,66 @@ const updateTask = async (req, res) => {
       });
     }
 
-    // Validation des IDs si fournis
-    if (assignedTo && !isValidObjectId(assignedTo)) {
+    // Vérifier que tous les champs requis sont présents
+    if (
+      !title ||
+      !description ||
+      !status ||
+      !priority ||
+      !dueDate ||
+      !assignedTo ||
+      !project
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "Tous les champs sont obligatoires",
+      });
+    }
+
+    // Validation des IDs
+    if (!isValidObjectId(assignedTo)) {
       return res.status(400).json({
         success: false,
         error: "ID d'assignation invalide",
       });
     }
 
-    if (project && !isValidObjectId(project)) {
+    if (!isValidObjectId(project)) {
       return res.status(400).json({
         success: false,
         error: "ID de projet invalide",
       });
+    }
+
+    // Vérifier si l'utilisateur assigné est membre du projet
+    if (project && assignedTo) {
+      const projectData = await Project.findById(project);
+      if (!projectData) {
+        return res.status(404).json({
+          success: false,
+          error: "Projet non trouvé",
+        });
+      }
+
+      // Vérifier si l'utilisateur assigné est membre du projet
+      if (!projectData.members.includes(assignedTo)) {
+        return res.status(400).json({
+          success: false,
+          error: "L'utilisateur assigné doit être membre du projet",
+        });
+      }
+    } else if (!project && assignedTo) {
+      // Si on assigne un utilisateur sans projet, vérifier si la tâche a déjà un projet
+      const existingTask = await Task.findById(req.params.id);
+      if (existingTask && existingTask.project) {
+        const projectData = await Project.findById(existingTask.project);
+        if (projectData && !projectData.members.includes(assignedTo)) {
+          return res.status(400).json({
+            success: false,
+            error: "L'utilisateur assigné doit être membre du projet",
+          });
+        }
+      }
     }
 
     // Préparer les données de mise à jour

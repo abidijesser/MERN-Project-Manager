@@ -1,4 +1,5 @@
 const Project = require("../models/Project");
+const User = require("../models/User");
 
 // GET all projects
 const getAllProjects = async (req, res) => {
@@ -154,6 +155,50 @@ const deleteProject = async (req, res) => {
     res.status(500).json({ error: "Erreur lors de la suppression du projet" });
   }
 };
+// GET project members
+const getProjectMembers = async (req, res) => {
+  try {
+    const projectId = req.params.id;
+
+    // Validate project ID
+    if (!projectId) {
+      return res.status(400).json({
+        success: false,
+        error: "ID de projet requis",
+      });
+    }
+
+    // Find the project
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        error: "Projet non trouvé",
+      });
+    }
+
+    // Get members details
+    const members = await User.find(
+      { _id: { $in: project.members } },
+      "_id name email role"
+    );
+
+    res.status(200).json({
+      success: true,
+      members,
+    });
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des membres du projet:",
+      error
+    );
+    res.status(500).json({
+      success: false,
+      error: "Erreur lors de la récupération des membres du projet",
+    });
+  }
+};
+
 module.exports = {
   getAllProjects,
   getProjectById,
@@ -161,4 +206,5 @@ module.exports = {
   addComment,
   updateProject,
   deleteProject,
+  getProjectMembers,
 };

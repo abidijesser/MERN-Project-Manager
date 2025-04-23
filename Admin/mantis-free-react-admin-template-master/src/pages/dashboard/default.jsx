@@ -21,7 +21,12 @@ import MonthlyBarChart from 'sections/dashboard/default/MonthlyBarChart';
 import ReportAreaChart from 'sections/dashboard/default/ReportAreaChart';
 import UniqueVisitorCard from 'sections/dashboard/default/UniqueVisitorCard';
 import SaleReportCard from 'sections/dashboard/default/SaleReportCard';
-import ProjectManagement from 'sections/dashboard/default/ProjectManagement';
+
+// project management
+import ProjectManagement from 'pages/project-management';
+
+// task management
+import TaskManagement from 'pages/task-management';
 
 // assets
 import GiftOutlined from '@ant-design/icons/GiftOutlined';
@@ -143,10 +148,16 @@ export default function DashboardDefault() {
           <Grid>
             <Typography variant="h5">Project Management</Typography>
           </Grid>
-          <Grid />
+          <Grid>
+            <Button variant="contained" color="primary" onClick={() => (window.location.href = '/project-management')}>
+              View All
+            </Button>
+          </Grid>
         </Grid>
         <MainCard sx={{ mt: 2 }} content={false}>
-          <ProjectManagement />
+          <Box sx={{ p: 2 }}>
+            <ProjectManagement dashboardView={true} />
+          </Box>
         </MainCard>
       </Grid>
       <Grid size={{ xs: 12, md: 5, lg: 4 }}>
@@ -176,7 +187,21 @@ export default function DashboardDefault() {
       </Grid>
       {/* row 4 */}
       <Grid size={{ xs: 12, md: 7, lg: 8 }}>
-        <SaleReportCard />
+        <Grid container alignItems="center" justifyContent="space-between">
+          <Grid>
+            <Typography variant="h5">Task Management</Typography>
+          </Grid>
+          <Grid>
+            <Button variant="contained" color="primary" onClick={() => (window.location.href = '/task-management')}>
+              View All
+            </Button>
+          </Grid>
+        </Grid>
+        <MainCard sx={{ mt: 2 }} content={false}>
+          <Box sx={{ p: 2 }}>
+            <TaskManagement dashboardView={true} />
+          </Box>
+        </MainCard>
       </Grid>
       <Grid size={{ xs: 12, md: 5, lg: 4 }}>
         <Grid container alignItems="center" justifyContent="space-between">
