@@ -21,6 +21,7 @@ import MonthlyBarChart from 'sections/dashboard/default/MonthlyBarChart';
 import ReportAreaChart from 'sections/dashboard/default/ReportAreaChart';
 import UniqueVisitorCard from 'sections/dashboard/default/UniqueVisitorCard';
 import SaleReportCard from 'sections/dashboard/default/SaleReportCard';
+import UpcomingDeadlinesCard from 'sections/dashboard/default/UpcomingDeadlinesCard';
 
 // project management
 import ProjectManagement from 'pages/project-management';
@@ -206,115 +207,13 @@ export default function DashboardDefault() {
       <Grid size={{ xs: 12, md: 5, lg: 4 }}>
         <Grid container alignItems="center" justifyContent="space-between">
           <Grid>
-            <Typography variant="h5">Transaction History</Typography>
+            <Typography variant="h5">Upcoming Deadlines</Typography>
           </Grid>
           <Grid />
         </Grid>
-        <MainCard sx={{ mt: 2 }} content={false}>
-          <List
-            component="nav"
-            sx={{
-              px: 0,
-              py: 0,
-              '& .MuiListItemButton-root': {
-                py: 1.5,
-                px: 2,
-                '& .MuiAvatar-root': avatarSX,
-                '& .MuiListItemSecondaryAction-root': { ...actionSX, position: 'relative' }
-              }
-            }}
-          >
-            <ListItem
-              component={ListItemButton}
-              divider
-              secondaryAction={
-                <Stack sx={{ alignItems: 'flex-end' }}>
-                  <Typography variant="subtitle1" noWrap>
-                    + $1,430
-                  </Typography>
-                  <Typography variant="h6" color="secondary" noWrap>
-                    78%
-                  </Typography>
-                </Stack>
-              }
-            >
-              <ListItemAvatar>
-                <Avatar sx={{ color: 'success.main', bgcolor: 'success.lighter' }}>
-                  <GiftOutlined />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary={<Typography variant="subtitle1">Order #002434</Typography>} secondary="Today, 2:00 AM" />
-            </ListItem>
-            <ListItem
-              component={ListItemButton}
-              divider
-              secondaryAction={
-                <Stack sx={{ alignItems: 'flex-end' }}>
-                  <Typography variant="subtitle1" noWrap>
-                    + $302
-                  </Typography>
-                  <Typography variant="h6" color="secondary" noWrap>
-                    8%
-                  </Typography>
-                </Stack>
-              }
-            >
-              <ListItemAvatar>
-                <Avatar sx={{ color: 'primary.main', bgcolor: 'primary.lighter' }}>
-                  <MessageOutlined />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary={<Typography variant="subtitle1">Order #984947</Typography>} secondary="5 August, 1:45 PM" />
-            </ListItem>
-            <ListItem
-              component={ListItemButton}
-              secondaryAction={
-                <Stack sx={{ alignItems: 'flex-end' }}>
-                  <Typography variant="subtitle1" noWrap>
-                    + $682
-                  </Typography>
-                  <Typography variant="h6" color="secondary" noWrap>
-                    16%
-                  </Typography>
-                </Stack>
-              }
-            >
-              <ListItemAvatar>
-                <Avatar sx={{ color: 'error.main', bgcolor: 'error.lighter' }}>
-                  <SettingOutlined />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary={<Typography variant="subtitle1">Order #988784</Typography>} secondary="7 hours ago" />
-            </ListItem>
-          </List>
-        </MainCard>
-        <MainCard sx={{ mt: 2 }}>
-          <Stack sx={{ gap: 3 }}>
-            <Grid container justifyContent="space-between" alignItems="center">
-              <Grid>
-                <Stack>
-                  <Typography variant="h5" noWrap>
-                    Help & Support Chat
-                  </Typography>
-                  <Typography variant="caption" color="secondary" noWrap>
-                    Typical replay within 5 min
-                  </Typography>
-                </Stack>
-              </Grid>
-              <Grid>
-                <AvatarGroup sx={{ '& .MuiAvatar-root': { width: 32, height: 32 } }}>
-                  <Avatar alt="Remy Sharp" src={avatar1} />
-                  <Avatar alt="Travis Howard" src={avatar2} />
-                  <Avatar alt="Cindy Baker" src={avatar3} />
-                  <Avatar alt="Agnes Walker" src={avatar4} />
-                </AvatarGroup>
-              </Grid>
-            </Grid>
-            <Button size="small" variant="contained" sx={{ textTransform: 'capitalize' }}>
-              Need Help?
-            </Button>
-          </Stack>
-        </MainCard>
+        <Box sx={{ mt: 2 }}>
+          <UpcomingDeadlinesCard />
+        </Box>
       </Grid>
     </Grid>
   );
