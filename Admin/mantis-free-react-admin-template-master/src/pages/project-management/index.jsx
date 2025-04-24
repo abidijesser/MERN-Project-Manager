@@ -11,6 +11,7 @@ import {
   FormControl,
   Grid,
   IconButton,
+  InputAdornment,
   InputLabel,
   List,
   ListItem,
@@ -38,12 +39,23 @@ import api from 'utils/api';
 import axios from 'axios';
 
 // icons
-import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  CalendarOutlined,
+  SyncOutlined,
+  SearchOutlined,
+  CloseOutlined
+} from '@ant-design/icons';
 
 // ==============================|| PROJECT MANAGEMENT ||============================== //
 
 const ProjectManagement = ({ dashboardView = false }) => {
   const [projects, setProjects] = useState([]);
+  const [filteredProjects, setFilteredProjects] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -75,6 +87,9 @@ const ProjectManagement = ({ dashboardView = false }) => {
     severity: 'success'
   });
 
+  // State for calendar sync
+  const [syncing, setSyncing] = useState(false);
+
   // Fetch projects and users on component mount
   useEffect(() => {
     fetchProjects();
@@ -95,6 +110,24 @@ const ProjectManagement = ({ dashboardView = false }) => {
 
     fetchCurrentUser();
   }, []);
+
+  // Filter projects based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredProjects(projects);
+    } else {
+      const lowercasedQuery = searchQuery.toLowerCase();
+      const filtered = projects.filter(
+        (project) =>
+          (project.projectName && project.projectName.toLowerCase().includes(lowercasedQuery)) ||
+          (project.description && project.description.toLowerCase().includes(lowercasedQuery)) ||
+          (project.status && project.status.toLowerCase().includes(lowercasedQuery))
+      );
+      setFilteredProjects(filtered);
+    }
+    // Reset to first page when search changes
+    setPage(0);
+  }, [searchQuery, projects]);
 
   const fetchProjects = async () => {
     try {
@@ -175,6 +208,30 @@ const ProjectManagement = ({ dashboardView = false }) => {
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
+  };
+
+  // Handle calendar sync for a project
+  const handleSyncProject = async (projectId) => {
+    try {
+      setSyncing(true);
+      const response = await api.post(`/calendar/sync-project/${projectId}`);
+      if (response.data.success) {
+        setSnackbar({
+          open: true,
+          message: 'Project synced with Google Calendar successfully',
+          severity: 'success'
+        });
+      }
+    } catch (error) {
+      console.error('Error syncing project with Google Calendar:', error);
+      setSnackbar({
+        open: true,
+        message: 'Error syncing project: ' + (error.response?.data?.error || error.message),
+        severity: 'error'
+      });
+    } finally {
+      setSyncing(false);
+    }
   };
 
   // Dialog handlers
@@ -473,7 +530,29 @@ const ProjectManagement = ({ dashboardView = false }) => {
     <MainCard title={dashboardView ? '' : 'Project Management'}>
       {!dashboardView && (
         <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6">Manage Projects</Typography>
+          <TextField
+            label="Search Projects"
+            variant="outlined"
+            size="small"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name, description, status..."
+            sx={{ width: '40%' }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchOutlined />
+                </InputAdornment>
+              ),
+              endAdornment: searchQuery && (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => setSearchQuery('')}>
+                    <CloseOutlined />
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+          />
           <Button variant="contained" color="primary" startIcon={<PlusOutlined />} onClick={handleOpenAddDialog}>
             Add Project
           </Button>
@@ -500,14 +579,14 @@ const ProjectManagement = ({ dashboardView = false }) => {
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : projects.length === 0 ? (
+            ) : filteredProjects.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={dashboardView ? 4 : 7} align="center">
                   No projects found
                 </TableCell>
               </TableRow>
             ) : (
-              projects.slice(page * rowsPerPage, page * rowsPerPage + (dashboardView ? 5 : rowsPerPage)).map((project) => (
+              filteredProjects.slice(page * rowsPerPage, page * rowsPerPage + (dashboardView ? 5 : rowsPerPage)).map((project) => (
                 <TableRow key={project._id}>
                   <TableCell>{project.projectName}</TableCell>
                   {!dashboardView && (
@@ -531,6 +610,9 @@ const ProjectManagement = ({ dashboardView = false }) => {
                     <IconButton color="error" size="small" onClick={() => handleOpenDeleteDialog(project)}>
                       <DeleteOutlined style={{ fontSize: '1rem' }} />
                     </IconButton>
+                    <IconButton color="secondary" size="small" onClick={() => handleSyncProject(project._id)} disabled={syncing}>
+                      <CalendarOutlined style={{ fontSize: '1rem' }} />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))
@@ -543,7 +625,7 @@ const ProjectManagement = ({ dashboardView = false }) => {
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={projects.length}
+          count={filteredProjects.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
@@ -843,6 +925,14 @@ const ProjectManagement = ({ dashboardView = false }) => {
           )}
         </DialogContent>
         <DialogActions>
+          <Button
+            onClick={() => handleSyncProject(projectDetails._id)}
+            color="secondary"
+            disabled={syncing}
+            startIcon={<CalendarOutlined />}
+          >
+            Sync to Calendar
+          </Button>
           <Button onClick={handleCloseDetailsDialog}>Close</Button>
         </DialogActions>
       </Dialog>

@@ -33,6 +33,10 @@ const UserSchema = new Schema({
   },
   verificationToken: String,
   verificationTokenExpires: Date,
+  googleCalendarToken: {
+    type: Object,
+    default: null,
+  },
 });
 
 // Modifier le middleware pre-save

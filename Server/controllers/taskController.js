@@ -21,31 +21,18 @@ const createTask = async (req, res) => {
       project,
     } = req.body;
 
-    // Vérifier que tous les champs requis sont présents
-    if (
-      !title ||
-      !description ||
-      !status ||
-      !priority ||
-      !dueDate ||
-      !assignedTo ||
-      !project
-    ) {
-      return res.status(400).json({
-        success: false,
-        error: "Tous les champs sont obligatoires",
-      });
-    }
+    // All fields are now optional, no validation needed
+    console.log("All fields are optional, proceeding with task creation");
 
-    // Validation des IDs
-    if (!isValidObjectId(assignedTo)) {
+    // Only validate IDs if they are provided
+    if (assignedTo && !isValidObjectId(assignedTo)) {
       return res.status(400).json({
         success: false,
         error: "ID d'assignation invalide",
       });
     }
 
-    if (!isValidObjectId(project)) {
+    if (project && !isValidObjectId(project)) {
       return res.status(400).json({
         success: false,
         error: "ID de projet invalide",
@@ -136,7 +123,10 @@ const getAllTasks = async (req, res) => {
 // Obtenir une tâche par ID
 const getTaskById = async (req, res) => {
   try {
+    console.log("getTaskById - Task ID:", req.params.id);
+
     if (!isValidObjectId(req.params.id)) {
+      console.log("getTaskById - Invalid task ID format");
       return res.status(400).json({
         success: false,
         error: "ID de tâche invalide",
@@ -148,12 +138,21 @@ const getTaskById = async (req, res) => {
       .populate("project", "projectName")
       .populate("createdBy", "name");
 
+    console.log("getTaskById - Task found:", task ? "Yes" : "No");
+
     if (!task) {
       return res.status(404).json({
         success: false,
         error: "Tâche non trouvée",
       });
     }
+
+    console.log("getTaskById - Task details:", {
+      id: task._id,
+      title: task.title,
+      assignedTo: task.assignedTo ? task.assignedTo._id : null,
+      project: task.project ? task.project._id : null,
+    });
 
     res.json({
       success: true,
@@ -171,6 +170,9 @@ const getTaskById = async (req, res) => {
 // Mettre à jour une tâche
 const updateTask = async (req, res) => {
   try {
+    console.log("updateTask - Request body:", req.body);
+    console.log("updateTask - Task ID:", req.params.id);
+
     const {
       title,
       description,
@@ -183,71 +185,67 @@ const updateTask = async (req, res) => {
 
     // Validation de l'ID de la tâche
     if (!isValidObjectId(req.params.id)) {
+      console.log("updateTask - Invalid task ID format");
       return res.status(400).json({
         success: false,
         error: "ID de tâche invalide",
       });
     }
 
-    // Vérifier que tous les champs requis sont présents
-    if (
-      !title ||
-      !description ||
-      !status ||
-      !priority ||
-      !dueDate ||
-      !assignedTo ||
-      !project
-    ) {
-      return res.status(400).json({
-        success: false,
-        error: "Tous les champs sont obligatoires",
-      });
-    }
+    // All fields are now optional, no validation needed
+    console.log(
+      "All fields are optional for task update, proceeding with update"
+    );
 
-    // Validation des IDs
-    if (!isValidObjectId(assignedTo)) {
+    // Log the update data
+    console.log("updateTask - Update data after validation:", {
+      title,
+      description,
+      status,
+      priority,
+      dueDate,
+      assignedTo,
+      project,
+    });
+
+    // Validation des IDs (seulement si présents)
+    if (assignedTo && !isValidObjectId(assignedTo)) {
+      console.log("updateTask - Invalid assignedTo ID:", assignedTo);
       return res.status(400).json({
         success: false,
         error: "ID d'assignation invalide",
       });
     }
 
-    if (!isValidObjectId(project)) {
+    if (project && !isValidObjectId(project)) {
+      console.log("updateTask - Invalid project ID:", project);
       return res.status(400).json({
         success: false,
         error: "ID de projet invalide",
       });
     }
 
-    // Vérifier si l'utilisateur assigné est membre du projet
+    // Vérifier si l'utilisateur assigné est membre du projet (mais ne pas bloquer)
     if (project && assignedTo) {
-      const projectData = await Project.findById(project);
-      if (!projectData) {
-        return res.status(404).json({
-          success: false,
-          error: "Projet non trouvé",
-        });
-      }
-
-      // Vérifier si l'utilisateur assigné est membre du projet
-      if (!projectData.members.includes(assignedTo)) {
-        return res.status(400).json({
-          success: false,
-          error: "L'utilisateur assigné doit être membre du projet",
-        });
-      }
-    } else if (!project && assignedTo) {
-      // Si on assigne un utilisateur sans projet, vérifier si la tâche a déjà un projet
-      const existingTask = await Task.findById(req.params.id);
-      if (existingTask && existingTask.project) {
-        const projectData = await Project.findById(existingTask.project);
-        if (projectData && !projectData.members.includes(assignedTo)) {
-          return res.status(400).json({
-            success: false,
-            error: "L'utilisateur assigné doit être membre du projet",
+      try {
+        const projectData = await Project.findById(project);
+        if (!projectData) {
+          console.log("updateTask - Project not found:", project);
+          // Continue instead of blocking
+        } else if (!projectData.members.includes(assignedTo)) {
+          console.log("updateTask - User is not a member of the project:", {
+            user: assignedTo,
+            project: project,
+            members: projectData.members,
           });
+          // Log warning but continue
         }
+      } catch (projectError) {
+        console.error(
+          "updateTask - Error checking project membership:",
+          projectError
+        );
+        // Continue despite error
       }
     }
 
@@ -267,6 +265,23 @@ const updateTask = async (req, res) => {
       (key) => updateData[key] === undefined && delete updateData[key]
     );
 
+    // First check if the task exists
+    const existingTask = await Task.findById(req.params.id);
+    console.log(
+      "updateTask - Existing task found:",
+      existingTask ? "Yes" : "No"
+    );
+
+    if (!existingTask) {
+      console.log("updateTask - Task not found before update");
+      return res.status(404).json({
+        success: false,
+        error: "Tâche non trouvée",
+      });
+    }
+
+    console.log("updateTask - Updating task with data:", updateData);
+
     const task = await Task.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
@@ -274,6 +289,8 @@ const updateTask = async (req, res) => {
       .populate("assignedTo", "name email")
       .populate("project", "projectName")
       .populate("createdBy", "name");
+
+    console.log("updateTask - Updated task:", task ? "Success" : "Failed");
 
     if (!task) {
       return res.status(404).json({

@@ -1,5 +1,13 @@
 // assets
-import { DashboardOutlined, UserOutlined, TeamOutlined, PieChartOutlined, ProjectOutlined, CheckSquareOutlined } from '@ant-design/icons';
+import {
+  DashboardOutlined,
+  UserOutlined,
+  TeamOutlined,
+  PieChartOutlined,
+  ProjectOutlined,
+  CheckSquareOutlined,
+  CalendarOutlined
+} from '@ant-design/icons';
 
 // icons
 const icons = {
@@ -8,7 +16,8 @@ const icons = {
   TeamOutlined,
   PieChartOutlined,
   ProjectOutlined,
-  CheckSquareOutlined
+  CheckSquareOutlined,
+  CalendarOutlined
 };
 
 // ==============================|| MENU ITEMS - DASHBOARD ||============================== //
@@ -56,6 +65,14 @@ const dashboard = {
       type: 'item',
       url: '/statistics',
       icon: icons.PieChartOutlined,
+      breadcrumbs: false
+    },
+    {
+      id: 'calendar-sync',
+      title: 'Calendar Sync',
+      type: 'item',
+      url: '/calendar-sync',
+      icon: icons.CalendarOutlined,
       breadcrumbs: false
     }
   ]

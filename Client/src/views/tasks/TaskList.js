@@ -12,6 +12,8 @@ import {
   CTableDataCell,
   CBadge,
   CSpinner,
+  CFormInput,
+  CIcon,
 } from '@coreui/react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -19,6 +21,8 @@ import { toast } from 'react-toastify'
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([])
+  const [filteredTasks, setFilteredTasks] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const navigate = useNavigate()
@@ -26,6 +30,28 @@ const TaskList = () => {
   useEffect(() => {
     fetchTasks()
   }, [])
+
+  // Filter tasks based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredTasks(tasks)
+    } else {
+      const lowercasedQuery = searchQuery.toLowerCase()
+      const filtered = tasks.filter(
+        (task) =>
+          (task.title && task.title.toLowerCase().includes(lowercasedQuery)) ||
+          (task.project &&
+            task.project.projectName &&
+            task.project.projectName.toLowerCase().includes(lowercasedQuery)) ||
+          (task.assignedTo &&
+            task.assignedTo.name &&
+            task.assignedTo.name.toLowerCase().includes(lowercasedQuery)) ||
+          (task.status && task.status.toLowerCase().includes(lowercasedQuery)) ||
+          (task.priority && task.priority.toLowerCase().includes(lowercasedQuery)),
+      )
+      setFilteredTasks(filtered)
+    }
+  }, [searchQuery, tasks])
 
   const fetchTasks = async () => {
     try {
@@ -124,11 +150,31 @@ const TaskList = () => {
     <CCard>
       <CCardHeader className="d-flex justify-content-between align-items-center">
         <h5>Liste des tâches</h5>
-        {localStorage.getItem('userRole') === 'Admin' && (
-          <CButton color="primary" onClick={() => navigate('/tasks/new')}>
-            Nouvelle tâche
-          </CButton>
-        )}
+        <div className="d-flex align-items-center">
+          <div className="position-relative me-2" style={{ width: '300px' }}>
+            <CFormInput
+              placeholder="Rechercher des tâches..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pr-5"
+            />
+            {searchQuery && (
+              <CButton
+                color="link"
+                className="position-absolute"
+                style={{ right: '5px', top: '3px' }}
+                onClick={() => setSearchQuery('')}
+              >
+                <CIcon icon={['cil', 'x']} size="sm" />
+              </CButton>
+            )}
+          </div>
+          {localStorage.getItem('userRole') === 'Admin' && (
+            <CButton color="primary" onClick={() => navigate('/tasks/new')}>
+              Nouvelle tâche
+            </CButton>
+          )}
+        </div>
       </CCardHeader>
       <CCardBody>
         <CTable hover responsive>
@@ -144,53 +190,63 @@ const TaskList = () => {
             </CTableRow>
           </CTableHead>
           <CTableBody>
-            {tasks.map((task) => (
-              <CTableRow key={task._id}>
-                <CTableDataCell>{task.title}</CTableDataCell>
-                <CTableDataCell>{task.project?.projectName || 'Non assigné'}</CTableDataCell>
-                <CTableDataCell>{task.assignedTo?.name || 'Non assigné'}</CTableDataCell>
-                <CTableDataCell>{getStatusBadge(task.status)}</CTableDataCell>
-                <CTableDataCell>{getPriorityBadge(task.priority)}</CTableDataCell>
-                <CTableDataCell>
-                  {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Non définie'}
-                </CTableDataCell>
-                <CTableDataCell>
-                  <CButton
-                    color="info"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => navigate(`/tasks/${task._id}`)}
-                  >
-                    Détails
-                  </CButton>
-
-                  {localStorage.getItem('userRole') === 'Admin' ? (
-                    <>
-                      <CButton
-                        color="primary"
-                        size="sm"
-                        className="me-2"
-                        onClick={() => navigate(`/tasks/edit/${task._id}`)}
-                      >
-                        Modifier
-                      </CButton>
-                      <CButton color="danger" size="sm" onClick={() => handleDelete(task._id)}>
-                        Supprimer
-                      </CButton>
-                    </>
-                  ) : (
-                    <CButton
-                      color="warning"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => navigate(`/tasks/status/${task._id}`)}
-                    >
-                      Modifier statut
-                    </CButton>
-                  )}
+            {filteredTasks.length === 0 ? (
+              <CTableRow>
+                <CTableDataCell colSpan="7" className="text-center">
+                  {searchQuery
+                    ? 'Aucune tâche ne correspond à votre recherche'
+                    : 'Aucune tâche trouvée'}
                 </CTableDataCell>
               </CTableRow>
-            ))}
+            ) : (
+              filteredTasks.map((task) => (
+                <CTableRow key={task._id}>
+                  <CTableDataCell>{task.title}</CTableDataCell>
+                  <CTableDataCell>{task.project?.projectName || 'Non assigné'}</CTableDataCell>
+                  <CTableDataCell>{task.assignedTo?.name || 'Non assigné'}</CTableDataCell>
+                  <CTableDataCell>{getStatusBadge(task.status)}</CTableDataCell>
+                  <CTableDataCell>{getPriorityBadge(task.priority)}</CTableDataCell>
+                  <CTableDataCell>
+                    {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Non définie'}
+                  </CTableDataCell>
+                  <CTableDataCell>
+                    <CButton
+                      color="info"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => navigate(`/tasks/${task._id}`)}
+                    >
+                      Détails
+                    </CButton>
+
+                    {localStorage.getItem('userRole') === 'Admin' ? (
+                      <>
+                        <CButton
+                          color="primary"
+                          size="sm"
+                          className="me-2"
+                          onClick={() => navigate(`/tasks/edit/${task._id}`)}
+                        >
+                          Modifier
+                        </CButton>
+                        <CButton color="danger" size="sm" onClick={() => handleDelete(task._id)}>
+                          Supprimer
+                        </CButton>
+                      </>
+                    ) : (
+                      <CButton
+                        color="warning"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => navigate(`/tasks/status/${task._id}`)}
+                      >
+                        Modifier statut
+                      </CButton>
+                    )}
+                  </CTableDataCell>
+                </CTableRow>
+              ))
+            )}
           </CTableBody>
         </CTable>
       </CCardBody>

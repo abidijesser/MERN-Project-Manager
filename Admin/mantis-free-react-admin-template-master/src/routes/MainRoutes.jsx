@@ -32,6 +32,9 @@ const StatisticsPage = Loadable(lazy(() => import('pages/statistics')));
 // render - task management
 const TaskManagement = Loadable(lazy(() => import('pages/task-management')));
 
+// render - calendar sync
+const CalendarSync = Loadable(lazy(() => import('pages/calendar-sync')));
+
 // ==============================|| MAIN ROUTING ||============================== //
 
 const MainRoutes = {
@@ -90,6 +93,10 @@ const MainRoutes = {
     {
       path: 'task-management',
       element: <TaskManagement />
+    },
+    {
+      path: 'calendar-sync',
+      element: <CalendarSync />
     }
   ]
 };

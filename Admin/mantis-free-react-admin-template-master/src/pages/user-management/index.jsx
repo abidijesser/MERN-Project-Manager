@@ -11,6 +11,7 @@ import {
   DialogTitle,
   Grid,
   IconButton,
+  InputAdornment,
   Paper,
   Table,
   TableBody,
@@ -37,11 +38,15 @@ import api from 'utils/api';
 import EditIcon from '@ant-design/icons/EditOutlined';
 import DeleteIcon from '@ant-design/icons/DeleteOutlined';
 import AddIcon from '@ant-design/icons/PlusOutlined';
+import SearchIcon from '@ant-design/icons/SearchOutlined';
+import CloseIcon from '@ant-design/icons/CloseOutlined';
 
 // ==============================|| USER MANAGEMENT ||============================== //
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -65,6 +70,24 @@ const UserManagement = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  // Filter users based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredUsers(users);
+    } else {
+      const lowercasedQuery = searchQuery.toLowerCase();
+      const filtered = users.filter(
+        (user) =>
+          (user.name && user.name.toLowerCase().includes(lowercasedQuery)) ||
+          (user.email && user.email.toLowerCase().includes(lowercasedQuery)) ||
+          (user.role && user.role.toLowerCase().includes(lowercasedQuery))
+      );
+      setFilteredUsers(filtered);
+    }
+    // Reset to first page when search changes
+    setPage(0);
+  }, [searchQuery, users]);
 
   const fetchUsers = async () => {
     try {
@@ -230,7 +253,29 @@ const UserManagement = () => {
   return (
     <MainCard title="User Management">
       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6">Manage Users</Typography>
+        <TextField
+          label="Search Users"
+          variant="outlined"
+          size="small"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by name, email, role..."
+          sx={{ width: '40%' }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+            endAdornment: searchQuery && (
+              <InputAdornment position="end">
+                <IconButton size="small" onClick={() => setSearchQuery('')}>
+                  <CloseIcon />
+                </IconButton>
+              </InputAdornment>
+            )
+          }}
+        />
         <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={handleOpenAddDialog}>
           Add User
         </Button>
@@ -253,14 +298,14 @@ const UserManagement = () => {
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : users.length === 0 ? (
+            ) : filteredUsers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} align="center">
                   No users found
                 </TableCell>
               </TableRow>
             ) : (
-              users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user) => (
+              filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user) => (
                 <TableRow key={user._id}>
                   <TableCell>{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
@@ -283,7 +328,7 @@ const UserManagement = () => {
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
-        count={users.length}
+        count={filteredUsers.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}

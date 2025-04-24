@@ -40,6 +40,10 @@ const ProjectSchema = new Schema({
   members: [{ type: Schema.Types.ObjectId, ref: "User" }],
   owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
   comments: [{ type: String }],
+  googleCalendarEventId: {
+    type: String,
+    default: null,
+  },
 });
 
 module.exports = mongoose.model("Project", ProjectSchema);

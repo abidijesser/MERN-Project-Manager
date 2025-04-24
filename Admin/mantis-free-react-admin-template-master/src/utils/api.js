@@ -13,6 +13,10 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     console.log('Admin API - Request URL:', config.url);
+    console.log('Admin API - Request Method:', config.method);
+    console.log('Admin API - Request Params:', config.params);
+    console.log('Admin API - Request Data:', config.data);
+
     const token = localStorage.getItem('token');
     console.log('Admin API - Token exists:', !!token);
     if (token) {
@@ -24,6 +28,7 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('Admin API - Request error:', error);
     return Promise.reject(error);
   }
 );
@@ -32,11 +37,18 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     console.log('Admin API - Response success:', response.config.url);
+    console.log('Admin API - Response status:', response.status);
+    console.log('Admin API - Response data:', response.data);
     return response;
   },
   (error) => {
     console.log('Admin API - Response error:', error.config?.url);
     console.error('Admin API - Error details:', error.response?.status, error.response?.data);
+    console.error('Admin API - Error message:', error.message);
+
+    if (error.request) {
+      console.error('Admin API - Request was made but no response received');
+    }
 
     // Handle 401 Unauthorized errors (token expired or invalid)
     if (error.response && error.response.status === 401) {

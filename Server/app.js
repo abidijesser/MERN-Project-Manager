@@ -13,6 +13,7 @@ const chatRoutes = require("./routes/chat");
 const notificationRoutes = require("./routes/notificationRoutes");
 const statsRoutes = require("./routes/statsRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const calendarRoutes = require("./routes/calendarRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
 const Message = require("./models/Message"); // Assurez-vous que le modèle Message existe
@@ -60,7 +61,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-
+app.use("/api/calendar", calendarRoutes);
 // Add a simple test route
 app.get("/api/test", (req, res) => {
   res.json({ message: "Server is running" });
