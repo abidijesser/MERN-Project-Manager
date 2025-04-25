@@ -43,6 +43,12 @@ const TaskSchema = new Schema({
     type: Date,
     default: Date.now,
   },
+  comments: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Comment",
+    },
+  ],
   googleCalendarEventId: {
     type: String,
     default: null,

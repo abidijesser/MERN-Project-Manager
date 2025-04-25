@@ -39,7 +39,7 @@ const ProjectSchema = new Schema({
   tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
   members: [{ type: Schema.Types.ObjectId, ref: "User" }],
   owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  comments: [{ type: String }],
+  comments: [{ type: Schema.Types.ObjectId, ref: "Comment" }],
   googleCalendarEventId: {
     type: String,
     default: null,

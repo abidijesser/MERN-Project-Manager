@@ -1,54 +1,82 @@
 import React, { useState, useEffect } from 'react'
-import { CCard, CCardBody, CCardHeader, CCol, CRow, CButton, CBadge, CSpinner } from '@coreui/react'
+import {
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CCol,
+  CRow,
+  CButton,
+  CBadge,
+  CSpinner,
+  CNav,
+  CNavItem,
+  CNavLink,
+  CTabContent,
+  CTabPane,
+} from '@coreui/react'
 import { useNavigate, useParams } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../../utils/axios'
 import { toast } from 'react-toastify'
+import CommentList from '../../components/Comments/CommentList'
+import ActivityLogList from '../../components/ActivityLog/ActivityLogList'
+import socketService from '../../services/socketService'
 
 const TaskDetail = () => {
   const [task, setTask] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [activeTab, setActiveTab] = useState(1)
   const { id } = useParams()
   const navigate = useNavigate()
 
+  // Connect to socket when component mounts
   useEffect(() => {
-    fetchTask()
+    // Connect to socket
+    socketService.connect()
+
+    // Join the task room for real-time updates
+    socketService.joinRoom('task', id)
+
+    // Clean up when component unmounts
+    return () => {
+      socketService.leaveRoom('task', id)
+    }
   }, [id])
 
-  const fetchTask = async () => {
-    try {
-      setLoading(true)
-      const token = localStorage.getItem('token')
-      if (!token) {
-        setError('No authentication token found')
+  useEffect(() => {
+    const fetchTask = async () => {
+      try {
+        setLoading(true)
+        const token = localStorage.getItem('token')
+        if (!token) {
+          setError('No authentication token found')
+          setLoading(false)
+          return
+        }
+
+        const response = await axios.get(`/tasks/${id}`)
+
+        if (response.data.success) {
+          setTask(response.data.task)
+        } else {
+          throw new Error('Failed to fetch task')
+        }
+      } catch (error) {
+        console.error('Error fetching task:', error)
+        setError(error.response?.data?.error || 'Erreur lors de la récupération de la tâche')
+        toast.error(error.response?.data?.error || 'Erreur lors de la récupération de la tâche')
+      } finally {
         setLoading(false)
-        return
       }
-
-      const response = await axios.get(`http://localhost:3001/api/tasks/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (response.data.success) {
-        setTask(response.data.task)
-      } else {
-        throw new Error('Failed to fetch task')
-      }
-    } catch (error) {
-      console.error('Error fetching task:', error)
-      setError(error.response?.data?.error || 'Erreur lors de la récupération de la tâche')
-      toast.error(error.response?.data?.error || 'Erreur lors de la récupération de la tâche')
-    } finally {
-      setLoading(false)
     }
-  }
+
+    fetchTask()
+  }, [id])
 
   const handleDelete = async () => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
       try {
-        await axios.delete(`/api/tasks/${id}`)
+        await axios.delete(`/tasks/${id}`)
         toast.success('Tâche supprimée avec succès')
         navigate('/tasks')
       } catch (error) {
@@ -95,7 +123,7 @@ const TaskDetail = () => {
   return (
     <CRow>
       <CCol>
-        <CCard>
+        <CCard className="mb-4">
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <h5>Détails de la tâche</h5>
             <div>
@@ -175,6 +203,34 @@ const TaskDetail = () => {
                 </table>
               </div>
             </div>
+          </CCardBody>
+        </CCard>
+
+        {/* Tabs for Comments and Activity Log */}
+        <CCard>
+          <CCardHeader>
+            <CNav variant="tabs" role="tablist">
+              <CNavItem>
+                <CNavLink active={activeTab === 1} onClick={() => setActiveTab(1)} role="button">
+                  Commentaires
+                </CNavLink>
+              </CNavItem>
+              <CNavItem>
+                <CNavLink active={activeTab === 2} onClick={() => setActiveTab(2)} role="button">
+                  Historique d'activité
+                </CNavLink>
+              </CNavItem>
+            </CNav>
+          </CCardHeader>
+          <CCardBody>
+            <CTabContent>
+              <CTabPane role="tabpanel" visible={activeTab === 1}>
+                <CommentList entityType="task" entityId={id} />
+              </CTabPane>
+              <CTabPane role="tabpanel" visible={activeTab === 2}>
+                <ActivityLogList entityType="task" entityId={id} />
+              </CTabPane>
+            </CTabContent>
           </CCardBody>
         </CCard>
       </CCol>

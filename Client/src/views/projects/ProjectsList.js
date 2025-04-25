@@ -11,8 +11,9 @@ import {
   CTableHeaderCell,
   CTableDataCell,
   CFormInput,
-  CIcon,
 } from '@coreui/react'
+import CIcon from '@coreui/icons-react'
+import { cilX } from '@coreui/icons'
 import { useNavigate } from 'react-router-dom'
 import axios from '../../utils/axios'
 import { toast } from 'react-toastify'
@@ -97,7 +98,7 @@ const ProjectsList = () => {
                   style={{ right: '5px', top: '3px' }}
                   onClick={() => setSearchQuery('')}
                 >
-                  <CIcon icon={['cil', 'x']} size="sm" />
+                  <CIcon icon={cilX} size="sm" />
                 </CButton>
               )}
             </div>

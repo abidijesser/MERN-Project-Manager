@@ -1,12 +1,30 @@
 import React, { useState, useEffect } from 'react'
-import { CCard, CCardBody, CCardHeader, CCol, CRow, CButton, CFormTextarea } from '@coreui/react'
+import {
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CCol,
+  CRow,
+  CButton,
+  CNav,
+  CNavItem,
+  CNavLink,
+  CTabContent,
+  CTabPane,
+  CSpinner,
+} from '@coreui/react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axios from '../../utils/axios'
 import { toast } from 'react-toastify'
+import CommentList from '../../components/Comments/CommentList'
+import ActivityLogList from '../../components/ActivityLog/ActivityLogList'
+import socketService from '../../services/socketService'
 
 const ProjectDetails = () => {
   const [project, setProject] = useState(null)
-  const [comment, setComment] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [activeTab, setActiveTab] = useState(1)
   const { id } = useParams()
   const navigate = useNavigate()
 
@@ -14,36 +32,66 @@ const ProjectDetails = () => {
     fetchProject()
   }, [id])
 
+  // Connect to socket when component mounts
+  useEffect(() => {
+    // Connect to socket
+    socketService.connect()
+
+    // Join the project room for real-time updates
+    socketService.joinRoom('project', id)
+
+    // Clean up when component unmounts
+    return () => {
+      socketService.leaveRoom('project', id)
+    }
+  }, [id])
+
   const fetchProject = async () => {
     try {
+      setLoading(true)
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setError('No authentication token found')
+        setLoading(false)
+        return
+      }
+
       const response = await axios.get(`/projects/${id}`)
-      setProject(response.data.project)
+
+      if (response.data.success) {
+        setProject(response.data.project)
+      } else {
+        throw new Error('Failed to fetch project')
+      }
     } catch (error) {
       console.error('Error fetching project:', error)
+      setError(error.response?.data?.error || 'Erreur lors de la récupération du projet')
       toast.error(error.response?.data?.error || 'Erreur lors de la récupération du projet')
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleAddComment = async () => {
-    try {
-      await axios.post(`/projects/${id}/comments`, { comment })
-      toast.success('Commentaire ajouté avec succès !')
-      setComment('')
-      fetchProject()
-    } catch (error) {
-      console.error("Erreur lors de l'ajout du commentaire:", error)
-      toast.error(error.response?.data?.error || "Erreur lors de l'ajout du commentaire.")
-    }
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+        <CSpinner color="primary" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return <div className="alert alert-danger">{error}</div>
   }
 
   if (!project) {
-    return <div>Chargement...</div>
+    return <div className="alert alert-warning">Projet non trouvé</div>
   }
 
   return (
     <CRow>
       <CCol>
-        <CCard>
+        <CCard className="mb-4">
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <strong>Détails du projet</strong>
             <div>
@@ -95,25 +143,34 @@ const ProjectDetails = () => {
                 )}
               </ul>
             </div>
+          </CCardBody>
+        </CCard>
 
-            <div>
-              <strong>Commentaires:</strong>
-              <ul>
-                {project.comments && project.comments.length > 0 ? (
-                  project.comments.map((c, index) => <li key={index}>{c}</li>)
-                ) : (
-                  <li>Aucun commentaire pour ce projet</li>
-                )}
-              </ul>
-              <CFormTextarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Ajouter un commentaire"
-              />
-              <CButton color="primary" onClick={handleAddComment}>
-                Ajouter
-              </CButton>
-            </div>
+        {/* Tabs for Comments and Activity Log */}
+        <CCard>
+          <CCardHeader>
+            <CNav variant="tabs" role="tablist">
+              <CNavItem>
+                <CNavLink active={activeTab === 1} onClick={() => setActiveTab(1)} role="button">
+                  Commentaires
+                </CNavLink>
+              </CNavItem>
+              <CNavItem>
+                <CNavLink active={activeTab === 2} onClick={() => setActiveTab(2)} role="button">
+                  Historique d'activité
+                </CNavLink>
+              </CNavItem>
+            </CNav>
+          </CCardHeader>
+          <CCardBody>
+            <CTabContent>
+              <CTabPane role="tabpanel" visible={activeTab === 1}>
+                <CommentList entityType="project" entityId={id} />
+              </CTabPane>
+              <CTabPane role="tabpanel" visible={activeTab === 2}>
+                <ActivityLogList entityType="project" entityId={id} />
+              </CTabPane>
+            </CTabContent>
           </CCardBody>
         </CCard>
       </CCol>

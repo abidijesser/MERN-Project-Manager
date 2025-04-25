@@ -14,6 +14,8 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const statsRoutes = require("./routes/statsRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const calendarRoutes = require("./routes/calendarRoutes");
+const commentRoutes = require("./routes/commentRoutes");
+const activityLogRoutes = require("./routes/activityLogRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
 const Message = require("./models/Message"); // Assurez-vous que le modèle Message existe
@@ -62,6 +64,8 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/calendar", calendarRoutes);
+app.use("/api/comments", commentRoutes);
+app.use("/api/activity", activityLogRoutes);
 // Add a simple test route
 app.get("/api/test", (req, res) => {
   res.json({ message: "Server is running" });
@@ -102,23 +106,78 @@ const io = new Server(server, {
   },
 });
 
-// WebSocket pour le chat
+// WebSocket implementation
 io.on("connection", (socket) => {
-  console.log("A user connected");
+  console.log("A user connected:", socket.id);
 
-  // Écoute des messages envoyés par le client
+  // Join rooms for specific projects and tasks
+  socket.on("joinRoom", (room) => {
+    console.log(`Socket ${socket.id} joining room: ${room}`);
+    socket.join(room);
+  });
+
+  // Leave rooms
+  socket.on("leaveRoom", (room) => {
+    console.log(`Socket ${socket.id} leaving room: ${room}`);
+    socket.leave(room);
+  });
+
+  // Listen for chat messages
   socket.on("sendMessage", async (messageData) => {
     try {
       const newMessage = new Message(messageData);
-      await newMessage.save(); // Stocke le message en base de données
-      io.emit("receiveMessage", messageData); // Diffuse le message à tous les clients
+      await newMessage.save(); // Store message in database
+      io.emit("receiveMessage", messageData); // Broadcast to all clients
     } catch (err) {
-      console.error("Erreur lors de l'enregistrement du message:", err);
+      console.error("Error saving message:", err);
+    }
+  });
+
+  // Listen for new comments
+  socket.on("newComment", async (commentData) => {
+    try {
+      console.log("New comment received:", commentData);
+
+      // Broadcast to the appropriate room
+      if (commentData.taskId) {
+        io.to(`task-${commentData.taskId}`).emit("commentAdded", commentData);
+      } else if (commentData.projectId) {
+        io.to(`project-${commentData.projectId}`).emit(
+          "commentAdded",
+          commentData
+        );
+      }
+    } catch (err) {
+      console.error("Error processing comment:", err);
+    }
+  });
+
+  // Listen for activity logs
+  socket.on("newActivity", (activityData) => {
+    try {
+      console.log("New activity received:", activityData);
+
+      // Broadcast to appropriate rooms
+      if (activityData.task) {
+        io.to(`task-${activityData.task}`).emit("activityAdded", activityData);
+      }
+
+      if (activityData.project) {
+        io.to(`project-${activityData.project}`).emit(
+          "activityAdded",
+          activityData
+        );
+      }
+
+      // Broadcast to all clients for dashboard updates
+      io.emit("activityUpdated", activityData);
+    } catch (err) {
+      console.error("Error processing activity:", err);
     }
   });
 
   socket.on("disconnect", () => {
-    console.log("User disconnected");
+    console.log("User disconnected:", socket.id);
   });
 });
 

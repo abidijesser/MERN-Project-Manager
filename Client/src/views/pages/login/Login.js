@@ -68,10 +68,17 @@ const Login = () => {
         localStorage.setItem('token', response.data.token)
         console.log('Token stored from login:', response.data.token)
 
-        // Store user role if available
-        if (response.data.user && response.data.user.role) {
-          localStorage.setItem('userRole', response.data.user.role)
-          console.log('User role stored:', response.data.user.role)
+        // Store user role and name if available
+        if (response.data.user) {
+          if (response.data.user.role) {
+            localStorage.setItem('userRole', response.data.user.role)
+            console.log('User role stored:', response.data.user.role)
+          }
+
+          if (response.data.user.name) {
+            localStorage.setItem('userName', response.data.user.name)
+            console.log('User name stored:', response.data.user.name)
+          }
 
           // Redirect based on role
           if (response.data.user.role === 'Admin') {
@@ -140,10 +147,17 @@ const Login = () => {
         localStorage.setItem('token', response.data.token)
         console.log('Token stored from 2FA login:', response.data.token)
 
-        // Store user role if available
-        if (response.data.user && response.data.user.role) {
-          localStorage.setItem('userRole', response.data.user.role)
-          console.log('User role stored from 2FA:', response.data.user.role)
+        // Store user role and name if available
+        if (response.data.user) {
+          if (response.data.user.role) {
+            localStorage.setItem('userRole', response.data.user.role)
+            console.log('User role stored from 2FA:', response.data.user.role)
+          }
+
+          if (response.data.user.name) {
+            localStorage.setItem('userName', response.data.user.name)
+            console.log('User name stored from 2FA:', response.data.user.name)
+          }
 
           // Redirect based on role
           if (response.data.user.role === 'Admin') {

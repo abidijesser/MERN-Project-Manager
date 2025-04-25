@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { isAuthenticated, isClient, isAdmin } from '../utils/authUtils'
 import { CSpinner } from '@coreui/react'
+import ErrorBoundary from './ErrorBoundary'
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const location = useLocation()
@@ -60,7 +61,7 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
     return <Navigate to="/unauthorized" state={{ from: location }} replace />
   }
 
-  return children
+  return <ErrorBoundary>{children}</ErrorBoundary>
 }
 
 ProtectedRoute.propTypes = {

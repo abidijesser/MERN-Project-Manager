@@ -58,6 +58,8 @@ import projectManagementImage from 'src/assets/images/gestion_projet.png'
 import WidgetsBrand from '../widgets/WidgetsBrand'
 import WidgetsDropdown from '../widgets/WidgetsDropdown'
 import MainChart from './MainChart'
+import RecentActivityWidget from '../../components/ActivityLog/RecentActivityWidget'
+import socketService from '../../services/socketService'
 
 const Dashboard = () => {
   const [users, setUsers] = useState([])
@@ -92,6 +94,14 @@ const Dashboard = () => {
     }
 
     fetchUsers()
+
+    // Connect to socket for real-time updates
+    socketService.connect()
+
+    return () => {
+      // Clean up socket connection when component unmounts
+      socketService.disconnect()
+    }
   }, [])
 
   return (
@@ -236,47 +246,56 @@ const Dashboard = () => {
 
       {/* Section existante */}
       <WidgetsDropdown className="mb-4" />
-      <CCard className="mb-4">
-        <CCardBody>
-          <CRow>
-            <CCol sm={5}>
-              <h4 id="traffic" className="card-title mb-0">
-                Traffic
-              </h4>
-              <div className="small text-body-secondary">January - July 2023</div>
-            </CCol>
-            <CCol sm={7} className="d-none d-md-block">
-              <CButton color="primary" className="float-end">
-                <CIcon icon={cilCloudDownload} />
-              </CButton>
-              <CButtonGroup className="float-end me-3">
-                {['Day', 'Month', 'Year'].map((value) => (
-                  <CButton
-                    color="outline-secondary"
-                    key={value}
-                    className="mx-0"
-                    active={value === 'Month'}
-                  >
-                    {value}
+
+      <CRow className="mb-4">
+        <CCol md={8}>
+          <CCard className="mb-4">
+            <CCardBody>
+              <CRow>
+                <CCol sm={5}>
+                  <h4 id="traffic" className="card-title mb-0">
+                    Traffic
+                  </h4>
+                  <div className="small text-body-secondary">January - July 2023</div>
+                </CCol>
+                <CCol sm={7} className="d-none d-md-block">
+                  <CButton color="primary" className="float-end">
+                    <CIcon icon={cilCloudDownload} />
                   </CButton>
-                ))}
-              </CButtonGroup>
-            </CCol>
-          </CRow>
-          <MainChart />
-        </CCardBody>
-        <CCardFooter>
-          <CRow
-            xs={{ cols: 1, gutter: 4 }}
-            sm={{ cols: 2 }}
-            lg={{ cols: 4 }}
-            xl={{ cols: 5 }}
-            className="mb-2 text-center"
-          >
-            {/* Your existing progressExample code */}
-          </CRow>
-        </CCardFooter>
-      </CCard>
+                  <CButtonGroup className="float-end me-3">
+                    {['Day', 'Month', 'Year'].map((value) => (
+                      <CButton
+                        color="outline-secondary"
+                        key={value}
+                        className="mx-0"
+                        active={value === 'Month'}
+                      >
+                        {value}
+                      </CButton>
+                    ))}
+                  </CButtonGroup>
+                </CCol>
+              </CRow>
+              <MainChart />
+            </CCardBody>
+            <CCardFooter>
+              <CRow
+                xs={{ cols: 1, gutter: 4 }}
+                sm={{ cols: 2 }}
+                lg={{ cols: 4 }}
+                xl={{ cols: 5 }}
+                className="mb-2 text-center"
+              >
+                {/* Your existing progressExample code */}
+              </CRow>
+            </CCardFooter>
+          </CCard>
+        </CCol>
+        <CCol md={4}>
+          <RecentActivityWidget limit={8} />
+        </CCol>
+      </CRow>
+
       <WidgetsBrand className="mb-4" withCharts />
       <CRow>
         <CCol xs>
