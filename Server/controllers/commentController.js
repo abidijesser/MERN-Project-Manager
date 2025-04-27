@@ -39,9 +39,9 @@ const createTaskComment = async (req, res) => {
 
     await comment.save();
 
-    // Add comment to task
-    task.comments.push(comment._id);
-    await task.save();
+    // Add comment to task using updateOne to avoid validation
+    await Task.updateOne({ _id: taskId }, { $push: { comments: comment._id } });
+    console.log("Task updated with new comment using updateOne");
 
     // Create activity log
     const activityLog = new ActivityLog({
@@ -53,14 +53,17 @@ const createTaskComment = async (req, res) => {
       project: task.project,
       details: {
         commentId: comment._id,
-        content: content.substring(0, 100) // Store a preview of the comment
-      }
+        content: content.substring(0, 100), // Store a preview of the comment
+      },
     });
 
     await activityLog.save();
 
     // Return the comment with author details
-    const populatedComment = await Comment.findById(comment._id).populate("author", "name email");
+    const populatedComment = await Comment.findById(comment._id).populate(
+      "author",
+      "name email"
+    );
 
     res.status(201).json({
       success: true,
@@ -81,11 +84,25 @@ const createProjectComment = async (req, res) => {
     const { content } = req.body;
     const { projectId } = req.params;
 
+    console.log("Creating project comment:", {
+      projectId,
+      content,
+      userId: req.user?.id,
+    });
+
     // Validate projectId
     if (!isValidObjectId(projectId)) {
       return res.status(400).json({
         success: false,
         error: "ID de projet invalide",
+      });
+    }
+
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        error: "Utilisateur non authentifié",
       });
     }
 
@@ -107,39 +124,93 @@ const createProjectComment = async (req, res) => {
       updatedAt: new Date(),
     });
 
-    await comment.save();
+    try {
+      await comment.save();
+      console.log("Comment saved successfully:", comment._id);
+    } catch (saveError) {
+      console.error("Error saving comment:", saveError);
+      return res.status(500).json({
+        success: false,
+        error: "Erreur lors de l'enregistrement du commentaire",
+        details: saveError.message,
+      });
+    }
 
     // Add comment to project
-    project.comments.push(comment._id);
-    await project.save();
+    try {
+      // Use updateOne with $push instead of save() to avoid validation
+      await Project.updateOne(
+        { _id: projectId },
+        { $push: { comments: comment._id } }
+      );
+
+      console.log("Project updated with new comment using updateOne");
+    } catch (projectError) {
+      console.error("Error updating project with comment:", projectError);
+      // Delete the comment if we couldn't update the project
+      await Comment.findByIdAndDelete(comment._id);
+      return res.status(500).json({
+        success: false,
+        error: "Erreur lors de la mise à jour du projet avec le commentaire",
+        details: projectError.message,
+      });
+    }
 
     // Create activity log
-    const activityLog = new ActivityLog({
-      user: req.user.id,
-      action: "COMMENT",
-      entityType: "PROJECT",
-      entityId: projectId,
-      project: projectId,
-      details: {
-        commentId: comment._id,
-        content: content.substring(0, 100) // Store a preview of the comment
-      }
-    });
+    try {
+      const activityLog = new ActivityLog({
+        user: req.user.id,
+        action: "COMMENT",
+        entityType: "PROJECT",
+        entityId: projectId,
+        project: projectId,
+        details: {
+          commentId: comment._id,
+          content: content.substring(0, 100), // Store a preview of the comment
+        },
+      });
 
-    await activityLog.save();
+      await activityLog.save();
+      console.log("Activity log created for comment");
+    } catch (activityError) {
+      console.error("Error creating activity log:", activityError);
+      // Continue even if activity log creation fails
+    }
 
     // Return the comment with author details
-    const populatedComment = await Comment.findById(comment._id).populate("author", "name email");
+    try {
+      const populatedComment = await Comment.findById(comment._id).populate(
+        "author",
+        "name email"
+      );
 
-    res.status(201).json({
-      success: true,
-      comment: populatedComment,
-    });
+      if (!populatedComment) {
+        return res.status(500).json({
+          success: false,
+          error: "Commentaire créé mais impossible de le récupérer",
+        });
+      }
+
+      console.log("Returning populated comment");
+      return res.status(201).json({
+        success: true,
+        comment: populatedComment,
+      });
+    } catch (populateError) {
+      console.error("Error populating comment:", populateError);
+      return res.status(201).json({
+        success: true,
+        comment: comment,
+        warning:
+          "Commentaire créé mais les détails de l'auteur n'ont pas pu être récupérés",
+      });
+    }
   } catch (error) {
     console.error("Error creating project comment:", error);
     res.status(500).json({
       success: false,
       error: "Erreur lors de la création du commentaire",
+      details: error.message || "Unknown error",
     });
   }
 };
@@ -247,7 +318,8 @@ const updateComment = async (req, res) => {
     if (!comment) {
       return res.status(404).json({
         success: false,
-        error: "Commentaire non trouvé ou vous n'êtes pas autorisé à le modifier",
+        error:
+          "Commentaire non trouvé ou vous n'êtes pas autorisé à le modifier",
       });
     }
 
@@ -265,8 +337,8 @@ const updateComment = async (req, res) => {
       task: comment.taskId,
       project: comment.projectId,
       details: {
-        content: content.substring(0, 100) // Store a preview of the comment
-      }
+        content: content.substring(0, 100), // Store a preview of the comment
+      },
     });
 
     await activityLog.save();
@@ -306,22 +378,27 @@ const deleteComment = async (req, res) => {
     if (!comment) {
       return res.status(404).json({
         success: false,
-        error: "Commentaire non trouvé ou vous n'êtes pas autorisé à le supprimer",
+        error:
+          "Commentaire non trouvé ou vous n'êtes pas autorisé à le supprimer",
       });
     }
 
     // If comment is on a task, remove from task
     if (comment.taskId) {
-      await Task.findByIdAndUpdate(comment.taskId, {
-        $pull: { comments: commentId },
-      });
+      await Task.updateOne(
+        { _id: comment.taskId },
+        { $pull: { comments: commentId } }
+      );
+      console.log("Comment removed from task using updateOne");
     }
 
     // If comment is on a project, remove from project
     if (comment.projectId) {
-      await Project.findByIdAndUpdate(comment.projectId, {
-        $pull: { comments: commentId },
-      });
+      await Project.updateOne(
+        { _id: comment.projectId },
+        { $pull: { comments: commentId } }
+      );
+      console.log("Comment removed from project using updateOne");
     }
 
     // Create activity log before deleting the comment
@@ -333,8 +410,8 @@ const deleteComment = async (req, res) => {
       task: comment.taskId,
       project: comment.projectId,
       details: {
-        content: comment.content.substring(0, 100) // Store a preview of the deleted comment
-      }
+        content: comment.content.substring(0, 100), // Store a preview of the deleted comment
+      },
     });
 
     await activityLog.save();

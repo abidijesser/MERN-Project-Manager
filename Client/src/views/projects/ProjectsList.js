@@ -11,6 +11,8 @@ import {
   CTableHeaderCell,
   CTableDataCell,
   CFormInput,
+  CBadge,
+  CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilX } from '@coreui/icons'
@@ -22,6 +24,7 @@ const ProjectsList = () => {
   const [projects, setProjects] = useState([])
   const [filteredProjects, setFilteredProjects] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -45,13 +48,25 @@ const ProjectsList = () => {
   }, [searchQuery, projects])
 
   const fetchProjects = async () => {
+    setLoading(true)
     try {
       // Récupération des projets depuis l'API backend
       const response = await axios.get('/projects')
-      setProjects(response.data.projects) // Mise à jour de l'état avec les projets
+
+      if (response.data.success && response.data.projects) {
+        console.log(`Fetched ${response.data.projects.length} projects where user is a member`)
+        setProjects(response.data.projects) // Mise à jour de l'état avec les projets
+      } else {
+        console.error('Format de réponse inattendu:', response.data)
+        setProjects([])
+        toast.error('Format de réponse inattendu lors de la récupération des projets')
+      }
     } catch (error) {
       console.error('Erreur lors de la récupération des projets:', error)
       toast.error(error.response?.data?.error || 'Erreur lors de la récupération des projets')
+      setProjects([])
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -78,51 +93,68 @@ const ProjectsList = () => {
     }
   }
 
+  const getStatusBadge = (status) => {
+    const statusColors = {
+      Active: 'primary',
+      Completed: 'success',
+      Archived: 'secondary',
+    }
+    return <CBadge color={statusColors[status] || 'info'}>{status}</CBadge>
+  }
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+        <CSpinner color="primary" />
+      </div>
+    )
+  }
+
   return (
     <CCard>
-      <CCardHeader>
-        <div className="d-flex justify-content-between align-items-center">
-          <strong>Liste des projets</strong>
-          <div className="d-flex align-items-center">
-            <div className="position-relative me-2" style={{ width: '300px' }}>
-              <CFormInput
-                placeholder="Rechercher des projets..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-5"
-              />
-              {searchQuery && (
-                <CButton
-                  color="link"
-                  className="position-absolute"
-                  style={{ right: '5px', top: '3px' }}
-                  onClick={() => setSearchQuery('')}
-                >
-                  <CIcon icon={cilX} size="sm" />
-                </CButton>
-              )}
-            </div>
-            {localStorage.getItem('userRole') === 'Admin' && (
-              <CButton color="primary" onClick={() => navigate('/projects/new')}>
-                Nouveau projet
+      <CCardHeader className="d-flex justify-content-between align-items-center">
+        <h5>Liste des projets</h5>
+        <div className="d-flex align-items-center">
+          <div className="position-relative me-2" style={{ width: '300px' }}>
+            <CFormInput
+              placeholder="Rechercher des projets..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pr-5"
+            />
+            {searchQuery && (
+              <CButton
+                color="link"
+                className="position-absolute"
+                style={{ right: '5px', top: '3px' }}
+                onClick={() => setSearchQuery('')}
+              >
+                <CIcon icon={cilX} size="sm" />
               </CButton>
             )}
           </div>
+          {localStorage.getItem('userRole') === 'Admin' && (
+            <CButton color="primary" onClick={() => navigate('/projects/new')}>
+              Nouveau projet
+            </CButton>
+          )}
         </div>
       </CCardHeader>
       <CCardBody>
-        <CTable hover>
+        <CTable hover responsive>
           <CTableHead>
             <CTableRow>
               <CTableHeaderCell>Nom</CTableHeaderCell>
               <CTableHeaderCell>Statut</CTableHeaderCell>
+              <CTableHeaderCell>Date de début</CTableHeaderCell>
+              <CTableHeaderCell>Date de fin</CTableHeaderCell>
               <CTableHeaderCell>Actions</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
             {filteredProjects.length === 0 ? (
               <CTableRow>
-                <CTableDataCell colSpan="3" className="text-center">
+                <CTableDataCell colSpan="5" className="text-center">
                   {searchQuery
                     ? 'Aucun projet ne correspond à votre recherche'
                     : 'Aucun projet trouvé'}
@@ -131,13 +163,23 @@ const ProjectsList = () => {
             ) : (
               filteredProjects.map((project) => (
                 <CTableRow key={project._id}>
-                  <CTableDataCell>{project.projectName}</CTableDataCell>{' '}
-                  {/* Utilisation de projectName */}
-                  <CTableDataCell>{project.status}</CTableDataCell>
+                  <CTableDataCell>{project.projectName}</CTableDataCell>
+                  <CTableDataCell>{getStatusBadge(project.status)}</CTableDataCell>
+                  <CTableDataCell>
+                    {project.startDate
+                      ? new Date(project.startDate).toLocaleDateString()
+                      : 'Non définie'}
+                  </CTableDataCell>
+                  <CTableDataCell>
+                    {project.endDate
+                      ? new Date(project.endDate).toLocaleDateString()
+                      : 'Non définie'}
+                  </CTableDataCell>
                   <CTableDataCell>
                     <CButton
                       color="info"
                       size="sm"
+                      className="me-2"
                       onClick={() => navigate(`/projects/${project._id}`)}
                     >
                       Détails
@@ -145,19 +187,14 @@ const ProjectsList = () => {
                     {localStorage.getItem('userRole') === 'Admin' && (
                       <>
                         <CButton
-                          color="warning"
+                          color="primary"
                           size="sm"
-                          className="ms-2"
+                          className="me-2"
                           onClick={() => navigate(`/projects/edit/${project._id}`)}
                         >
                           Modifier
                         </CButton>
-                        <CButton
-                          color="danger"
-                          size="sm"
-                          className="ms-2"
-                          onClick={() => handleDelete(project._id)} // Appel à la fonction de suppression
-                        >
+                        <CButton color="danger" size="sm" onClick={() => handleDelete(project._id)}>
                           Supprimer
                         </CButton>
                       </>

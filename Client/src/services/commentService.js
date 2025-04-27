@@ -26,19 +26,52 @@ export const createTaskComment = async (taskId, content) => {
 // Create a comment for a project
 export const createProjectComment = async (projectId, content) => {
   try {
+    // Validate inputs
+    if (!projectId) {
+      throw new Error('Project ID is required')
+    }
+
+    if (!content || !content.trim()) {
+      throw new Error('Comment content cannot be empty')
+    }
+
+    // Check if token exists
+    const token = localStorage.getItem('token')
+    if (!token) {
+      throw new Error('Authentication token not found')
+    }
+
+    console.log(`Sending comment to server for project ${projectId}`)
+
+    // Make the API request
     const response = await axios.post(`${API_URL}/project/${projectId}`, { content })
+
+    console.log('Server response:', response.data)
 
     // Emit the comment via socket for real-time updates
     if (response.data.success) {
-      socketService.sendComment({
-        ...response.data.comment,
-        projectId,
-      })
+      try {
+        socketService.sendComment({
+          ...response.data.comment,
+          projectId,
+        })
+        console.log('Comment sent to socket service')
+      } catch (socketError) {
+        console.error('Error sending comment via socket:', socketError)
+        // Continue even if socket fails
+      }
     }
 
     return response.data
   } catch (error) {
     console.error('Error creating project comment:', error)
+
+    // Add more context to the error
+    if (error.response) {
+      console.error('Server response:', error.response.data)
+      error.additionalInfo = error.response.data
+    }
+
     throw error
   }
 }

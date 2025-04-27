@@ -9,7 +9,7 @@ import {
   CAlert,
   CPagination,
   CPaginationItem,
-  CBadge
+  CBadge,
 } from '@coreui/react'
 import { getProjectActivityLogs, getTaskActivityLogs } from '../../services/activityLogService'
 import socketService from '../../services/socketService'
@@ -21,7 +21,7 @@ import {
   cilCheckAlt,
   cilNotes,
   cilUser,
-  cilSwapHorizontal
+  cilSwapHorizontal,
 } from '@coreui/icons'
 
 const ActivityLogList = ({ entityType, entityId }) => {
@@ -31,7 +31,7 @@ const ActivityLogList = ({ entityType, entityId }) => {
   const [pagination, setPagination] = useState({
     total: 0,
     limit: 10,
-    skip: 0
+    skip: 0,
   })
 
   // Fetch activity logs when component mounts
@@ -88,7 +88,7 @@ const ActivityLogList = ({ entityType, entityId }) => {
     const newSkip = (page - 1) * pagination.limit
     setPagination((prev) => ({
       ...prev,
-      skip: newSkip
+      skip: newSkip,
     }))
   }
 
@@ -121,45 +121,63 @@ const ActivityLogList = ({ entityType, entityId }) => {
   const getActivityBadge = (action) => {
     switch (action) {
       case 'CREATE':
-        return { color: 'success', text: 'Created' }
+        return { color: 'success', text: 'Créé' }
       case 'UPDATE':
-        return { color: 'info', text: 'Updated' }
+        return { color: 'info', text: 'Mis à jour' }
       case 'DELETE':
-        return { color: 'danger', text: 'Deleted' }
+        return { color: 'danger', text: 'Supprimé' }
       case 'COMMENT':
-        return { color: 'primary', text: 'Commented' }
+        return { color: 'primary', text: 'Commenté' }
       case 'STATUS_CHANGE':
-        return { color: 'warning', text: 'Status Changed' }
+        return { color: 'warning', text: 'Statut modifié' }
       case 'ASSIGN':
-        return { color: 'info', text: 'Assigned' }
+        return { color: 'info', text: 'Assigné' }
       case 'COMPLETE':
-        return { color: 'success', text: 'Completed' }
+        return { color: 'success', text: 'Terminé' }
       default:
         return { color: 'secondary', text: action }
     }
   }
 
   const getActivityDescription = (activity) => {
-    const userName = activity.user?.name || 'Unknown User'
-    const entityType = activity.entityType.toLowerCase()
-    
+    const userName = activity.user?.name || 'Utilisateur inconnu'
+    let entityType = ''
+
+    // Translate entity type to French
+    switch (activity.entityType) {
+      case 'PROJECT':
+        entityType = 'projet'
+        break
+      case 'TASK':
+        entityType = 'tâche'
+        break
+      case 'COMMENT':
+        entityType = 'commentaire'
+        break
+      case 'USER':
+        entityType = 'utilisateur'
+        break
+      default:
+        entityType = activity.entityType.toLowerCase()
+    }
+
     switch (activity.action) {
       case 'CREATE':
-        return `${userName} created a new ${entityType}`
+        return `${userName} a créé un nouveau ${entityType}`
       case 'UPDATE':
-        return `${userName} updated the ${entityType}`
+        return `${userName} a mis à jour le ${entityType}`
       case 'DELETE':
-        return `${userName} deleted a ${entityType}`
+        return `${userName} a supprimé un ${entityType}`
       case 'COMMENT':
-        return `${userName} commented: "${activity.details?.content || ''}"`
+        return `${userName} a commenté: "${activity.details?.content || ''}"`
       case 'STATUS_CHANGE':
-        return `${userName} changed status to ${activity.details?.newStatus || ''}`
+        return `${userName} a changé le statut en ${activity.details?.newStatus || ''}`
       case 'ASSIGN':
-        return `${userName} assigned the ${entityType} to ${activity.details?.assignedTo || ''}`
+        return `${userName} a assigné le ${entityType} à ${activity.details?.assignedTo || ''}`
       case 'COMPLETE':
-        return `${userName} marked the ${entityType} as complete`
+        return `${userName} a marqué le ${entityType} comme terminé`
       default:
-        return `${userName} performed an action on the ${entityType}`
+        return `${userName} a effectué une action sur le ${entityType}`
     }
   }
 
@@ -169,7 +187,7 @@ const ActivityLogList = ({ entityType, entityId }) => {
   return (
     <CCard className="mb-4">
       <CCardHeader>
-        <strong>Activity Log</strong>
+        <strong>Historique d'activité</strong>
       </CCardHeader>
       <CCardBody>
         {error && <CAlert color="danger">{error}</CAlert>}
@@ -179,7 +197,7 @@ const ActivityLogList = ({ entityType, entityId }) => {
             <CSpinner />
           </div>
         ) : activities.length === 0 ? (
-          <div className="text-center text-muted my-3">No activity logs yet</div>
+          <div className="text-center text-muted my-3">Aucune activité enregistrée</div>
         ) : (
           <>
             <CListGroup>
@@ -194,7 +212,7 @@ const ActivityLogList = ({ entityType, entityId }) => {
                       <div className="flex-grow-1">
                         <div className="d-flex justify-content-between align-items-center">
                           <div>
-                            <strong>{activity.user?.name || 'Unknown User'}</strong>{' '}
+                            <strong>{activity.user?.name || 'Utilisateur inconnu'}</strong>{' '}
                             <CBadge color={badge.color}>{badge.text}</CBadge>
                           </div>
                           <small className="text-muted">{formatDate(activity.timestamp)}</small>
@@ -208,14 +226,17 @@ const ActivityLogList = ({ entityType, entityId }) => {
             </CListGroup>
 
             {totalPages > 1 && (
-              <CPagination className="mt-3 justify-content-center" aria-label="Activity log pagination">
+              <CPagination
+                className="mt-3 justify-content-center"
+                aria-label="Pagination de l'historique d'activité"
+              >
                 <CPaginationItem
                   disabled={currentPage === 1}
                   onClick={() => handlePageChange(currentPage - 1)}
                 >
-                  Previous
+                  Précédent
                 </CPaginationItem>
-                
+
                 {[...Array(totalPages).keys()].map((page) => (
                   <CPaginationItem
                     key={page + 1}
@@ -225,12 +246,12 @@ const ActivityLogList = ({ entityType, entityId }) => {
                     {page + 1}
                   </CPaginationItem>
                 ))}
-                
+
                 <CPaginationItem
                   disabled={currentPage === totalPages}
                   onClick={() => handlePageChange(currentPage + 1)}
                 >
-                  Next
+                  Suivant
                 </CPaginationItem>
               </CPagination>
             )}

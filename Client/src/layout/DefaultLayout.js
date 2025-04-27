@@ -1,7 +1,8 @@
 // filepath: c:\Users\Lenovo\Desktop\pi1\MERN-Project-Manager\Client\src\layout\DefaultLayout.js
 import React, { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
-import { AppContent, AppSidebar, AppFooter, AppHeader } from '../components/index'
+import { AppContent, AppFooter, AppHeader } from '../components/index'
+import './layout.css'
 
 const DefaultLayout = ({ children }) => {
   const location = useLocation()
@@ -26,13 +27,12 @@ const DefaultLayout = ({ children }) => {
   }, [location])
 
   return (
-    <div>
-      <AppSidebar />
+    <div className="webtrack-layout">
+      <AppHeader />
       <div className="wrapper d-flex flex-column min-vh-100">
-        <AppHeader />
-        <div className="body flex-grow-1 px-3">{children || <AppContent />}</div>
-        <AppFooter />
+        <div className="body flex-grow-1 px-3 py-4">{children || <AppContent />}</div>
       </div>
+      <AppFooter />
     </div>
   )
 }

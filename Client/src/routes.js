@@ -47,6 +47,9 @@ const routes = [
   { path: '/projects/:id', exact: true, name: 'Détails du projet', element: ProjectDetails },
   { path: '/performances', name: 'Suivi des Performances', element: Performances },
   { path: '/collaboration', name: 'Collaboration & Communication', element: Collaboration },
+  { path: '/collaboration/chat', name: 'Chat', element: Collaboration },
+  { path: '/collaboration/notifications', name: 'Notifications', element: Collaboration },
+  { path: '/collaboration/meetings', name: 'Réunions', element: Collaboration },
 ]
 
 export default routes

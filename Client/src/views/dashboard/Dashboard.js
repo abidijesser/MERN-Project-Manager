@@ -1,11 +1,8 @@
 // filepath: c:\Users\Lenovo\Desktop\pi1\MERN-Project-Manager\Client\src\views\dashboard\Dashboard.js
-import React, { useEffect, useState } from 'react'
-import axios from '../../utils/axios'
+import React, { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import classNames from 'classnames'
 
 import {
-  CAvatar,
   CButton,
   CButtonGroup,
   CCard,
@@ -15,43 +12,18 @@ import {
   CCol,
   CProgress,
   CRow,
-  CTable,
-  CTableBody,
-  CTableDataCell,
-  CTableHead,
-  CTableHeaderCell,
-  CTableRow,
+  CBadge,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
-  cibCcAmex,
-  cibCcApplePay,
-  cibCcMastercard,
-  cibCcPaypal,
-  cibCcStripe,
-  cibCcVisa,
-  cibGoogle,
-  cibFacebook,
-  cibLinkedin,
-  cifBr,
-  cifEs,
-  cifFr,
-  cifIn,
-  cifPl,
-  cifUs,
-  cibTwitter,
   cilCloudDownload,
   cilPeople,
-  cilUser,
-  cilUserFemale,
+  cilChart,
+  cilSpeedometer,
+  cilNotes,
+  cilTask,
+  cilCalendar,
 } from '@coreui/icons'
-
-import avatar1 from 'src/assets/images/avatars/1.jpg'
-import avatar2 from 'src/assets/images/avatars/2.jpg'
-import avatar3 from 'src/assets/images/avatars/3.jpg'
-import avatar4 from 'src/assets/images/avatars/4.jpg'
-import avatar5 from 'src/assets/images/avatars/5.jpg'
-import avatar6 from 'src/assets/images/avatars/6.jpg'
 
 import projectManagementImage from 'src/assets/images/gestion_projet.png'
 
@@ -62,39 +34,7 @@ import RecentActivityWidget from '../../components/ActivityLog/RecentActivityWid
 import socketService from '../../services/socketService'
 
 const Dashboard = () => {
-  const [users, setUsers] = useState([])
-
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const token = localStorage.getItem('token')
-        if (!token) {
-          console.error('No authentication token found')
-          return
-        }
-
-        // Vérifier le rôle de l'utilisateur
-        const userRole = localStorage.getItem('userRole')
-        console.log('Dashboard - User role:', userRole)
-
-        // Seuls les administrateurs peuvent récupérer la liste des utilisateurs
-        if (userRole === 'Admin') {
-          try {
-            const response = await axios.get('/auth/users')
-            setUsers(response.data)
-          } catch (error) {
-            console.error('There was an error fetching the users!', error)
-          }
-        } else {
-          console.log('User is not an admin, skipping user fetch')
-        }
-      } catch (error) {
-        console.error('Error in fetchUsers:', error)
-      }
-    }
-
-    fetchUsers()
-
     // Connect to socket for real-time updates
     socketService.connect()
 
@@ -244,31 +184,35 @@ const Dashboard = () => {
         </div>
       </section>
 
-      {/* Section existante */}
+      {/* Dashboard Widgets */}
       <WidgetsDropdown className="mb-4" />
 
       <CRow className="mb-4">
         <CCol md={8}>
-          <CCard className="mb-4">
+          <CCard className="mb-4 dashboard-card">
+            <CCardHeader className="dashboard-card-header">
+              <h4 className="mb-0">
+                <CIcon icon={cilChart} className="me-2" />
+                Activité du projet
+              </h4>
+            </CCardHeader>
             <CCardBody>
               <CRow>
                 <CCol sm={5}>
-                  <h4 id="traffic" className="card-title mb-0">
-                    Traffic
-                  </h4>
-                  <div className="small text-body-secondary">January - July 2023</div>
+                  <div className="small text-body-secondary mb-2">Janvier - Juillet 2023</div>
                 </CCol>
                 <CCol sm={7} className="d-none d-md-block">
-                  <CButton color="primary" className="float-end">
-                    <CIcon icon={cilCloudDownload} />
+                  <CButton color="primary" className="float-end btn-sm">
+                    <CIcon icon={cilCloudDownload} className="me-1" /> Exporter
                   </CButton>
                   <CButtonGroup className="float-end me-3">
-                    {['Day', 'Month', 'Year'].map((value) => (
+                    {['Jour', 'Mois', 'Année'].map((value) => (
                       <CButton
-                        color="outline-secondary"
+                        color="outline-primary"
+                        size="sm"
                         key={value}
                         className="mx-0"
-                        active={value === 'Month'}
+                        active={value === 'Mois'}
                       >
                         {value}
                       </CButton>
@@ -278,17 +222,6 @@ const Dashboard = () => {
               </CRow>
               <MainChart />
             </CCardBody>
-            <CCardFooter>
-              <CRow
-                xs={{ cols: 1, gutter: 4 }}
-                sm={{ cols: 2 }}
-                lg={{ cols: 4 }}
-                xl={{ cols: 5 }}
-                className="mb-2 text-center"
-              >
-                {/* Your existing progressExample code */}
-              </CRow>
-            </CCardFooter>
           </CCard>
         </CCol>
         <CCol md={4}>
@@ -296,70 +229,178 @@ const Dashboard = () => {
         </CCol>
       </CRow>
 
-      <WidgetsBrand className="mb-4" withCharts />
-      <CRow>
-        <CCol xs>
-          <CCard className="mb-4">
-            <CCardHeader>Users</CCardHeader>
+      <CRow className="mb-4">
+        <CCol md={12}>
+          <CCard className="dashboard-card">
+            <CCardHeader className="dashboard-card-header">
+              <h4 className="mb-0">
+                <CIcon icon={cilTask} className="me-2" />
+                Aperçu des projets
+              </h4>
+            </CCardHeader>
             <CCardBody>
-              <CTable align="middle" className="mb-0 border" hover responsive>
-                <CTableHead className="text-nowrap">
-                  <CTableRow>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                      <CIcon icon={cilPeople} />
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">User</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                      Country
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">Usage</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                      Payment Method
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">Activity</CTableHeaderCell>
-                  </CTableRow>
-                </CTableHead>
-                <CTableBody>
-                  {users.map((user, index) => (
-                    <CTableRow key={index}>
-                      <CTableDataCell className="text-center">
-                        <CAvatar size="md" src={avatar1} status="success" />
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div>{user.name}</div>
-                        <div className="small text-body-secondary text-nowrap">
-                          <span>{user.new ? 'New' : 'Recurring'}</span> | Registered:{' '}
-                          {user.registered}
+              <CRow>
+                {[
+                  {
+                    title: 'Refonte du site web',
+                    progress: 75,
+                    status: 'En cours',
+                    statusColor: 'primary',
+                    tasks: 12,
+                    completedTasks: 9,
+                    dueDate: '15 Août 2023',
+                  },
+                  {
+                    title: 'Application mobile',
+                    progress: 45,
+                    status: 'En cours',
+                    statusColor: 'primary',
+                    tasks: 24,
+                    completedTasks: 10,
+                    dueDate: '30 Sept 2023',
+                  },
+                  {
+                    title: 'Campagne marketing',
+                    progress: 90,
+                    status: 'Presque terminé',
+                    statusColor: 'success',
+                    tasks: 18,
+                    completedTasks: 16,
+                    dueDate: '5 Août 2023',
+                  },
+                ].map((project, index) => (
+                  <CCol md={4} key={index} className="mb-3">
+                    <div className="project-card p-3 border rounded h-100">
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h5 className="mb-0">{project.title}</h5>
+                        <CBadge color={project.statusColor}>{project.status}</CBadge>
+                      </div>
+                      <div className="mb-3">
+                        <div className="d-flex justify-content-between mb-1">
+                          <span>Progression</span>
+                          <span>{project.progress}%</span>
                         </div>
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <CIcon size="xl" icon={cifUs} title="USA" />
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="d-flex justify-content-between text-nowrap">
-                          <div className="fw-semibold">50%</div>
-                          <div className="ms-3">
-                            <small className="text-body-secondary">
-                              Jun 11, 2023 - Jul 10, 2023
-                            </small>
+                        <CProgress
+                          value={project.progress}
+                          color={
+                            project.progress > 75
+                              ? 'success'
+                              : project.progress > 40
+                                ? 'primary'
+                                : 'warning'
+                          }
+                          height={8}
+                          className="mb-3"
+                        />
+                        <div className="d-flex justify-content-between text-muted small">
+                          <span>
+                            Tâches: {project.completedTasks}/{project.tasks}
+                          </span>
+                          <span>Échéance: {project.dueDate}</span>
+                        </div>
+                      </div>
+                      <div className="text-end">
+                        <Link to="/projects" className="btn btn-sm btn-outline-primary">
+                          Voir détails
+                        </Link>
+                      </div>
+                    </div>
+                  </CCol>
+                ))}
+              </CRow>
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
+
+      <CRow className="mb-4">
+        <CCol md={6}>
+          <CCard className="dashboard-card h-100">
+            <CCardHeader className="dashboard-card-header">
+              <h4 className="mb-0">
+                <CIcon icon={cilCalendar} className="me-2" />
+                Événements à venir
+              </h4>
+            </CCardHeader>
+            <CCardBody>
+              <div className="upcoming-events">
+                {[
+                  {
+                    title: "Réunion d'équipe",
+                    date: "Aujourd'hui, 14:00",
+                    type: 'Réunion',
+                    priority: 'high',
+                  },
+                  {
+                    title: 'Présentation client',
+                    date: 'Demain, 10:30',
+                    type: 'Présentation',
+                    priority: 'medium',
+                  },
+                  {
+                    title: 'Date limite du rapport',
+                    date: '12 Août, 2023',
+                    type: 'Échéance',
+                    priority: 'high',
+                  },
+                ].map((event, index) => (
+                  <div
+                    key={index}
+                    className={`event-item p-3 mb-3 border-start border-4 border-${event.priority === 'high' ? 'danger' : event.priority === 'medium' ? 'warning' : 'info'} rounded`}
+                  >
+                    <div className="d-flex justify-content-between">
+                      <h5 className="mb-1">{event.title}</h5>
+                      <span className="badge bg-light text-dark">{event.type}</span>
+                    </div>
+                    <p className="text-muted mb-0">{event.date}</p>
+                  </div>
+                ))}
+              </div>
+            </CCardBody>
+          </CCard>
+        </CCol>
+        <CCol md={6}>
+          <CCard className="dashboard-card h-100">
+            <CCardHeader className="dashboard-card-header">
+              <h4 className="mb-0">
+                <CIcon icon={cilPeople} className="me-2" />
+                Membres de l'équipe
+              </h4>
+            </CCardHeader>
+            <CCardBody>
+              <div className="team-members">
+                <CRow className="g-3">
+                  {[
+                    { name: 'Sophie Martin', role: 'Chef de projet', tasks: 8 },
+                    { name: 'Thomas Dubois', role: 'Développeur', tasks: 12 },
+                    { name: 'Emma Petit', role: 'Designer', tasks: 6 },
+                    { name: 'Lucas Bernard', role: 'Marketing', tasks: 5 },
+                  ].map((member, index) => (
+                    <CCol md={6} key={index}>
+                      <div className="team-member-card p-3 border rounded">
+                        <div className="d-flex align-items-center">
+                          <div
+                            className="member-avatar me-3 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                            style={{ width: '40px', height: '40px' }}
+                          >
+                            {member.name
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')}
+                          </div>
+                          <div>
+                            <h6 className="mb-0">{member.name}</h6>
+                            <p className="text-muted small mb-0">{member.role}</p>
                           </div>
                         </div>
-                        <CProgress thin color="success" value={50} />
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <CIcon size="xl" icon={cibCcMastercard} />
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="small text-body-secondary text-nowrap">Last login</div>
-                        <div className="fw-semibold text-nowrap">10 sec ago</div>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <Link to={`/user-details/${user._id}`}>View Details</Link>
-                      </CTableDataCell>
-                    </CTableRow>
+                        <div className="mt-2 text-end">
+                          <span className="badge bg-light text-dark">{member.tasks} tâches</span>
+                        </div>
+                      </div>
+                    </CCol>
                   ))}
-                </CTableBody>
-              </CTable>
+                </CRow>
+              </div>
             </CCardBody>
           </CCard>
         </CCol>

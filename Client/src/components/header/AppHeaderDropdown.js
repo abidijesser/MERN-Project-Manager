@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   CAvatar,
@@ -9,27 +9,30 @@ import {
   CDropdownItem,
   CDropdownMenu,
   CDropdownToggle,
+  CProgress,
 } from '@coreui/react'
-import {
-  cilBell,
-  cilCreditCard,
-  cilCommentSquare,
-  cilEnvelopeOpen,
-  cilFile,
-  cilLockLocked,
-  cilSettings,
-  cilTask,
-  cilUser,
-  cilAccountLogout,
-} from '@coreui/icons'
+import { cilSettings, cilTask, cilUser, cilAccountLogout, cilCalendar } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
-import axios from 'axios'
 import { toast } from 'react-toastify'
-
-import avatar8 from './../../assets/images/avatars/8.jpg'
 
 const AppHeaderDropdown = () => {
   const navigate = useNavigate()
+  const [userName, setUserName] = useState('User')
+  const [userRole, setUserRole] = useState('Client')
+
+  useEffect(() => {
+    // Get user name from localStorage
+    const storedName = localStorage.getItem('userName')
+    if (storedName) {
+      setUserName(storedName)
+    }
+
+    // Get user role from localStorage
+    const storedRole = localStorage.getItem('userRole')
+    if (storedRole) {
+      setUserRole(storedRole)
+    }
+  }, [])
 
   const handleLogout = async () => {
     try {
@@ -39,6 +42,8 @@ const AppHeaderDropdown = () => {
       // Clear local storage first to ensure the user is logged out even if the server request fails
       localStorage.removeItem('token')
       localStorage.removeItem('user')
+      localStorage.removeItem('userName')
+      localStorage.removeItem('userRole')
 
       // Show success message
       toast.success('Déconnexion réussie')
@@ -71,6 +76,8 @@ const AppHeaderDropdown = () => {
       // Ensure logout even if there's an error
       localStorage.removeItem('token')
       localStorage.removeItem('user')
+      localStorage.removeItem('userName')
+      localStorage.removeItem('userRole')
 
       toast.error('Erreur lors de la déconnexion, mais vous avez été déconnecté')
       navigate('/login')
@@ -81,39 +88,65 @@ const AppHeaderDropdown = () => {
     navigate('/profile')
   }
 
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (!userName) return 'U'
+    const nameParts = userName.split(' ')
+    if (nameParts.length > 1) {
+      return `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`.toUpperCase()
+    }
+    return userName.charAt(0).toUpperCase()
+  }
+
   return (
     <CDropdown variant="nav-item">
       <CDropdownToggle placement="bottom-end" className="py-0 pe-0" caret={false}>
-        <CAvatar src={avatar8} size="md" />
+        <CAvatar color="light" size="md" className="text-primary border border-2 border-white">
+          {getUserInitials()}
+        </CAvatar>
       </CDropdownToggle>
-      <CDropdownMenu className="pt-0" placement="bottom-end">
-        <CDropdownHeader className="bg-body-secondary fw-semibold mb-2">Account</CDropdownHeader>
+      <CDropdownMenu className="pt-0" placement="bottom-end" style={{ minWidth: '250px' }}>
+        <CDropdownHeader className="bg-gradient-primary text-white d-flex flex-column align-items-center p-3">
+          <CAvatar
+            color="light"
+            size="lg"
+            className="mb-2 text-primary border border-2 border-white"
+          >
+            {getUserInitials()}
+          </CAvatar>
+          <div className="fw-semibold">{userName}</div>
+          <div className="text-white-50 small">{userRole}</div>
 
-        <CDropdownHeader className="bg-body-secondary fw-semibold my-2">Settings</CDropdownHeader>
+          <div className="w-100 mt-2">
+            <div className="d-flex justify-content-between mb-1 small">
+              <span>Profile Completion</span>
+              <span>75%</span>
+            </div>
+            <CProgress value={75} thin color="light" />
+          </div>
+        </CDropdownHeader>
+
         <CDropdownItem onClick={handleProfileClick}>
-          <CIcon icon={cilUser} className="me-2" />
-          Profile
+          <CIcon icon={cilUser} className="me-2 text-primary" />
+          My Profile
         </CDropdownItem>
-        <CDropdownItem href="#">
-          <CIcon icon={cilSettings} className="me-2" />
+        <CDropdownItem href="/tasks">
+          <CIcon icon={cilTask} className="me-2 text-info" />
+          My Tasks
+          <CBadge color="info" className="ms-2">
+            5
+          </CBadge>
+        </CDropdownItem>
+        <CDropdownItem href="/calendar">
+          <CIcon icon={cilCalendar} className="me-2 text-success" />
+          Calendar
+        </CDropdownItem>
+        <CDropdownItem href="/settings">
+          <CIcon icon={cilSettings} className="me-2 text-secondary" />
           Settings
         </CDropdownItem>
-        <CDropdownItem href="#">
-          <CIcon icon={cilCreditCard} className="me-2" />
-          Payments
-          <CBadge color="secondary" className="ms-2">
-            42
-          </CBadge>
-        </CDropdownItem>
-        <CDropdownItem href="#">
-          <CIcon icon={cilFile} className="me-2" />
-          Projects
-          <CBadge color="primary" className="ms-2">
-            42
-          </CBadge>
-        </CDropdownItem>
         <CDropdownDivider />
-        <CDropdownItem onClick={handleLogout}>
+        <CDropdownItem onClick={handleLogout} className="text-danger">
           <CIcon icon={cilAccountLogout} className="me-2" />
           Logout
         </CDropdownItem>

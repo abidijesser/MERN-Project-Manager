@@ -13,18 +13,23 @@ import {
   CNavLink,
   CNavItem,
   useColorModes,
-  CButton,
+  CBadge,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
   cilBell,
   cilContrast,
   cilEnvelopeOpen,
-  cilList,
   cilMenu,
   cilMoon,
   cilSun,
-  cilAccountLogout,
+  cilSpeedometer,
+  cilNotes,
+  cilChartPie,
+  cilStar,
+  cilCursor,
+  cilDescription,
+  cilCalculator,
 } from '@coreui/icons'
 
 import { AppBreadcrumb } from './index'
@@ -44,100 +49,144 @@ const AppHeader = () => {
     })
   }, [])
 
-  const handleLogout = () => {
-    window.location.href = 'http://localhost:3001/logout'
-  }
   return (
-    <CHeader position="sticky" className="mb-4 p-0" ref={headerRef}>
-      <CContainer className="border-bottom px-4" fluid>
-        <CHeaderToggler
-          onClick={() => dispatch({ type: 'set', sidebarShow: !sidebarShow })}
-          style={{ marginInlineStart: '-14px' }}
-        >
-          <CIcon icon={cilMenu} size="lg" />
-        </CHeaderToggler>
-        <CHeaderNav className="d-none d-md-flex">
-          <CNavItem>
-            <CNavLink to="/dashboard" as={NavLink}>
-              Dashboard
-            </CNavLink>
-          </CNavItem>
-          <CNavItem>
-            <CNavLink href="#">Create project</CNavLink>
-          </CNavItem>
-          <CNavItem>
-            <CNavLink href="#">Settings</CNavLink>
-          </CNavItem>
-        </CHeaderNav>
-        <CHeaderNav className="ms-auto">
-          <CNavItem>
-            <CNavLink href="#">
-              <CIcon icon={cilBell} size="lg" />
-            </CNavLink>
-          </CNavItem>
-          <CNavItem>
-            <CNavLink href="#">
-              <CIcon icon={cilList} size="lg" />
-            </CNavLink>
-          </CNavItem>
-          <CNavItem>
-            <CNavLink href="#">
-              <CIcon icon={cilEnvelopeOpen} size="lg" />
-            </CNavLink>
-          </CNavItem>
-        </CHeaderNav>
-        <CHeaderNav>
-          <li className="nav-item py-1">
-            <div className="vr h-100 mx-2 text-body text-opacity-75"></div>
-          </li>
-          <CDropdown variant="nav-item" placement="bottom-end">
-            <CDropdownToggle caret={false}>
-              {colorMode === 'dark' ? (
-                <CIcon icon={cilMoon} size="lg" />
-              ) : colorMode === 'auto' ? (
-                <CIcon icon={cilContrast} size="lg" />
-              ) : (
-                <CIcon icon={cilSun} size="lg" />
-              )}
-            </CDropdownToggle>
-            <CDropdownMenu>
-              <CDropdownItem
-                active={colorMode === 'light'}
-                className="d-flex align-items-center"
-                as="button"
-                type="button"
-                onClick={() => setColorMode('light')}
-              >
-                <CIcon className="me-2" icon={cilSun} size="lg" /> Light
-              </CDropdownItem>
-              <CDropdownItem
-                active={colorMode === 'dark'}
-                className="d-flex align-items-center"
-                as="button"
-                type="button"
-                onClick={() => setColorMode('dark')}
-              >
-                <CIcon className="me-2" icon={cilMoon} size="lg" /> Dark
-              </CDropdownItem>
-              <CDropdownItem
-                active={colorMode === 'auto'}
-                className="d-flex align-items-center"
-                as="button"
-                type="button"
-                onClick={() => setColorMode('auto')}
-              >
-                <CIcon className="me-2" icon={cilContrast} size="lg" /> Auto
-              </CDropdownItem>
-            </CDropdownMenu>
-          </CDropdown>
-          <li className="nav-item py-1">
-            <div className="vr h-100 mx-2 text-body text-opacity-75"></div>
-          </li>
+    <CHeader position="sticky" className="mb-4 p-0 app-header" ref={headerRef}>
+      <CContainer className="px-4 py-2" fluid>
+        <div className="d-flex align-items-center justify-content-between w-100">
+          <div className="d-flex align-items-center">
+            <div className="app-logo me-4">
+              <span className="fw-bold fs-4 text-white">WebTrack</span>
+            </div>
+            <CHeaderToggler
+              onClick={() => dispatch({ type: 'set', sidebarShow: !sidebarShow })}
+              className="d-md-none text-white"
+            >
+              <CIcon icon={cilMenu} size="lg" />
+            </CHeaderToggler>
+            <CHeaderNav className="d-none d-md-flex main-nav">
+              <CNavItem>
+                <CNavLink to="/dashboard" as={NavLink} className="nav-link-custom">
+                  <CIcon icon={cilSpeedometer} className="nav-icon" />
+                  <span>Tableau de bord</span>
+                </CNavLink>
+              </CNavItem>
+              <CNavItem>
+                <CNavLink to="/projects" as={NavLink} className="nav-link-custom">
+                  <CIcon icon={cilNotes} className="nav-icon" />
+                  <span>Mes projets</span>
+                </CNavLink>
+              </CNavItem>
+              <CNavItem>
+                <CNavLink to="/tasks" as={NavLink} className="nav-link-custom">
+                  <CIcon icon={cilChartPie} className="nav-icon" />
+                  <span>Tâches</span>
+                </CNavLink>
+              </CNavItem>
+              <CNavItem>
+                <CNavLink to="/performances" as={NavLink} className="nav-link-custom">
+                  <CIcon icon={cilStar} className="nav-icon" />
+                  <span>Performances</span>
+                </CNavLink>
+              </CNavItem>
+              <CDropdown variant="nav-item">
+                <CDropdownToggle caret className="nav-link-custom">
+                  <CIcon icon={cilCursor} className="nav-icon" />
+                  <span>Collaboration</span>
+                </CDropdownToggle>
+                <CDropdownMenu>
+                  <CDropdownItem href="#/collaboration/chat">Chat</CDropdownItem>
+                  <CDropdownItem href="#/collaboration/notifications">Notifications</CDropdownItem>
+                  <CDropdownItem href="#/collaboration/meetings">Réunions</CDropdownItem>
+                </CDropdownMenu>
+              </CDropdown>
+              <CNavItem>
+                <CNavLink to="/resources" as={NavLink} className="nav-link-custom">
+                  <CIcon icon={cilDescription} className="nav-icon" />
+                  <span>Ressources</span>
+                </CNavLink>
+              </CNavItem>
+              <CNavItem>
+                <CNavLink to="/settings" as={NavLink} className="nav-link-custom">
+                  <CIcon icon={cilCalculator} className="nav-icon" />
+                  <span>Paramètres</span>
+                </CNavLink>
+              </CNavItem>
+            </CHeaderNav>
+          </div>
 
-          <AppHeaderDropdown />
-        </CHeaderNav>
+          <div className="d-flex align-items-center">
+            <CHeaderNav className="header-actions">
+              <CNavItem>
+                <CNavLink href="#" className="action-link">
+                  <div className="icon-wrapper">
+                    <CIcon icon={cilBell} size="lg" />
+                    <CBadge color="warning" shape="rounded-pill" position="top-end" size="sm">
+                      3
+                    </CBadge>
+                  </div>
+                </CNavLink>
+              </CNavItem>
+              <CNavItem>
+                <CNavLink href="#" className="action-link">
+                  <div className="icon-wrapper">
+                    <CIcon icon={cilEnvelopeOpen} size="lg" />
+                    <CBadge color="warning" shape="rounded-pill" position="top-end" size="sm">
+                      5
+                    </CBadge>
+                  </div>
+                </CNavLink>
+              </CNavItem>
+            </CHeaderNav>
+
+            <div className="vr h-100 mx-3 text-white text-opacity-25 d-none d-lg-block"></div>
+
+            <CDropdown variant="nav-item" placement="bottom-end">
+              <CDropdownToggle caret={false} className="text-white theme-toggle">
+                {colorMode === 'dark' ? (
+                  <CIcon icon={cilMoon} size="lg" />
+                ) : colorMode === 'auto' ? (
+                  <CIcon icon={cilContrast} size="lg" />
+                ) : (
+                  <CIcon icon={cilSun} size="lg" />
+                )}
+              </CDropdownToggle>
+              <CDropdownMenu>
+                <CDropdownItem
+                  active={colorMode === 'light'}
+                  className="d-flex align-items-center"
+                  as="button"
+                  type="button"
+                  onClick={() => setColorMode('light')}
+                >
+                  <CIcon className="me-2" icon={cilSun} size="lg" /> Light
+                </CDropdownItem>
+                <CDropdownItem
+                  active={colorMode === 'dark'}
+                  className="d-flex align-items-center"
+                  as="button"
+                  type="button"
+                  onClick={() => setColorMode('dark')}
+                >
+                  <CIcon className="me-2" icon={cilMoon} size="lg" /> Dark
+                </CDropdownItem>
+                <CDropdownItem
+                  active={colorMode === 'auto'}
+                  className="d-flex align-items-center"
+                  as="button"
+                  type="button"
+                  onClick={() => setColorMode('auto')}
+                >
+                  <CIcon className="me-2" icon={cilContrast} size="lg" /> Auto
+                </CDropdownItem>
+              </CDropdownMenu>
+            </CDropdown>
+
+            <div className="vr h-100 mx-3 text-white text-opacity-25"></div>
+            <AppHeaderDropdown />
+          </div>
+        </div>
       </CContainer>
-      <CContainer className="px-4" fluid>
+      <CContainer className="px-4 breadcrumb-container" fluid>
         <AppBreadcrumb />
       </CContainer>
     </CHeader>

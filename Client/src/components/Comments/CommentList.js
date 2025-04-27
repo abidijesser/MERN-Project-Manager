@@ -112,17 +112,60 @@ const CommentList = ({ entityType, entityId }) => {
       if (entityType === 'task') {
         response = await createTaskComment(entityId, newComment)
       } else if (entityType === 'project') {
-        response = await createProjectComment(entityId, newComment)
+        try {
+          console.log(`Submitting comment for project ${entityId}:`, newComment)
+          response = await createProjectComment(entityId, newComment)
+          console.log('Project comment response:', response)
+        } catch (projectCommentError) {
+          console.error('Error in createProjectComment:', projectCommentError)
+          const errorDetails = projectCommentError.response?.data?.details || ''
+          throw new Error(
+            `Failed to create project comment: ${projectCommentError.message}. ${errorDetails}`,
+          )
+        }
       }
 
-      if (response.success) {
+      if (response && response.success) {
         setNewComment('')
         // The comment will be added via the socket listener
       } else {
-        setError('Failed to add comment')
+        const errorMessage = response?.error || 'Failed to add comment'
+        console.error('Comment submission failed:', errorMessage)
+        setError(errorMessage)
       }
     } catch (err) {
-      setError('Error adding comment: ' + (err.response?.data?.error || err.message))
+      console.error('Comment submission error:', err)
+
+      // Extract the most useful error message
+      let errorMessage = 'An error occurred while adding your comment'
+
+      if (err.response?.data?.error) {
+        // Server returned a specific error message
+        errorMessage = err.response.data.error
+      } else if (err.message && err.message.includes('validation failed')) {
+        // This is a validation error, simplify it
+        errorMessage = 'The comment could not be saved due to validation issues'
+      } else if (err.message) {
+        // Use the error message but remove technical details
+        errorMessage = err.message
+          .replace(/^Error: Failed to create .* comment: /, '')
+          .replace(/^Request failed with status code \d+\. /, '')
+      }
+
+      setError(`Error: ${errorMessage}`)
+
+      // Check if token is expired or invalid
+      if (err.response?.status === 401) {
+        // Token might be expired, try to refresh or redirect to login
+        localStorage.removeItem('token')
+        alert('Your session has expired. Please log in again.')
+        window.location.href = '/login'
+      }
+
+      // Automatically clear error after 5 seconds
+      setTimeout(() => {
+        setError(null)
+      }, 5000)
     } finally {
       setSubmitting(false)
     }
@@ -171,7 +214,16 @@ const CommentList = ({ entityType, entityId }) => {
         <strong>Comments</strong>
       </CCardHeader>
       <CCardBody>
-        {error && <CAlert color="danger">{error}</CAlert>}
+        {error && (
+          <CAlert color="danger" dismissible onClose={() => setError(null)}>
+            <div className="d-flex align-items-center">
+              <div className="me-3">
+                <i className="fa fa-exclamation-circle" style={{ fontSize: '1.5rem' }}></i>
+              </div>
+              <div>{error}</div>
+            </div>
+          </CAlert>
+        )}
 
         <div className="mb-4 comment-form">
           <div className="d-flex">

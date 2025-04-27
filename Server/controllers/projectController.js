@@ -4,9 +4,12 @@ const User = require("../models/User");
 // GET all projects
 const getAllProjects = async (req, res) => {
   try {
-    const projects = await Project.find({ owner: req.user.id }).populate(
-      "tasks members owner"
-    );
+    // Find projects where the user is either the owner or a member
+    const projects = await Project.find({
+      $or: [{ owner: req.user.id }, { members: req.user.id }],
+    }).populate("tasks members owner");
+
+    console.log(`Found ${projects.length} projects for user ${req.user.id}`);
     res.status(200).json({ success: true, projects });
   } catch (error) {
     console.error("Erreur lors de la récupération des projets:", error);
@@ -20,15 +23,19 @@ const getAllProjects = async (req, res) => {
 // GET a single project by ID
 const getProjectById = async (req, res) => {
   try {
+    // Find project where the user is either the owner or a member
     const project = await Project.findOne({
       _id: req.params.id,
-      owner: req.user.id,
+      $or: [{ owner: req.user.id }, { members: req.user.id }],
     }).populate("tasks members owner");
 
     if (!project) {
       return res
         .status(404)
-        .json({ success: false, error: "Projet non trouvé" });
+        .json({
+          success: false,
+          error: "Projet non trouvé ou vous n'avez pas accès à ce projet",
+        });
     }
     res.status(200).json({ success: true, project: project });
   } catch (error) {
