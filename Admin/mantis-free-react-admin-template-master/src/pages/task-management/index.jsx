@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Button,
@@ -64,6 +64,10 @@ const TaskManagement = ({ dashboardView = false }) => {
   // State for task form
   const [openTaskDialog, setOpenTaskDialog] = useState(false);
   const [taskFormMode, setTaskFormMode] = useState('add'); // 'add' or 'edit'
+
+  // Create a ref to store the current task ID to ensure it persists across renders
+  const taskIdRef = useRef('');
+
   const [currentTask, setCurrentTask] = useState({
     _id: '', // Initialize with empty string to avoid undefined
     title: '',
@@ -75,6 +79,14 @@ const TaskManagement = ({ dashboardView = false }) => {
     assignedTo: '',
     googleCalendarEventId: null // Initialize Google Calendar Event ID
   });
+
+  // Update the ref whenever currentTask._id changes
+  useEffect(() => {
+    if (currentTask._id) {
+      taskIdRef.current = currentTask._id;
+      console.log('Updated taskIdRef with:', currentTask._id);
+    }
+  }, [currentTask._id]);
 
   // State for task details
   const [openTaskDetails, setOpenTaskDetails] = useState(false);
@@ -121,7 +133,8 @@ const TaskManagement = ({ dashboardView = false }) => {
     try {
       setLoading(true);
       // Use Promise.allSettled to handle partial failures
-      const results = await Promise.allSettled([api.get('/tasks'), api.get('/projects'), adminApi.get('/users')]);
+      // Use adminApi for projects to get all projects without filtering by user
+      const results = await Promise.allSettled([api.get('/tasks'), adminApi.get('/projects'), adminApi.get('/users')]);
 
       // Process results
       const [tasksRes, projectsRes, usersRes] = results.map((result) =>
@@ -134,8 +147,22 @@ const TaskManagement = ({ dashboardView = false }) => {
       }
 
       if (projectsRes.data.success) {
-        console.log('Fetched projects data:', JSON.stringify(projectsRes.data.projects));
+        console.log('Fetched projects data from admin API:', JSON.stringify(projectsRes.data.projects));
+        console.log('Number of projects fetched:', projectsRes.data.projects.length);
         setProjects(projectsRes.data.projects);
+      } else {
+        // Fallback to regular API if admin API fails
+        try {
+          console.log('Admin API failed, trying regular projects API');
+          const regularProjectsRes = await api.get('/projects');
+          if (regularProjectsRes.data.success) {
+            console.log('Fetched projects data from regular API:', JSON.stringify(regularProjectsRes.data.projects));
+            console.log('Number of projects fetched (regular API):', regularProjectsRes.data.projects.length);
+            setProjects(regularProjectsRes.data.projects);
+          }
+        } catch (error) {
+          console.error('Error fetching projects from regular API:', error);
+        }
       }
 
       if (usersRes.data.success) {
@@ -191,7 +218,7 @@ const TaskManagement = ({ dashboardView = false }) => {
     // Validate project ID
     if (!projectId) {
       console.log('No project ID provided, clearing members');
-      setCurrentTask({ ...currentTask, project: '', assignedTo: '' });
+      setCurrentTask((prevTask) => ({ ...prevTask, project: '', assignedTo: '' }));
       setAvailableMembers([]);
       return;
     }
@@ -200,10 +227,32 @@ const TaskManagement = ({ dashboardView = false }) => {
     const projectExists = projects.some((p) => p._id === projectId);
     if (!projectExists) {
       console.warn('Selected project ID does not exist in available projects:', projectId);
+
+      // Try to fetch the project if it doesn't exist in our list
+      try {
+        const projectResponse = await api.get(`/projects/${projectId}`);
+        if (projectResponse.data.success && projectResponse.data.project) {
+          console.log('Successfully fetched missing project:', projectResponse.data.project);
+
+          // Add the project to our list
+          setProjects((prevProjects) => {
+            if (!prevProjects.some((p) => p._id === projectId)) {
+              return [...prevProjects, projectResponse.data.project];
+            }
+            return prevProjects;
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching project:', error);
+      }
     }
 
-    // Update the current task with the new project ID
-    setCurrentTask({ ...currentTask, project: projectId, assignedTo: '' });
+    // Update the current task with the new project ID using a callback to ensure we have the latest state
+    setCurrentTask((prevTask) => {
+      console.log('Updating current task with project ID:', projectId);
+      console.log('Previous task state:', prevTask);
+      return { ...prevTask, project: projectId, assignedTo: '' };
+    });
 
     try {
       // Fetch project members directly from the server
@@ -233,17 +282,29 @@ const TaskManagement = ({ dashboardView = false }) => {
   const handleTaskInputChange = (e) => {
     const { name, value } = e.target;
 
+    console.log('Task input changed:', name, value);
+
     // Special handling for project field to ensure members are updated
     if (name === 'project') {
       handleProjectChange(value);
     } else {
-      setCurrentTask({ ...currentTask, [name]: value });
+      // Use a callback to ensure we have the latest state
+      setCurrentTask((prevTask) => {
+        console.log('Updating task field:', name, 'from', prevTask[name], 'to', value);
+        return { ...prevTask, [name]: value };
+      });
     }
   };
 
   // Handle date change
   const handleDateChange = (date) => {
-    setCurrentTask({ ...currentTask, dueDate: date });
+    console.log('Date changed to:', date);
+
+    // Use a callback to ensure we have the latest state
+    setCurrentTask((prevTask) => {
+      console.log('Updating dueDate from', prevTask.dueDate, 'to', date);
+      return { ...prevTask, dueDate: date };
+    });
   };
 
   // Open task dialog for adding a new task
@@ -296,7 +357,8 @@ const TaskManagement = ({ dashboardView = false }) => {
       setTaskFormMode('edit');
 
       // Initialize the current task with the ID to ensure it's set
-      setCurrentTask((prev) => {
+      // We need to make sure the _id is properly set before anything else
+      await setCurrentTask((prev) => {
         console.log('Setting task ID in currentTask:', taskIdStr);
         return {
           ...prev,
@@ -547,13 +609,74 @@ const TaskManagement = ({ dashboardView = false }) => {
       console.log('Task ID type:', typeof currentTask._id);
       console.log('Task ID value:', currentTask._id);
 
+      // Get the task ID directly from the currentTask state
+      let taskId = currentTask._id;
+      console.log('Task ID from currentTask state:', taskId);
+
+      // Get the task ID from the hidden input as a backup
+      const hiddenInput = document.getElementById('taskId');
+      let taskIdFromHidden = '';
+      if (hiddenInput && hiddenInput.value) {
+        taskIdFromHidden = hiddenInput.value;
+        console.log('Task ID from hidden input:', taskIdFromHidden);
+      }
+
+      // Get the task ID from the dialog data attribute as another backup
+      const dialogElement = document.querySelector('[data-task-id]');
+      let taskIdFromDialog = '';
+      if (dialogElement) {
+        taskIdFromDialog = dialogElement.getAttribute('data-task-id');
+        console.log('Task ID from dialog attribute:', taskIdFromDialog);
+      }
+
+      // Create a copy of the current task
+      const taskToSubmit = { ...currentTask };
+
+      // If we're in edit mode but the task ID is missing, try to get it from various sources
+      if (taskFormMode === 'edit') {
+        if (!taskToSubmit._id) {
+          // Try hidden input first
+          if (taskIdFromHidden) {
+            console.log('Using task ID from hidden input for submission');
+            taskToSubmit._id = taskIdFromHidden;
+          }
+          // Then try dialog attribute
+          else if (taskIdFromDialog) {
+            console.log('Using task ID from dialog attribute for submission');
+            taskToSubmit._id = taskIdFromDialog;
+          }
+          // If we still don't have an ID, check the submit button
+          else {
+            const submitButton = document.querySelector('button[data-task-id]');
+            const taskIdFromButton = submitButton?.getAttribute('data-task-id');
+            if (taskIdFromButton) {
+              console.log('Using task ID from submit button for submission');
+              taskToSubmit._id = taskIdFromButton;
+            }
+          }
+        }
+
+        console.log('Final task ID for submission:', taskToSubmit._id);
+
+        // If we still don't have a task ID, show an error
+        if (!taskToSubmit._id) {
+          console.error('Could not find task ID from any source');
+          setSnackbar({
+            open: true,
+            message: 'Error: Could not find task ID from any source',
+            severity: 'error'
+          });
+          return;
+        }
+      }
+
       // All fields are now optional, no validation needed
       console.log('All fields are optional, proceeding with submission');
 
       // Format data for API
       const taskData = {
-        ...currentTask,
-        dueDate: currentTask.dueDate.toISOString()
+        ...taskToSubmit,
+        dueDate: taskToSubmit.dueDate.toISOString()
       };
 
       // Ensure we preserve the Google Calendar Event ID if it exists
@@ -572,20 +695,25 @@ const TaskManagement = ({ dashboardView = false }) => {
         console.log('Submitting new task data:', newTaskData);
         response = await api.post('/tasks', newTaskData);
       } else if (taskFormMode === 'edit') {
-        // Get the task ID from currentTask and ensure it's a string
-        let taskId = currentTask._id ? currentTask._id.toString() : null;
-        console.log('Initial taskId from currentTask:', taskId);
+        // Get the task ID from taskToSubmit (which should now have the ID from one of our sources)
+        let taskId = taskToSubmit._id ? taskToSubmit._id.toString() : null;
+        console.log('Final taskId for update operation:', taskId);
 
-        // Also check the hidden input field as a backup
+        // Log the task ID type for debugging
+        console.log('Task ID type in handleTaskSubmit:', typeof taskToSubmit._id);
+
+        // Double-check that we have a valid task ID
         if (!taskId) {
-          const hiddenInput = document.getElementById('taskId');
-          if (hiddenInput && hiddenInput.value) {
-            taskId = hiddenInput.value;
-            console.log('Retrieved task ID from hidden input:', taskId);
-          }
+          console.error('Task ID is still missing before update operation');
+          setSnackbar({
+            open: true,
+            message: 'Error: Task ID is missing before update operation',
+            severity: 'error'
+          });
+          return;
         }
 
-        // Check if we have a task ID in the DOM
+        // Check if we have a task ID in the alert element
         const taskIdAlert = document.getElementById('taskIdAlert');
         if (taskIdAlert && taskIdAlert.value) {
           console.log('Task ID from alert element:', taskIdAlert.value);
@@ -594,6 +722,14 @@ const TaskManagement = ({ dashboardView = false }) => {
             console.log('Using task ID from alert element as fallback');
           }
         }
+
+        // Log all possible sources of task ID for debugging
+        console.log('Task ID sources:');
+        console.log('- From taskToSubmit._id:', taskToSubmit._id);
+        console.log('- From taskId variable:', taskId);
+        console.log('- From hidden input:', taskIdFromHidden);
+        console.log('- From dialog attribute:', taskIdFromDialog);
+        console.log('- From alert element:', taskIdAlert?.value);
 
         // Add the task ID to the task data as a fallback
         if (taskId) {
@@ -667,8 +803,28 @@ const TaskManagement = ({ dashboardView = false }) => {
           message: `Task ${taskFormMode === 'add' ? 'created' : 'updated'} successfully`,
           severity: 'success'
         });
+
+        // Close the dialog
         setOpenTaskDialog(false);
-        fetchData(); // Refresh tasks list
+
+        // Clear the task ID from localStorage
+        localStorage.removeItem('currentEditTaskId');
+
+        // Reset the current task state
+        setCurrentTask({
+          _id: '',
+          title: '',
+          description: '',
+          status: 'To Do',
+          priority: 'Medium',
+          dueDate: new Date(),
+          project: '',
+          assignedTo: '',
+          googleCalendarEventId: null
+        });
+
+        // Refresh tasks list
+        fetchData();
       } else {
         console.error('Invalid response format:', response);
         setSnackbar({
@@ -795,9 +951,32 @@ const TaskManagement = ({ dashboardView = false }) => {
   const renderTaskFormDialog = () => {
     // Log current state for debugging
     console.log('Current task in dialog:', currentTask);
-    console.log('Available projects:', projects);
+    console.log('Current task ID type:', typeof currentTask._id);
+    console.log('Current task ID value:', currentTask._id);
+    console.log('Task ID from ref:', taskIdRef.current);
     console.log('Task form mode:', taskFormMode);
-    console.log('Task ID in form:', currentTask._id);
+    console.log('Current task title:', currentTask.title);
+    console.log('Current task description:', currentTask.description);
+    console.log('Current task status:', currentTask.status);
+    console.log('Current task priority:', currentTask.priority);
+    console.log('Current task dueDate:', currentTask.dueDate);
+    console.log('Current task project:', currentTask.project);
+    console.log('Current task assignedTo:', currentTask.assignedTo);
+
+    // Use the ID from the ref if the current task ID is missing
+    const effectiveTaskId = currentTask._id || taskIdRef.current;
+
+    // Force the component to re-render when the task ID changes
+    useEffect(() => {
+      console.log('Task ID changed in dialog, new value:', currentTask._id);
+      console.log('Effective task ID:', effectiveTaskId);
+    }, [currentTask._id, effectiveTaskId]);
+
+    // Force the component to re-render when any task field changes
+    useEffect(() => {
+      console.log('Task data changed in dialog');
+      console.log('Current task in effect:', currentTask);
+    }, [currentTask]);
 
     // Check if the current task's project exists in the projects list
     const projectExists = currentTask.project && projects.some((p) => p._id === currentTask.project);
@@ -823,187 +1002,39 @@ const TaskManagement = ({ dashboardView = false }) => {
       fetchMissingProject();
     }, [currentTask.project, openTaskDialog]);
 
-    // Ensure task ID is properly set when editing and fetch task data if needed
+    // Fetch task data when needed
     useEffect(() => {
-      if (taskFormMode === 'edit' && openTaskDialog) {
-        console.log('Task ID in edit mode:', currentTask._id);
-        console.log('Task ID type:', typeof currentTask._id);
-        console.log('Current task data:', currentTask);
-
-        // Get the task ID from URL or data attributes if it's not in currentTask
-        let taskId = currentTask._id;
-
-        // Try to get task ID from URL if it's not in currentTask
-        if (!taskId) {
-          const urlParams = new URLSearchParams(window.location.search);
-          const urlTaskId = urlParams.get('taskId');
-          if (urlTaskId) {
-            console.log('Found task ID in URL:', urlTaskId);
-            taskId = urlTaskId;
-          }
+      // If we're in edit mode and the dialog is open, make sure we have complete task data
+      if (taskFormMode === 'edit' && openTaskDialog && currentTask._id) {
+        // If project is set, load available members
+        if (currentTask.project) {
+          handleProjectChange(currentTask.project);
         }
-
-        // Try to get task ID from data attribute if it's still not found
-        if (!taskId) {
-          const editDialog = document.querySelector('[data-task-id]');
-          if (editDialog) {
-            const dataTaskId = editDialog.getAttribute('data-task-id');
-            if (dataTaskId) {
-              console.log('Found task ID in data attribute:', dataTaskId);
-              taskId = dataTaskId;
-            }
-          }
-        }
-
-        // If we have a task ID but the task data is incomplete, fetch the task data
-        const fetchTaskIfNeeded = async () => {
-          if (taskId && (!currentTask.title || !currentTask.description)) {
-            console.log('Task data is incomplete, fetching from API...');
-            try {
-              const response = await api.get(`/tasks/${taskId}`);
-              if (response.data.success && response.data.task) {
-                const task = response.data.task;
-                console.log('Successfully fetched task data:', task);
-
-                // Create a clean task object with all required fields
-                const updatedTask = {
-                  _id: taskId,
-                  title: task.title || '',
-                  description: task.description || '',
-                  status: task.status || 'To Do',
-                  priority: task.priority || 'Medium',
-                  dueDate: task.dueDate ? new Date(task.dueDate) : new Date(),
-                  project: '',
-                  assignedTo: '',
-                  googleCalendarEventId: task.googleCalendarEventId || null
-                };
-
-                // Handle project ID
-                if (task.project) {
-                  if (typeof task.project === 'object' && task.project._id) {
-                    updatedTask.project = task.project._id.toString();
-                  } else if (typeof task.project === 'string') {
-                    updatedTask.project = task.project;
-                  }
-                }
-
-                // Handle assignedTo ID
-                if (task.assignedTo) {
-                  if (typeof task.assignedTo === 'object' && task.assignedTo._id) {
-                    updatedTask.assignedTo = task.assignedTo._id.toString();
-                  } else if (typeof task.assignedTo === 'string') {
-                    updatedTask.assignedTo = task.assignedTo;
-                  }
-                }
-
-                console.log('Setting updated task data:', updatedTask);
-                setCurrentTask(updatedTask);
-
-                // If project is set, load available members
-                if (updatedTask.project) {
-                  handleProjectChange(updatedTask.project);
-                }
-              }
-            } catch (error) {
-              console.error('Error fetching task data:', error);
-            }
-          }
-        };
-
-        fetchTaskIfNeeded();
-
-        // Ensure the task ID is set in the form
-        setTimeout(() => {
-          const hiddenInput = document.getElementById('taskId');
-          if (hiddenInput) {
-            if (taskId) {
-              hiddenInput.value = taskId.toString();
-              console.log('Set task ID in hidden input:', hiddenInput.value);
-
-              // Also update currentTask if needed
-              if (!currentTask._id) {
-                setCurrentTask((prev) => ({
-                  ...prev,
-                  _id: taskId.toString()
-                }));
-              }
-            } else {
-              console.error('Task ID is missing in currentTask and could not be found elsewhere');
-            }
-          } else {
-            console.error('Hidden input element not found');
-          }
-
-          // Also update the alert hidden input
-          const alertHiddenInput = document.getElementById('taskIdAlert');
-          if (alertHiddenInput) {
-            if (taskId) {
-              alertHiddenInput.value = taskId.toString();
-              console.log('Set task ID in alert hidden input:', alertHiddenInput.value);
-            } else {
-              console.error('Task ID is missing for alert hidden input');
-            }
-          } else {
-            console.error('Alert hidden input element not found');
-          }
-        }, 100);
       }
-    }, [taskFormMode, openTaskDialog, currentTask._id]);
-
-    // Update hidden input whenever currentTask changes
-    useEffect(() => {
-      if (openTaskDialog) {
-        setTimeout(() => {
-          const hiddenInput = document.getElementById('taskId');
-          if (hiddenInput) {
-            // For add mode, we don't need a task ID
-            if (taskFormMode === 'add') {
-              hiddenInput.value = '';
-              console.log('Task ID cleared for add mode');
-              return;
-            }
-
-            // For edit mode, ensure we have a task ID
-            if (currentTask._id) {
-              hiddenInput.value = currentTask._id.toString();
-              console.log('Updated task ID in hidden input on currentTask change:', hiddenInput.value);
-            } else {
-              console.error('Task ID is missing in currentTask during update');
-
-              // Try to recover the task ID from the dialog data attribute
-              const dialog = document.querySelector('[data-task-id]');
-              if (dialog) {
-                const dataTaskId = dialog.getAttribute('data-task-id');
-                if (dataTaskId) {
-                  console.log('Recovered task ID from dialog attribute:', dataTaskId);
-                  hiddenInput.value = dataTaskId;
-
-                  // Update the currentTask state with the recovered ID
-                  setCurrentTask((prev) => ({
-                    ...prev,
-                    _id: dataTaskId
-                  }));
-                }
-              }
-            }
-          } else {
-            console.error('Hidden input element not found during update');
-          }
-        }, 100);
-      }
-    }, [currentTask, openTaskDialog, taskFormMode]);
+    }, [taskFormMode, openTaskDialog, currentTask._id, currentTask.project]);
 
     // If we're editing and the project doesn't exist in our list, we need to handle it
     // This could happen if the project was deleted or if there's a data mismatch
     const projectValue = projectExists ? currentTask.project : '';
 
+    // We already have taskIdForDisplay defined above, so we don't need to redefine it here
+
     return (
-      <Dialog open={openTaskDialog} onClose={() => setOpenTaskDialog(false)} maxWidth="md" fullWidth data-task-id={currentTask._id || ''}>
+      <Dialog
+        open={openTaskDialog}
+        onClose={() => {
+          // Simply close the dialog without resetting state
+          setOpenTaskDialog(false);
+        }}
+        maxWidth="md"
+        fullWidth
+        data-task-id={effectiveTaskId}
+      >
         <DialogTitle>
-          {taskFormMode === 'add' ? 'Add New Task' : `Edit Task (ID: ${currentTask._id || 'Unknown'})`}
+          {taskFormMode === 'add' ? 'Add New Task' : `Edit Task (ID: ${effectiveTaskId || 'Unknown'})`}
           {taskFormMode === 'edit' && (
             <Typography variant="caption" display="block" color="textSecondary">
-              Task ID: {currentTask._id || 'Unknown'}
+              Task ID: {effectiveTaskId || 'Unknown'}
             </Typography>
           )}
         </DialogTitle>
@@ -1012,7 +1043,7 @@ const TaskManagement = ({ dashboardView = false }) => {
             {taskFormMode === 'edit' && (
               <Grid item xs={12}>
                 <Alert severity="info" sx={{ mb: 2 }}>
-                  Editing task with ID: {currentTask._id || 'Unknown'}
+                  Editing task with ID: {effectiveTaskId || 'Unknown'}
                   {currentTask.googleCalendarEventId && (
                     <Box mt={1}>
                       <Typography variant="caption" display="block">
@@ -1026,9 +1057,9 @@ const TaskManagement = ({ dashboardView = false }) => {
                   type="hidden"
                   id="taskIdAlert"
                   name="taskIdAlert"
-                  value={currentTask._id || ''}
+                  value={effectiveTaskId || ''}
                   data-testid="task-id-alert"
-                  key={`task-id-alert-${currentTask._id || 'new'}`} // Force re-render when ID changes
+                  key={`task-id-alert-${effectiveTaskId || 'new'}`} // Force re-render when ID changes
                 />
                 {/* Hidden input for Google Calendar Event ID */}
                 {currentTask.googleCalendarEventId && (
@@ -1038,6 +1069,7 @@ const TaskManagement = ({ dashboardView = false }) => {
                     name="googleCalendarEventId"
                     value={currentTask.googleCalendarEventId}
                     data-testid="google-calendar-event-id"
+                    key={`google-calendar-event-id-${currentTask.googleCalendarEventId}`} // Force re-render
                   />
                 )}
               </Grid>
@@ -1047,9 +1079,9 @@ const TaskManagement = ({ dashboardView = false }) => {
               type="hidden"
               id="taskId"
               name="_id"
-              value={currentTask._id || ''}
+              value={effectiveTaskId || ''}
               data-testid="task-id-input"
-              key={`task-id-${currentTask._id || 'new'}`} // Force re-render when ID changes
+              key={`task-id-${effectiveTaskId || 'new'}`} // Force re-render when ID changes
             />
 
             <Grid item xs={12}>
@@ -1166,7 +1198,12 @@ const TaskManagement = ({ dashboardView = false }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenTaskDialog(false)}>Cancel</Button>
-          <Button onClick={handleTaskSubmit} variant="contained" color="primary">
+          <Button
+            onClick={handleTaskSubmit}
+            variant="contained"
+            color="primary"
+            data-task-id={effectiveTaskId || ''} // Add task ID as data attribute for backup retrieval
+          >
             {taskFormMode === 'add' ? 'Create' : 'Update'}
           </Button>
         </DialogActions>
@@ -1334,14 +1371,11 @@ const TaskManagement = ({ dashboardView = false }) => {
           </DialogContent>
           <DialogActions>
             <Button
-              onClick={async () => {
+              onClick={() => {
                 console.log('Edit button clicked, task ID:', taskDetails._id);
-                console.log('Full task details:', JSON.stringify(taskDetails));
 
                 // Ensure we have a valid task ID
                 const taskId = taskDetails._id ? taskDetails._id.toString() : '';
-                console.log('Task ID from details:', taskId);
-                console.log('Task ID type:', typeof taskDetails._id);
 
                 if (!taskId) {
                   console.error('Task ID is missing in details data');
@@ -1353,146 +1387,34 @@ const TaskManagement = ({ dashboardView = false }) => {
                   return;
                 }
 
-                // Always fetch the latest task data from the API to ensure we have complete data
-                try {
-                  console.log('Fetching latest task data from API for edit from details...');
-                  const response = await api.get(`/tasks/${taskId}`);
+                // Close the details dialog first
+                setOpenTaskDetails(false);
 
-                  if (response.data.success && response.data.task) {
-                    const freshTask = response.data.task;
-                    console.log('Successfully fetched fresh task data from details view:', freshTask);
+                // Set the task form mode to edit
+                setTaskFormMode('edit');
 
-                    // Create a clean task object with all required fields
-                    const taskToEdit = {
-                      _id: taskId,
-                      title: freshTask.title || '',
-                      description: freshTask.description || '',
-                      status: freshTask.status || 'To Do',
-                      priority: freshTask.priority || 'Medium',
-                      dueDate: freshTask.dueDate ? new Date(freshTask.dueDate) : new Date(),
-                      project: '',
-                      assignedTo: '',
-                      // Preserve Google Calendar Event ID if it exists
-                      googleCalendarEventId: freshTask.googleCalendarEventId || null
-                    };
+                // Create a complete task object from the details data
+                const taskToEdit = {
+                  _id: taskId,
+                  title: taskDetails.title || '',
+                  description: taskDetails.description || '',
+                  status: taskDetails.status || 'To Do',
+                  priority: taskDetails.priority || 'Medium',
+                  dueDate: taskDetails.dueDate ? new Date(taskDetails.dueDate) : new Date(),
+                  project:
+                    taskDetails.project && typeof taskDetails.project === 'object' ? taskDetails.project._id : taskDetails.project || '',
+                  assignedTo:
+                    taskDetails.assignedTo && typeof taskDetails.assignedTo === 'object'
+                      ? taskDetails.assignedTo._id
+                      : taskDetails.assignedTo || '',
+                  googleCalendarEventId: taskDetails.googleCalendarEventId || null
+                };
 
-                    // Log Google Calendar Event ID if it exists
-                    if (freshTask.googleCalendarEventId) {
-                      console.log('Google Calendar Event ID from API (details view):', freshTask.googleCalendarEventId);
-                    }
+                // Set the current task with the complete data
+                setCurrentTask(taskToEdit);
 
-                    // Handle project ID - ensure we get the ID string
-                    if (freshTask.project) {
-                      if (typeof freshTask.project === 'object' && freshTask.project._id) {
-                        taskToEdit.project = freshTask.project._id.toString();
-                      } else if (typeof freshTask.project === 'string') {
-                        taskToEdit.project = freshTask.project;
-                      }
-                    }
-
-                    // Handle assignedTo ID - ensure we get the ID string
-                    if (freshTask.assignedTo) {
-                      if (typeof freshTask.assignedTo === 'object' && freshTask.assignedTo._id) {
-                        taskToEdit.assignedTo = freshTask.assignedTo._id.toString();
-                      } else if (typeof freshTask.assignedTo === 'string') {
-                        taskToEdit.assignedTo = freshTask.assignedTo;
-                      }
-                    }
-
-                    console.log('Setting task with fresh data from details view:', taskToEdit);
-
-                    // Set task form mode
-                    setTaskFormMode('edit');
-
-                    // Set current task
-                    setCurrentTask(taskToEdit);
-
-                    // If project is set, try to fetch it if it doesn't exist in our list
-                    if (taskToEdit.project) {
-                      const projectExists = projects.some((p) => p._id === taskToEdit.project);
-                      if (!projectExists) {
-                        console.log('Project not in list, attempting to fetch:', taskToEdit.project);
-                        fetchProjectById(taskToEdit.project).then((project) => {
-                          if (project) {
-                            console.log('Successfully fetched project for edit from details:', project);
-                          }
-                          // Load available members regardless
-                          handleProjectChange(taskToEdit.project);
-                        });
-                      } else {
-                        handleProjectChange(taskToEdit.project);
-                      }
-                    }
-
-                    // Close details dialog and open edit dialog
-                    setOpenTaskDetails(false);
-                    setOpenTaskDialog(true);
-                  } else {
-                    // Fallback to using the data from the details view if API fetch fails
-                    console.warn('API fetch failed, using details view data as fallback');
-
-                    // Create a clean task object with all required fields
-                    const taskToEdit = {
-                      _id: taskId,
-                      title: taskDetails.title || '',
-                      description: taskDetails.description || '',
-                      status: taskDetails.status || 'To Do',
-                      priority: taskDetails.priority || 'Medium',
-                      dueDate: taskDetails.dueDate ? new Date(taskDetails.dueDate) : new Date(),
-                      project: '',
-                      assignedTo: '',
-                      // Preserve Google Calendar Event ID if it exists
-                      googleCalendarEventId: taskDetails.googleCalendarEventId || null
-                    };
-
-                    // Log Google Calendar Event ID if it exists
-                    if (taskDetails.googleCalendarEventId) {
-                      console.log('Google Calendar Event ID from details fallback:', taskDetails.googleCalendarEventId);
-                    }
-
-                    // Handle project ID - ensure we get the ID string
-                    if (taskDetails.project) {
-                      if (typeof taskDetails.project === 'object' && taskDetails.project._id) {
-                        taskToEdit.project = taskDetails.project._id.toString();
-                      } else if (typeof taskDetails.project === 'string') {
-                        taskToEdit.project = taskDetails.project;
-                      }
-                    }
-
-                    // Handle assignedTo ID - ensure we get the ID string
-                    if (taskDetails.assignedTo) {
-                      if (typeof taskDetails.assignedTo === 'object' && taskDetails.assignedTo._id) {
-                        taskToEdit.assignedTo = taskDetails.assignedTo._id.toString();
-                      } else if (typeof taskDetails.assignedTo === 'string') {
-                        taskToEdit.assignedTo = taskDetails.assignedTo;
-                      }
-                    }
-
-                    console.log('Setting task with fallback data from details:', taskToEdit);
-
-                    // Set task form mode
-                    setTaskFormMode('edit');
-
-                    // Set current task
-                    setCurrentTask(taskToEdit);
-
-                    // If project is set, handle project change
-                    if (taskToEdit.project) {
-                      handleProjectChange(taskToEdit.project);
-                    }
-
-                    // Close details dialog and open edit dialog
-                    setOpenTaskDetails(false);
-                    setOpenTaskDialog(true);
-                  }
-                } catch (error) {
-                  console.error('Error fetching task data from details view:', error);
-                  setSnackbar({
-                    open: true,
-                    message: 'Error fetching task data: ' + (error.response?.data?.error || error.message),
-                    severity: 'error'
-                  });
-                }
+                // Open the dialog
+                setOpenTaskDialog(true);
               }}
               color="primary"
               startIcon={<EditOutlined />}
@@ -1582,12 +1504,11 @@ const TaskManagement = ({ dashboardView = false }) => {
                       size="small"
                       onClick={async () => {
                         console.log('Edit icon clicked, task ID:', task._id);
-                        console.log('Full task object:', JSON.stringify(task));
-                        console.log('Task ID type:', typeof task._id);
 
                         // Ensure we have a valid task ID
                         const taskId = task._id ? task._id.toString() : '';
                         console.log('Task ID from table row:', taskId);
+                        console.log('Task ID type:', typeof taskId);
 
                         if (!taskId) {
                           console.error('Task ID is missing in table data');
@@ -1599,138 +1520,95 @@ const TaskManagement = ({ dashboardView = false }) => {
                           return;
                         }
 
-                        // Always fetch the latest task data from the API to ensure we have complete data
+                        // Update the task ID ref first to ensure it's available
+                        taskIdRef.current = taskId;
+                        console.log('Updated taskIdRef directly with:', taskId);
+
                         try {
-                          console.log('Fetching latest task data from API...');
+                          // First set the task form mode to edit
+                          setTaskFormMode('edit');
+
+                          // Fetch the task data directly from the API to ensure we have the most up-to-date information
+                          console.log('Fetching task data from API for ID:', taskId);
                           const response = await api.get(`/tasks/${taskId}`);
 
                           if (response.data.success && response.data.task) {
-                            const freshTask = response.data.task;
-                            console.log('Successfully fetched fresh task data:', freshTask);
+                            const apiTask = response.data.task;
+                            console.log('Task data fetched from API:', apiTask);
 
-                            // Create a clean task object with all required fields
+                            // Create a complete task object from the API data
                             const taskToEdit = {
-                              _id: taskId,
-                              title: freshTask.title || '',
-                              description: freshTask.description || '',
-                              status: freshTask.status || 'To Do',
-                              priority: freshTask.priority || 'Medium',
-                              dueDate: freshTask.dueDate ? new Date(freshTask.dueDate) : new Date(),
-                              project: '',
-                              assignedTo: '',
-                              // Preserve Google Calendar Event ID if it exists
-                              googleCalendarEventId: freshTask.googleCalendarEventId || null
+                              _id: taskId, // Ensure this is a string
+                              title: apiTask.title || '',
+                              description: apiTask.description || '',
+                              status: apiTask.status || 'To Do',
+                              priority: apiTask.priority || 'Medium',
+                              dueDate: apiTask.dueDate ? new Date(apiTask.dueDate) : new Date(),
+                              project: apiTask.project && typeof apiTask.project === 'object' ? apiTask.project._id : apiTask.project || '',
+                              assignedTo:
+                                apiTask.assignedTo && typeof apiTask.assignedTo === 'object'
+                                  ? apiTask.assignedTo._id
+                                  : apiTask.assignedTo || '',
+                              googleCalendarEventId: apiTask.googleCalendarEventId || null
                             };
 
-                            // Log Google Calendar Event ID if it exists
-                            if (freshTask.googleCalendarEventId) {
-                              console.log('Google Calendar Event ID from API:', freshTask.googleCalendarEventId);
-                            }
+                            console.log('Task object created with ID:', taskToEdit._id);
+                            console.log('Task object details:', taskToEdit);
 
-                            // Handle project ID - ensure we get the ID string
-                            if (freshTask.project) {
-                              if (typeof freshTask.project === 'object' && freshTask.project._id) {
-                                taskToEdit.project = freshTask.project._id.toString();
-                              } else if (typeof freshTask.project === 'string') {
-                                taskToEdit.project = freshTask.project;
-                              }
-                            }
+                            // Set the current task with the complete data
+                            await new Promise((resolve) => {
+                              setCurrentTask(taskToEdit);
+                              setTimeout(resolve, 0); // Use setTimeout to ensure state is updated
+                            });
 
-                            // Handle assignedTo ID - ensure we get the ID string
-                            if (freshTask.assignedTo) {
-                              if (typeof freshTask.assignedTo === 'object' && freshTask.assignedTo._id) {
-                                taskToEdit.assignedTo = freshTask.assignedTo._id.toString();
-                              } else if (typeof freshTask.assignedTo === 'string') {
-                                taskToEdit.assignedTo = freshTask.assignedTo;
-                              }
-                            }
+                            console.log('Current task set to:', taskToEdit);
+                            console.log('Task ID ref is now:', taskIdRef.current);
 
-                            console.log('Setting task with fresh data:', taskToEdit);
-
-                            // Set task form mode
-                            setTaskFormMode('edit');
-
-                            // Set current task
-                            setCurrentTask(taskToEdit);
-
-                            // If project is set, try to fetch it if it doesn't exist in our list
+                            // If project is set, load available members
                             if (taskToEdit.project) {
-                              const projectExists = projects.some((p) => p._id === taskToEdit.project);
-                              if (!projectExists) {
-                                console.log('Project not in list, attempting to fetch:', taskToEdit.project);
-                                fetchProjectById(taskToEdit.project).then((project) => {
-                                  if (project) {
-                                    console.log('Successfully fetched project for edit:', project);
-                                  }
-                                  // Load available members regardless
-                                  handleProjectChange(taskToEdit.project);
-                                });
-                              } else {
-                                handleProjectChange(taskToEdit.project);
-                              }
+                              await handleProjectChange(taskToEdit.project);
                             }
 
-                            // Open dialog
+                            // Finally open the dialog
                             setOpenTaskDialog(true);
                           } else {
-                            // Fallback to using the data from the table row if API fetch fails
-                            console.warn('API fetch failed, using table row data as fallback');
-
-                            // Create a clean task object with all required fields
-                            const taskToEdit = {
-                              _id: taskId,
-                              title: task.title || '',
-                              description: task.description || '',
-                              status: task.status || 'To Do',
-                              priority: task.priority || 'Medium',
-                              dueDate: task.dueDate ? new Date(task.dueDate) : new Date(),
-                              project: '',
-                              assignedTo: '',
-                              // Preserve Google Calendar Event ID if it exists
-                              googleCalendarEventId: task.googleCalendarEventId || null
-                            };
-
-                            // Handle project ID - ensure we get the ID string
-                            if (task.project) {
-                              if (typeof task.project === 'object' && task.project._id) {
-                                taskToEdit.project = task.project._id.toString();
-                              } else if (typeof task.project === 'string') {
-                                taskToEdit.project = task.project;
-                              }
-                            }
-
-                            // Handle assignedTo ID - ensure we get the ID string
-                            if (task.assignedTo) {
-                              if (typeof task.assignedTo === 'object' && task.assignedTo._id) {
-                                taskToEdit.assignedTo = task.assignedTo._id.toString();
-                              } else if (typeof task.assignedTo === 'string') {
-                                taskToEdit.assignedTo = task.assignedTo;
-                              }
-                            }
-
-                            console.log('Setting task with fallback data:', taskToEdit);
-
-                            // Set task form mode
-                            setTaskFormMode('edit');
-
-                            // Set current task
-                            setCurrentTask(taskToEdit);
-
-                            // If project is set, handle project change
-                            if (taskToEdit.project) {
-                              handleProjectChange(taskToEdit.project);
-                            }
-
-                            // Open dialog
-                            setOpenTaskDialog(true);
+                            throw new Error('Failed to fetch task data from API');
                           }
                         } catch (error) {
                           console.error('Error fetching task data:', error);
-                          setSnackbar({
-                            open: true,
-                            message: 'Error fetching task data: ' + (error.response?.data?.error || error.message),
-                            severity: 'error'
+
+                          // Fallback to using the data from the table row
+                          console.log('Falling back to table data for task:', task);
+
+                          // Create a complete task object from the row data
+                          const taskToEdit = {
+                            _id: taskId, // Ensure this is a string
+                            title: task.title || '',
+                            description: task.description || '',
+                            status: task.status || 'To Do',
+                            priority: task.priority || 'Medium',
+                            dueDate: task.dueDate ? new Date(task.dueDate) : new Date(),
+                            project: task.project && typeof task.project === 'object' ? task.project._id : task.project || '',
+                            assignedTo:
+                              task.assignedTo && typeof task.assignedTo === 'object' ? task.assignedTo._id : task.assignedTo || '',
+                            googleCalendarEventId: task.googleCalendarEventId || null
+                          };
+
+                          console.log('Fallback task object created with ID:', taskToEdit._id);
+
+                          // Set the current task with the fallback data
+                          await new Promise((resolve) => {
+                            setCurrentTask(taskToEdit);
+                            setTimeout(resolve, 0); // Use setTimeout to ensure state is updated
                           });
+
+                          // If project is set, load available members
+                          if (taskToEdit.project) {
+                            await handleProjectChange(taskToEdit.project);
+                          }
+
+                          // Finally open the dialog
+                          setOpenTaskDialog(true);
                         }
                       }}
                     >

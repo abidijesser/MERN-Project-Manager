@@ -234,12 +234,23 @@ const TaskList = () => {
                           Supprimer
                         </CButton>
                       </>
-                    ) : (
+                    ) : // Vérifier si l'utilisateur connecté est assigné à cette tâche
+                    task.assignedTo && task.assignedTo._id === localStorage.getItem('userId') ? (
                       <CButton
                         color="warning"
                         size="sm"
                         className="me-2"
                         onClick={() => navigate(`/tasks/status/${task._id}`)}
+                      >
+                        Modifier statut
+                      </CButton>
+                    ) : (
+                      <CButton
+                        color="warning"
+                        size="sm"
+                        className="me-2"
+                        disabled
+                        title="Seul l'utilisateur assigné peut modifier le statut"
                       >
                         Modifier statut
                       </CButton>

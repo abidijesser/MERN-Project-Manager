@@ -53,6 +53,20 @@ const TaskStatusForm = () => {
 
       if (taskRes.data.success) {
         const taskData = taskRes.data.task
+
+        // Vérifier si l'utilisateur connecté est assigné à cette tâche
+        const userId = localStorage.getItem('userId')
+        const isAdmin = localStorage.getItem('userRole') === 'Admin'
+        const isAssigned = taskData.assignedTo && taskData.assignedTo._id === userId
+
+        if (!isAdmin && !isAssigned) {
+          setError(
+            "Vous n'êtes pas autorisé à modifier le statut de cette tâche. Seul l'utilisateur assigné peut modifier le statut.",
+          )
+          setLoading(false)
+          return
+        }
+
         setTask({
           ...taskData,
           dueDate: taskData.dueDate ? new Date(taskData.dueDate).toISOString().split('T')[0] : '',

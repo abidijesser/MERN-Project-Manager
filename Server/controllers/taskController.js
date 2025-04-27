@@ -401,6 +401,21 @@ const updateTaskStatus = async (req, res) => {
       });
     }
 
+    // Vérifier si l'utilisateur est assigné à cette tâche
+    if (
+      !existingTask.assignedTo ||
+      existingTask.assignedTo.toString() !== req.user._id.toString()
+    ) {
+      console.log("updateTaskStatus - User is not assigned to this task");
+      console.log("Task assignedTo:", existingTask.assignedTo);
+      console.log("Current user:", req.user._id);
+      return res.status(403).json({
+        success: false,
+        error:
+          "Vous n'êtes pas autorisé à modifier le statut de cette tâche. Seul l'utilisateur assigné peut modifier le statut.",
+      });
+    }
+
     // Extraire le statut de la requête
     let status;
     if (typeof req.body === "string") {
