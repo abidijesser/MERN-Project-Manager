@@ -37,6 +37,14 @@ const UserSchema = new Schema({
     type: Object,
     default: null,
   },
+  lastLogin: {
+    type: Date,
+    default: Date.now,
+  },
+  profilePicture: {
+    type: String,
+    default: null,
+  },
 });
 
 // Modifier le middleware pre-save

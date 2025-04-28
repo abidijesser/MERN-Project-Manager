@@ -12,6 +12,7 @@ const projectRoutes = require("./routes/projectRoutes");
 const chatRoutes = require("./routes/chat");
 const notificationRoutes = require("./routes/notificationRoutes");
 const statsRoutes = require("./routes/statsRoutes");
+const statisticsRoutes = require("./routes/statisticsRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const calendarRoutes = require("./routes/calendarRoutes");
 const commentRoutes = require("./routes/commentRoutes");
@@ -35,6 +36,9 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
+
+// Serve static files from the public directory
+app.use("/public", express.static("public"));
 
 // Session configuration
 app.use(
@@ -62,6 +66,7 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/stats", statsRoutes);
+app.use("/api/statistics", statisticsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/comments", commentRoutes);

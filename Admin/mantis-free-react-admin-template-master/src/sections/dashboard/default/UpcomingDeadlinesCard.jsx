@@ -107,12 +107,16 @@ const UpcomingDeadlinesCard = () => {
         {loading && <LinearProgress />}
         {error && (
           <Box sx={{ p: 2 }}>
-            <Typography color="error">{error}</Typography>
+            <Typography color="error" component="div">
+              {error}
+            </Typography>
           </Box>
         )}
         {!loading && !error && upcomingTasks.length === 0 && (
           <Box sx={{ p: 2 }}>
-            <Typography variant="body2">No upcoming deadlines found</Typography>
+            <Typography variant="body2" component="div">
+              No upcoming deadlines found
+            </Typography>
           </Box>
         )}
         {!loading && !error && upcomingTasks.length > 0 && (
@@ -135,9 +139,7 @@ const UpcomingDeadlinesCard = () => {
                 <ListItem
                   sx={{
                     py: 1.5,
-                    borderLeft: `4px solid ${
-                      task.daysRemaining <= 1 ? '#f44336' : task.daysRemaining <= 3 ? '#ff9800' : '#4caf50'
-                    }`,
+                    borderLeft: `4px solid ${task.daysRemaining <= 1 ? '#f44336' : task.daysRemaining <= 3 ? '#ff9800' : '#4caf50'}`,
                     '&:hover': {
                       bgcolor: 'grey.50'
                     }
@@ -155,40 +157,38 @@ const UpcomingDeadlinesCard = () => {
                   </ListItemAvatar>
                   <ListItemText
                     primary={
-                      <Typography variant="subtitle1">
-                        {task.title}
-                        <Typography component="span" variant="caption" sx={{ ml: 1 }}>
-                          <Chip
-                            label={task.priority}
-                            size="small"
-                            color={getPriorityColor(task.priority)}
-                            sx={{ mr: 1 }}
-                          />
-                          <Chip
-                            label={task.status}
-                            size="small"
-                            color={getStatusColor(task.status)}
-                          />
+                      <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <Typography variant="subtitle1" component="span">
+                          {task.title}
                         </Typography>
-                      </Typography>
+                        <Box sx={{ ml: 1, display: 'inline-flex' }}>
+                          <Chip label={task.priority} size="small" color={getPriorityColor(task.priority)} sx={{ mr: 1 }} />
+                          <Chip label={task.status} size="small" color={getStatusColor(task.status)} />
+                        </Box>
+                      </Box>
                     }
                     secondary={
-                      <Stack direction="column" spacing={0.5}>
-                        <Typography variant="caption" color="textSecondary">
-                          Project: {task.project?.projectName || 'N/A'}
-                        </Typography>
-                        <Typography variant="caption" color="textSecondary">
-                          Assigned to: {task.assignedTo?.name || 'N/A'}
-                        </Typography>
-                        <Stack direction="row" spacing={1} alignItems="center">
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                        <Box component="span">
+                          <Typography variant="caption" color="textSecondary" component="span">
+                            Project: {task.project?.projectName || 'N/A'}
+                          </Typography>
+                        </Box>
+                        <Box component="span">
+                          <Typography variant="caption" color="textSecondary" component="span">
+                            Assigned to: {task.assignedTo?.name || 'N/A'}
+                          </Typography>
+                        </Box>
+                        <Box component="span" sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
                           <Typography
                             variant="caption"
+                            component="span"
                             color={task.daysRemaining <= 1 ? 'error.main' : task.daysRemaining <= 3 ? 'warning.main' : 'success.main'}
                           >
                             Due in {task.daysRemaining} {task.daysRemaining === 1 ? 'day' : 'days'} ({formatDate(task.dueDate)})
                           </Typography>
-                        </Stack>
-                      </Stack>
+                        </Box>
+                      </Box>
                     }
                   />
                 </ListItem>
@@ -201,7 +201,7 @@ const UpcomingDeadlinesCard = () => {
       <Divider />
       <Grid container justifyContent="space-between" sx={{ p: 2 }}>
         <Grid item>
-          <Typography variant="caption" color="secondary">
+          <Typography variant="caption" color="secondary" component="div">
             Showing {upcomingTasks.length} upcoming deadlines
           </Typography>
         </Grid>

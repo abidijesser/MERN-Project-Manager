@@ -10,15 +10,19 @@ import {
   CDropdownMenu,
   CDropdownToggle,
   CProgress,
+  CImage,
 } from '@coreui/react'
 import { cilSettings, cilTask, cilUser, cilAccountLogout, cilCalendar } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
 import { toast } from 'react-toastify'
+import axios from '../../utils/axios'
 
 const AppHeaderDropdown = () => {
   const navigate = useNavigate()
   const [userName, setUserName] = useState('User')
   const [userRole, setUserRole] = useState('Client')
+  const [profilePicture, setProfilePicture] = useState(null)
+  const [userId, setUserId] = useState(null)
 
   useEffect(() => {
     // Get user name from localStorage
@@ -32,7 +36,54 @@ const AppHeaderDropdown = () => {
     if (storedRole) {
       setUserRole(storedRole)
     }
+
+    // Get user ID from localStorage
+    const userData = localStorage.getItem('user')
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData)
+        setUserId(parsedUser._id)
+
+        // If user has a profile picture, set it
+        if (parsedUser.profilePicture) {
+          setProfilePicture(parsedUser.profilePicture)
+        }
+      } catch (error) {
+        console.error('Error parsing user data:', error)
+      }
+    }
+
+    // Fetch current user profile to get the latest profile picture
+    fetchUserProfile()
   }, [])
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await axios.get('/auth/profile')
+      if (response.data.success) {
+        const userData = response.data.user
+
+        // Update profile picture if available
+        if (userData.profilePicture) {
+          setProfilePicture(userData.profilePicture)
+
+          // Update local storage with the latest user data
+          const storedUser = localStorage.getItem('user')
+          if (storedUser) {
+            try {
+              const parsedUser = JSON.parse(storedUser)
+              parsedUser.profilePicture = userData.profilePicture
+              localStorage.setItem('user', JSON.stringify(parsedUser))
+            } catch (error) {
+              console.error('Error updating user data in localStorage:', error)
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+    }
+  }
 
   const handleLogout = async () => {
     try {
@@ -44,6 +95,9 @@ const AppHeaderDropdown = () => {
       localStorage.removeItem('user')
       localStorage.removeItem('userName')
       localStorage.removeItem('userRole')
+
+      // Reset state
+      setProfilePicture(null)
 
       // Show success message
       toast.success('Déconnexion réussie')
@@ -79,6 +133,9 @@ const AppHeaderDropdown = () => {
       localStorage.removeItem('userName')
       localStorage.removeItem('userRole')
 
+      // Reset state
+      setProfilePicture(null)
+
       toast.error('Erreur lors de la déconnexion, mais vous avez été déconnecté')
       navigate('/login')
     }
@@ -101,19 +158,35 @@ const AppHeaderDropdown = () => {
   return (
     <CDropdown variant="nav-item">
       <CDropdownToggle placement="bottom-end" className="py-0 pe-0" caret={false}>
-        <CAvatar color="light" size="md" className="text-primary border border-2 border-white">
-          {getUserInitials()}
-        </CAvatar>
+        {profilePicture ? (
+          <CAvatar
+            size="md"
+            className="border border-2 border-white"
+            src={`http://localhost:3001/${profilePicture}`}
+          />
+        ) : (
+          <CAvatar color="light" size="md" className="text-primary border border-2 border-white">
+            {getUserInitials()}
+          </CAvatar>
+        )}
       </CDropdownToggle>
       <CDropdownMenu className="pt-0" placement="bottom-end" style={{ minWidth: '250px' }}>
         <CDropdownHeader className="bg-gradient-primary text-white d-flex flex-column align-items-center p-3">
-          <CAvatar
-            color="light"
-            size="lg"
-            className="mb-2 text-primary border border-2 border-white"
-          >
-            {getUserInitials()}
-          </CAvatar>
+          {profilePicture ? (
+            <CAvatar
+              size="lg"
+              className="mb-2 border border-2 border-white"
+              src={`http://localhost:3001/${profilePicture}`}
+            />
+          ) : (
+            <CAvatar
+              color="light"
+              size="lg"
+              className="mb-2 text-primary border border-2 border-white"
+            >
+              {getUserInitials()}
+            </CAvatar>
+          )}
           <div className="fw-semibold">{userName}</div>
           <div className="text-white-50 small">{userRole}</div>
 

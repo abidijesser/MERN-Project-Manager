@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   CCard,
   CCardBody,
@@ -13,10 +13,14 @@ import {
   CModalTitle,
   CModalBody,
   CModalFooter,
+  CSpinner,
+  CCardImage,
 } from '@coreui/react'
 import { Link } from 'react-router-dom'
 import axios from '../../../utils/axios'
 import { toast } from 'react-toastify'
+import CIcon from '@coreui/icons-react'
+import { cilCamera } from '@coreui/icons'
 
 const Profile = () => {
   const [user, setUser] = useState({
@@ -24,6 +28,7 @@ const Profile = () => {
     email: '',
     role: '',
     twoFactorEnabled: false,
+    profilePicture: null,
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
@@ -32,6 +37,8 @@ const Profile = () => {
   const [show2FASetup, setShow2FASetup] = useState(false)
   const [showDisable2FA, setShowDisable2FA] = useState(false)
   const [disableCode, setDisableCode] = useState('')
+  const [uploadingPicture, setUploadingPicture] = useState(false)
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -196,6 +203,58 @@ const Profile = () => {
     }
   }
 
+  const handleProfilePictureClick = () => {
+    fileInputRef.current.click()
+  }
+
+  const handleProfilePictureChange = async (e) => {
+    if (!e.target.files || e.target.files.length === 0) {
+      return
+    }
+
+    const file = e.target.files[0]
+
+    // Validate file type
+    if (!file.type.match('image.*')) {
+      toast.error('Please select an image file')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size should not exceed 5MB')
+      return
+    }
+
+    try {
+      setUploadingPicture(true)
+
+      const formData = new FormData()
+      formData.append('profilePicture', file)
+
+      const response = await axios.post('/auth/upload-profile-picture', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+
+      if (response.data.success) {
+        toast.success('Profile picture updated successfully')
+        setUser((prev) => ({
+          ...prev,
+          profilePicture: response.data.profilePicture,
+        }))
+      } else {
+        toast.error(response.data.error || 'Error uploading profile picture')
+      }
+    } catch (error) {
+      console.error('Error uploading profile picture:', error)
+      toast.error(error.response?.data?.error || 'Error uploading profile picture')
+    } finally {
+      setUploadingPicture(false)
+    }
+  }
+
   if (loading) {
     return <div>Loading...</div>
   }
@@ -233,7 +292,86 @@ const Profile = () => {
                 </CButton>
               </CModalFooter>
             </CModal>
+
             <CForm>
+              {/* Profile Picture */}
+              <div className="text-center mb-4">
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '150px',
+                    height: '150px',
+                    margin: '0 auto',
+                    cursor: 'pointer',
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    backgroundColor: '#f0f0f0',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                  onClick={handleProfilePictureClick}
+                >
+                  {user.profilePicture ? (
+                    <img
+                      src={`http://localhost:3001/${user.profilePicture}`}
+                      alt="Profile"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div style={{ fontSize: '3rem', color: '#666' }}>
+                      {user.name ? user.name.charAt(0).toUpperCase() : '?'}
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '0',
+                      right: '0',
+                      backgroundColor: 'rgba(0,0,0,0.5)',
+                      borderRadius: '50%',
+                      padding: '8px',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <CIcon icon={cilCamera} size="sm" style={{ color: 'white' }} />
+                  </div>
+
+                  {uploadingPicture && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '0',
+                        left: '0',
+                        width: '100%',
+                        height: '100%',
+                        backgroundColor: 'rgba(255,255,255,0.7)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <CSpinner color="primary" />
+                    </div>
+                  )}
+                </div>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  accept="image/*"
+                  onChange={handleProfilePictureChange}
+                />
+
+                <div className="mt-2">
+                  <small className="text-muted">Click to change profile picture</small>
+                </div>
+              </div>
+
               <div className="mb-3">
                 <label className="form-label">Name</label>
                 <CFormInput type="text" value={user.name || ''} disabled />

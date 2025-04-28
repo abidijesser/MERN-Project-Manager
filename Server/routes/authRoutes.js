@@ -34,6 +34,13 @@ router.post("/generate-2fa", auth, authController.generate2FA);
 router.post("/verify-2fa", auth, authController.verify2FA);
 router.post("/disable-2fa", auth, authController.disable2FA);
 
+// Profile picture upload route
+router.post(
+  "/upload-profile-picture",
+  auth,
+  authController.uploadUserProfilePicture
+);
+
 // Logout route - version simplifiée sans session
 router.get("/logout", (req, res) => {
   try {

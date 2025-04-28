@@ -6,6 +6,9 @@ const nodemailer = require("nodemailer");
 const transporter = require("../config/emailConfig");
 const speakeasy = require("speakeasy");
 const qrcode = require("qrcode");
+const { uploadProfilePicture } = require("../utils/fileUpload");
+const path = require("path");
+const fs = require("fs");
 require("dotenv").config();
 
 // Fonction pour générer le QR code pour l'authentification à deux facteurs
@@ -373,6 +376,12 @@ async function login(req, res) {
       console.log("User does not have 2FA enabled:", user.email);
     }
 
+    // Update last login time
+    console.log("Updating last login time for user:", user.email);
+    user.lastLogin = new Date();
+    await user.save();
+    console.log("Last login time updated for user:", user.email);
+
     // Generate JWT and send response
     console.log("Generating JWT token for user:", user.email);
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
@@ -388,6 +397,7 @@ async function login(req, res) {
       email: user.email,
       role: user.role,
       twoFactorEnabled: user.twoFactorEnabled || false,
+      profilePicture: user.profilePicture || null,
     };
     console.log("Returning user data:", userData);
     res.status(200).json({ success: true, token, user: userData });
@@ -855,6 +865,89 @@ const changePassword = async (req, res) => {
   }
 };
 
+// Upload profile picture
+const uploadUserProfilePicture = (req, res) => {
+  try {
+    // Use the multer middleware to handle the file upload
+    uploadProfilePicture(req, res, async (err) => {
+      if (err) {
+        console.error("Error uploading profile picture:", err);
+        return res.status(400).json({
+          success: false,
+          error: err.message || "Error uploading profile picture",
+        });
+      }
+
+      // Check if a file was uploaded
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: "No file uploaded",
+        });
+      }
+
+      try {
+        // Get the user
+        const userId = req.user.id;
+        const user = await User.findById(userId);
+
+        if (!user) {
+          // Remove the uploaded file if user not found
+          if (req.file.path && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+          }
+
+          return res.status(404).json({
+            success: false,
+            error: "User not found",
+          });
+        }
+
+        // If user already has a profile picture, delete the old one
+        if (user.profilePicture) {
+          const oldPicturePath = path.join(
+            __dirname,
+            "..",
+            user.profilePicture
+          );
+          if (fs.existsSync(oldPicturePath)) {
+            fs.unlinkSync(oldPicturePath);
+          }
+        }
+
+        // Update user with new profile picture path
+        // Store the path relative to the server root
+        const relativePath = req.file.path.replace(/\\/g, "/");
+        user.profilePicture = relativePath;
+        await user.save();
+
+        return res.status(200).json({
+          success: true,
+          message: "Profile picture uploaded successfully",
+          profilePicture: relativePath,
+        });
+      } catch (error) {
+        // Remove the uploaded file if there's an error
+        if (req.file.path && fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+
+        console.error("Error updating user profile picture:", error);
+        return res.status(500).json({
+          success: false,
+          error: "Error updating profile picture",
+        });
+      }
+    });
+  } catch (error) {
+    console.error("Error in uploadUserProfilePicture:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Server error",
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -873,4 +966,5 @@ module.exports = {
   generate2FA,
   verify2FA,
   disable2FA,
+  uploadUserProfilePicture,
 };

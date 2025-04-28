@@ -1,27 +1,17 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 // material-ui
-import Avatar from '@mui/material/Avatar';
-import AvatarGroup from '@mui/material/AvatarGroup';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid2';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemAvatar from '@mui/material/ListItemAvatar';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
 
 // project imports
 import MainCard from 'components/MainCard';
 import AnalyticEcommerce from 'components/cards/statistics/AnalyticEcommerce';
-import MonthlyBarChart from 'sections/dashboard/default/MonthlyBarChart';
-import ReportAreaChart from 'sections/dashboard/default/ReportAreaChart';
-import UniqueVisitorCard from 'sections/dashboard/default/UniqueVisitorCard';
-import SaleReportCard from 'sections/dashboard/default/SaleReportCard';
 import UpcomingDeadlinesCard from 'sections/dashboard/default/UpcomingDeadlinesCard';
+import TaskDistributionCard from 'sections/dashboard/default/TaskDistributionCard';
 
 // project management
 import ProjectManagement from 'pages/project-management';
@@ -29,36 +19,21 @@ import ProjectManagement from 'pages/project-management';
 // task management
 import TaskManagement from 'pages/task-management';
 
-// assets
-import GiftOutlined from '@ant-design/icons/GiftOutlined';
-import MessageOutlined from '@ant-design/icons/MessageOutlined';
-import SettingOutlined from '@ant-design/icons/SettingOutlined';
-
-import avatar1 from 'assets/images/users/avatar-1.png';
-import avatar2 from 'assets/images/users/avatar-2.png';
-import avatar3 from 'assets/images/users/avatar-3.png';
-import avatar4 from 'assets/images/users/avatar-4.png';
-
-// avatar style
-const avatarSX = {
-  width: 36,
-  height: 36,
-  fontSize: '1rem'
-};
-
-// action style
-const actionSX = {
-  mt: 0.75,
-  ml: 1,
-  top: 'auto',
-  right: 'auto',
-  alignSelf: 'flex-start',
-  transform: 'none'
-};
+// API functions
+import { getDashboardStats } from 'utils/dashboardApi';
 
 // ==============================|| DASHBOARD - DEFAULT ||============================== //
 
 export default function DashboardDefault() {
+  // State for dashboard statistics
+  const [stats, setStats] = useState({
+    totalProjects: 0,
+    completedTasks: 0,
+    tasksDueToday: 0,
+    activeUsersToday: 0
+  });
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     console.log('Dashboard - Component mounted');
 
@@ -99,55 +74,123 @@ export default function DashboardDefault() {
     }
 
     console.log('Dashboard - Authentication verified');
+
+    // Fetch dashboard statistics
+    const fetchDashboardStats = async () => {
+      try {
+        setLoading(true);
+        const dashboardStats = await getDashboardStats();
+        console.log('Dashboard - Statistics fetched:', dashboardStats);
+        setStats(dashboardStats);
+      } catch (error) {
+        console.error('Dashboard - Error fetching statistics:', error);
+        // Set default values in case of error
+        setStats({
+          totalProjects: 24,
+          completedTasks: 124,
+          tasksDueToday: 8,
+          activeUsersToday: 5
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardStats();
+
+    // Set up interval to refresh statistics every 5 minutes
+    const intervalId = setInterval(fetchDashboardStats, 5 * 60 * 1000);
+
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   return (
     <Grid container rowSpacing={4.5} columnSpacing={2.75}>
       {/* row 1 */}
       <Grid sx={{ mb: -2.25 }} size={12}>
-        <Typography variant="h5">Dashboard</Typography>
+        <Typography variant="h5" component="div">
+          Dashboard
+        </Typography>
       </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-        <AnalyticEcommerce title="Total Page Views" count="4,42,236" percentage={59.3} extra="35,000" />
+
+      {/* WebTrack Statistics Cards */}
+      <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3 }}>
+        {loading ? (
+          <MainCard sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <CircularProgress />
+          </MainCard>
+        ) : (
+          <AnalyticEcommerce
+            title="Total Projects"
+            count={stats.totalProjects.toString()}
+            percentage={stats.projectGrowthPercent}
+            isLoss={stats.projectGrowthPercent < 0}
+            extra="Active projects"
+            color="primary"
+          />
+        )}
       </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-        <AnalyticEcommerce title="Total Users" count="78,250" percentage={70.5} extra="8,900" />
+      <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3 }}>
+        {loading ? (
+          <MainCard sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <CircularProgress />
+          </MainCard>
+        ) : (
+          <AnalyticEcommerce
+            title="Completed Tasks"
+            count={stats.completedTasks.toString()}
+            percentage={stats.completedTasksGrowthPercent}
+            isLoss={stats.completedTasksGrowthPercent < 0}
+            extra="This month"
+            color="success"
+          />
+        )}
       </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-        <AnalyticEcommerce title="Total Order" count="18,800" percentage={27.4} isLoss color="warning" extra="1,943" />
+      <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3 }}>
+        {loading ? (
+          <MainCard sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <CircularProgress />
+          </MainCard>
+        ) : (
+          <AnalyticEcommerce
+            title="Tasks Due Today"
+            count={stats.tasksDueToday.toString()}
+            percentage={stats.tasksDueTodayGrowthPercent}
+            isLoss={stats.tasksDueTodayGrowthPercent > 0}
+            color={stats.tasksDueToday > 5 ? 'warning' : 'success'}
+            extra="Requires attention"
+          />
+        )}
       </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-        <AnalyticEcommerce title="Total Sales" count="35,078" percentage={27.4} isLoss color="warning" extra="20,395" />
+      <Grid size={{ xs: 12, sm: 6, md: 3, lg: 3 }}>
+        {loading ? (
+          <MainCard sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <CircularProgress />
+          </MainCard>
+        ) : (
+          <AnalyticEcommerce
+            title="Active Users Today"
+            count={stats.activeUsersToday.toString()}
+            percentage={stats.activeUsersGrowthPercent}
+            isLoss={stats.activeUsersGrowthPercent < 0}
+            color="info"
+            extra="Team activity"
+          />
+        )}
       </Grid>
-      <Grid sx={{ display: { sm: 'none', md: 'block', lg: 'none' } }} size={{ md: 8 }} />
-      {/* row 2 */}
-      <Grid size={{ xs: 12, md: 7, lg: 8 }}>
-        <UniqueVisitorCard />
+      {/* row 2 - Task Distribution Chart */}
+      <Grid size={{ xs: 12 }}>
+        <TaskDistributionCard />
       </Grid>
-      <Grid size={{ xs: 12, md: 5, lg: 4 }}>
+
+      {/* row 3 - Project Management */}
+      <Grid size={{ xs: 12 }}>
         <Grid container alignItems="center" justifyContent="space-between">
           <Grid>
-            <Typography variant="h5">Income Overview</Typography>
-          </Grid>
-          <Grid />
-        </Grid>
-        <MainCard sx={{ mt: 2 }} content={false}>
-          <Box sx={{ p: 3, pb: 0 }}>
-            <Stack sx={{ gap: 2 }}>
-              <Typography variant="h6" color="text.secondary">
-                This Week Statistics
-              </Typography>
-              <Typography variant="h3">$7,650</Typography>
-            </Stack>
-          </Box>
-          <MonthlyBarChart />
-        </MainCard>
-      </Grid>
-      {/* row 3 */}
-      <Grid size={{ xs: 12, md: 7, lg: 8 }}>
-        <Grid container alignItems="center" justifyContent="space-between">
-          <Grid>
-            <Typography variant="h5">Project Management</Typography>
+            <Typography variant="h5" component="div">
+              Project Management
+            </Typography>
           </Grid>
           <Grid>
             <Button variant="contained" color="primary" onClick={() => (window.location.href = '/project-management')}>
@@ -161,36 +204,14 @@ export default function DashboardDefault() {
           </Box>
         </MainCard>
       </Grid>
-      <Grid size={{ xs: 12, md: 5, lg: 4 }}>
+
+      {/* row 4 - Task Management */}
+      <Grid size={{ xs: 12, md: 8 }}>
         <Grid container alignItems="center" justifyContent="space-between">
           <Grid>
-            <Typography variant="h5">Analytics Report</Typography>
-          </Grid>
-          <Grid />
-        </Grid>
-        <MainCard sx={{ mt: 2 }} content={false}>
-          <List sx={{ p: 0, '& .MuiListItemButton-root': { py: 2 } }}>
-            <ListItemButton divider>
-              <ListItemText primary="Company Finance Growth" />
-              <Typography variant="h5">+45.14%</Typography>
-            </ListItemButton>
-            <ListItemButton divider>
-              <ListItemText primary="Company Expenses Ratio" />
-              <Typography variant="h5">0.58%</Typography>
-            </ListItemButton>
-            <ListItemButton>
-              <ListItemText primary="Business Risk Cases" />
-              <Typography variant="h5">Low</Typography>
-            </ListItemButton>
-          </List>
-          <ReportAreaChart />
-        </MainCard>
-      </Grid>
-      {/* row 4 */}
-      <Grid size={{ xs: 12, md: 7, lg: 8 }}>
-        <Grid container alignItems="center" justifyContent="space-between">
-          <Grid>
-            <Typography variant="h5">Task Management</Typography>
+            <Typography variant="h5" component="div">
+              Task Management
+            </Typography>
           </Grid>
           <Grid>
             <Button variant="contained" color="primary" onClick={() => (window.location.href = '/task-management')}>
@@ -204,10 +225,14 @@ export default function DashboardDefault() {
           </Box>
         </MainCard>
       </Grid>
-      <Grid size={{ xs: 12, md: 5, lg: 4 }}>
+
+      {/* row 5 - Upcoming Deadlines */}
+      <Grid size={{ xs: 12, md: 4 }}>
         <Grid container alignItems="center" justifyContent="space-between">
           <Grid>
-            <Typography variant="h5">Upcoming Deadlines</Typography>
+            <Typography variant="h5" component="div">
+              Upcoming Deadlines
+            </Typography>
           </Grid>
           <Grid />
         </Grid>
