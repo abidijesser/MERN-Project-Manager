@@ -101,7 +101,7 @@ const DocumentUpload = ({ visible, onClose, onUploadSuccess }) => {
       setError(null)
 
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('document', file)
       formData.append('name', name || file.name)
       formData.append('description', description)
       if (project) {
@@ -137,7 +137,7 @@ const DocumentUpload = ({ visible, onClose, onUploadSuccess }) => {
   const handleDrag = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    
+
     if (e.type === 'dragenter' || e.type === 'dragover') {
       setDragActive(true)
     } else if (e.type === 'dragleave') {
@@ -150,7 +150,7 @@ const DocumentUpload = ({ visible, onClose, onUploadSuccess }) => {
     e.preventDefault()
     e.stopPropagation()
     setDragActive(false)
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const droppedFile = e.dataTransfer.files[0]
       setFile(droppedFile)
@@ -169,7 +169,7 @@ const DocumentUpload = ({ visible, onClose, onUploadSuccess }) => {
         <CForm onSubmit={handleSubmit}>
           {error && <CAlert color="danger">{error}</CAlert>}
 
-          <div 
+          <div
             className={`file-upload-area mb-3 ${dragActive ? 'drag-active' : ''}`}
             onDragEnter={handleDrag}
             onDragOver={handleDrag}
@@ -182,9 +182,9 @@ const DocumentUpload = ({ visible, onClose, onUploadSuccess }) => {
                   <CIcon icon={cilFile} size="xl" />
                   <div className="file-name">{file.name}</div>
                   <div className="file-size">{(file.size / 1024).toFixed(2)} KB</div>
-                  <CButton 
-                    color="danger" 
-                    variant="ghost" 
+                  <CButton
+                    color="danger"
+                    variant="ghost"
                     size="sm"
                     onClick={() => setFile(null)}
                   >
