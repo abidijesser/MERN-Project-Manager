@@ -18,6 +18,7 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const calendarRoutes = require("./routes/calendarRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const activityLogRoutes = require("./routes/activityLogRoutes");
+const documentRoutes = require("./routes/documentRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
 const Message = require("./models/Message"); // Assurez-vous que le modèle Message existe
@@ -75,6 +76,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/activity", activityLogRoutes);
+app.use("/api/documents", documentRoutes);
 // Add a simple test route
 app.get("/api/test", (req, res) => {
   res.json({ message: "Server is running" });

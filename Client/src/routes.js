@@ -23,6 +23,7 @@ const VerifyEmail = React.lazy(() => import('./views/pages/verify-email/VerifyEm
 const Performances = React.lazy(() => import('./views/Performances/Performances'))
 const EditTask = React.lazy(() => import('./views/tasks/EditTask'))
 const AdminRedirect = React.lazy(() => import('./views/pages/admin-redirect/AdminRedirect'))
+const Resources = React.lazy(() => import('./views/resources/Resources'))
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
@@ -51,6 +52,7 @@ const routes = [
   { path: '/collaboration/chat', name: 'Chat', element: Collaboration },
   { path: '/collaboration/notifications', name: 'Notifications', element: Collaboration },
   { path: '/collaboration/meetings', name: 'Réunions', element: Collaboration },
+  { path: '/resources', name: 'Ressources & Documents', element: Resources },
 ]
 
 export default routes
