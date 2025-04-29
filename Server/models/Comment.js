@@ -19,6 +19,10 @@ const CommentSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Project",
   },
+  documentId: {
+    type: Schema.Types.ObjectId,
+    ref: "Document",
+  },
   createdAt: {
     type: Date,
     default: Date.now,

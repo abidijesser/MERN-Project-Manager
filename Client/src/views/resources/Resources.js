@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import DocumentUpload from './DocumentUpload'
+import DocumentUpload from '../../components/Documents/DocumentUpload'
+import DocumentComments from '../../components/Documents/DocumentComments'
+import DocumentVersions from '../../components/Documents/DocumentVersions'
+import DocumentPreview from '../../components/Documents/DocumentPreview'
+import DocumentShare from '../../components/Documents/DocumentShare'
 import './Resources.css'
 import axios from '../../utils/axios'
 import { toast } from 'react-toastify'
+import socketService from '../../services/socketService'
 import {
   CCard,
   CCardBody,
@@ -61,6 +66,7 @@ const Resources = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState('')
   const [uploadModalVisible, setUploadModalVisible] = useState(false)
+  const [shareModalVisible, setShareModalVisible] = useState(false)
 
   // Fetch projects and documents from API
   useEffect(() => {
@@ -96,7 +102,8 @@ const Resources = () => {
             project: doc.project?._id || '',
             pinned: doc.pinned,
             permissions: getPermissionLevel(doc),
-            filePath: doc.filePath
+            filePath: doc.filePath,
+            versions: doc.versions || []
           })))
         } else {
           console.error('Format de réponse inattendu:', response.data)
@@ -113,6 +120,64 @@ const Resources = () => {
     fetchProjects()
     fetchDocuments()
   }, [])
+
+  // Set up socket.io listeners for real-time updates
+  useEffect(() => {
+    // Connect to socket
+    socketService.connect();
+
+    // Join room for document notifications
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      socketService.joinRoom(`user-${userId}`);
+    }
+
+    // Listen for document notifications
+    socketService.on('notification', (notification) => {
+      if (notification.type.startsWith('document_')) {
+        // Refresh documents when a document-related notification is received
+        toast.info(notification.message);
+        fetchDocuments();
+      }
+    });
+
+    // Clean up on unmount
+    return () => {
+      socketService.off('notification');
+      if (userId) {
+        socketService.leaveRoom(`user-${userId}`);
+      }
+    };
+  }, []);
+
+  // Function to fetch documents
+  const fetchDocuments = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/documents')
+      if (response.data.success && response.data.data) {
+        setDocuments(response.data.data.map(doc => ({
+          id: doc._id,
+          name: doc.name,
+          type: doc.fileType,
+          size: formatFileSize(doc.fileSize),
+          uploadedBy: doc.uploadedBy?.name || 'Utilisateur inconnu',
+          uploadedDate: new Date(doc.uploadedDate).toISOString().split('T')[0],
+          project: doc.project?._id || '',
+          pinned: doc.pinned,
+          permissions: getPermissionLevel(doc),
+          filePath: doc.filePath,
+          versions: doc.versions || []
+        })))
+      } else {
+        console.error('Format de réponse inattendu:', response.data)
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération des documents:', error)
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Format file size in human-readable format
   const formatFileSize = (bytes) => {
@@ -179,28 +244,14 @@ const Resources = () => {
   }
 
   // Function to handle document upload
-  const handleUploadSuccess = async (uploadData) => {
+  const handleUploadSuccess = async () => {
     // Refresh the documents list after successful upload
     try {
-      const response = await axios.get('/documents')
-      if (response.data.success && response.data.data) {
-        setDocuments(response.data.data.map(doc => ({
-          id: doc._id,
-          name: doc.name,
-          type: doc.fileType,
-          size: formatFileSize(doc.fileSize),
-          uploadedBy: doc.uploadedBy?.name || 'Utilisateur inconnu',
-          uploadedDate: new Date(doc.uploadedDate).toISOString().split('T')[0],
-          project: doc.project?._id || '',
-          pinned: doc.pinned,
-          permissions: getPermissionLevel(doc),
-          filePath: doc.filePath
-        })))
-        toast.success('Document(s) téléchargé(s) avec succès')
-      }
+      await fetchDocuments();
+      toast.success('Document(s) téléchargé(s) avec succès');
     } catch (error) {
-      console.error('Erreur lors de la récupération des documents:', error)
-      toast.error('Erreur lors de la mise à jour de la liste des documents')
+      console.error('Erreur lors de la récupération des documents:', error);
+      toast.error('Erreur lors de la mise à jour de la liste des documents');
     }
   }
 
@@ -209,7 +260,8 @@ const Resources = () => {
     try {
       // Create a link to download the file
       const link = document.createElement('a')
-      link.href = `http://localhost:3001/${doc.filePath}`
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      link.href = `${baseUrl}/${doc.filePath}`
       link.setAttribute('download', doc.name)
       document.body.appendChild(link)
       link.click()
@@ -417,7 +469,10 @@ const Resources = () => {
                                   <CIcon icon={cilCloudDownload} className="me-2" />
                                   Télécharger
                                 </CDropdownItem>
-                                <CDropdownItem>
+                                <CDropdownItem onClick={() => {
+                                  setSelectedDocument(doc);
+                                  setShareModalVisible(true);
+                                }}>
                                   <CIcon icon={cilShareBoxed} className="me-2" />
                                   Partager
                                 </CDropdownItem>
@@ -469,7 +524,12 @@ const Resources = () => {
                           <CIcon icon={cilCloudDownload} className="me-2" />
                           Télécharger
                         </CButton>
-                        <CButton color="primary" variant="outline" className="me-2">
+                        <CButton
+                          color="primary"
+                          variant="outline"
+                          className="me-2"
+                          onClick={() => setShareModalVisible(true)}
+                        >
                           <CIcon icon={cilShareBoxed} className="me-2" />
                           Partager
                         </CButton>
@@ -497,23 +557,7 @@ const Resources = () => {
 
                   <CRow className="mb-4">
                     <CCol md={8}>
-                      <CCard>
-                        <CCardHeader>Aperçu du document</CCardHeader>
-                        <CCardBody className="text-center p-5">
-                          <CIcon icon={getFileIcon(selectedDocument.type)} style={{ width: '64px', height: '64px' }} />
-                          <p className="mt-3">
-                            L'aperçu n'est pas disponible pour ce type de fichier. Veuillez télécharger le document pour
-                            le consulter.
-                          </p>
-                          <CButton
-                            color="primary"
-                            onClick={() => handleDownload(selectedDocument)}
-                          >
-                            <CIcon icon={cilCloudDownload} className="me-2" />
-                            Télécharger
-                          </CButton>
-                        </CCardBody>
-                      </CCard>
+                      <DocumentPreview document={selectedDocument} />
                     </CCol>
                     <CCol md={4}>
                       <CCard className="mb-4">
@@ -550,25 +594,21 @@ const Resources = () => {
                         </CCardBody>
                       </CCard>
 
-                      <CCard>
-                        <CCardHeader>Historique des versions</CCardHeader>
-                        <CCardBody>
-                          <p className="text-muted">Aucune version antérieure disponible.</p>
-                        </CCardBody>
-                      </CCard>
+                      {/* Historique des versions */}
+                      <DocumentVersions
+                        document={selectedDocument}
+                        onVersionRestore={(version, comment) => {
+                          // Dans une implémentation réelle, cette fonction appellerait l'API
+                          const versionDate = new Date(version.uploadedDate).toLocaleDateString();
+                          toast.success(`Version du ${versionDate} restaurée avec succès${comment ? ': ' + comment : ''}`)
+                          fetchDocuments();
+                        }}
+                      />
                     </CCol>
                   </CRow>
 
-                  <CCard>
-                    <CCardHeader>Commentaires</CCardHeader>
-                    <CCardBody>
-                      <p className="text-muted">Aucun commentaire pour le moment.</p>
-                      <CInputGroup>
-                        <CFormInput placeholder="Ajouter un commentaire..." />
-                        <CButton color="primary">Envoyer</CButton>
-                      </CInputGroup>
-                    </CCardBody>
-                  </CCard>
+                  {/* Commentaires */}
+                  <DocumentComments documentId={selectedDocument.id} />
                 </div>
               )}
             </CTabPane>
@@ -582,6 +622,15 @@ const Resources = () => {
         onClose={() => setUploadModalVisible(false)}
         onUploadSuccess={handleUploadSuccess}
       />
+
+      {/* Document Share Modal */}
+      {selectedDocument && (
+        <DocumentShare
+          document={selectedDocument}
+          visible={shareModalVisible}
+          onClose={() => setShareModalVisible(false)}
+        />
+      )}
     </div>
   )
 }

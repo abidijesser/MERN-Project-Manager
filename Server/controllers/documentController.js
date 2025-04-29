@@ -1,6 +1,8 @@
 const Document = require("../models/Document");
 const User = require("../models/User");
 const Project = require("../models/Project");
+const Comment = require("../models/Comment");
+const notificationService = require("../services/notificationService");
 const fs = require("fs");
 const path = require("path");
 
@@ -126,20 +128,33 @@ const createDocument = async (req, res) => {
       isPublic: isPublic === "true",
     });
 
+    // Créer une notification pour le nouveau document
+    try {
+      await notificationService.createDocumentNotification(
+        document,
+        "document_uploaded",
+        req.user
+      );
+      console.log("Document upload notification created successfully");
+    } catch (notificationError) {
+      console.error("Error creating document upload notification:", notificationError);
+      // Continue despite notification error
+    }
+
     res.status(201).json({
       success: true,
       data: document,
     });
   } catch (error) {
     console.error("Error creating document:", error);
-    
+
     // If there was an error, remove the uploaded file
     if (req.file) {
       fs.unlink(req.file.path, (err) => {
         if (err) console.error("Error deleting file:", err);
       });
     }
-    
+
     res.status(500).json({
       success: false,
       error: "Server Error",
@@ -175,7 +190,7 @@ const updateDocument = async (req, res) => {
 
     // Update document
     const { name, description, project, isPublic, pinned } = req.body;
-    
+
     document = await Document.findByIdAndUpdate(
       req.params.id,
       {
@@ -235,7 +250,7 @@ const deleteDocument = async (req, res) => {
       }
 
       // Delete document from database
-      await document.remove();
+      await Document.deleteOne({ _id: document._id });
 
       res.status(200).json({
         success: true,
@@ -370,20 +385,32 @@ const uploadNewVersion = async (req, res) => {
 
     await document.save();
 
+    // Créer une notification pour la nouvelle version du document
+    try {
+      await notificationService.createDocumentVersionNotification(
+        document,
+        req.user
+      );
+      console.log("Document version notification created successfully");
+    } catch (notificationError) {
+      console.error("Error creating document version notification:", notificationError);
+      // Continue despite notification error
+    }
+
     res.status(200).json({
       success: true,
       data: document,
     });
   } catch (error) {
     console.error("Error uploading new version:", error);
-    
+
     // If there was an error, remove the uploaded file
     if (req.file) {
       fs.unlink(req.file.path, (err) => {
         if (err) console.error("Error deleting file:", err);
       });
     }
-    
+
     res.status(500).json({
       success: false,
       error: "Server Error",

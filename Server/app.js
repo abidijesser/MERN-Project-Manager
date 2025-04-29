@@ -19,9 +19,11 @@ const calendarRoutes = require("./routes/calendarRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const activityLogRoutes = require("./routes/activityLogRoutes");
 const documentRoutes = require("./routes/documentRoutes");
+const shareRoutes = require("./routes/shareRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
 const Message = require("./models/Message"); // Assurez-vous que le modèle Message existe
+const notificationService = require("./services/notificationService");
 require("./config/passportConfig");
 require("./config/facebookStrategy");
 
@@ -77,6 +79,7 @@ app.use("/api/calendar", calendarRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/activity", activityLogRoutes);
 app.use("/api/documents", documentRoutes);
+app.use("/api/share", shareRoutes);
 // Add a simple test route
 app.get("/api/test", (req, res) => {
   res.json({ message: "Server is running" });
@@ -119,6 +122,9 @@ const io = new Server(server, {
   },
 });
 
+// Initialize notification service with Socket.io
+notificationService.initializeSocketIO(io);
+
 // WebSocket implementation
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
@@ -159,6 +165,11 @@ io.on("connection", (socket) => {
           "commentAdded",
           commentData
         );
+      } else if (commentData.documentId) {
+        io.to(`document-${commentData.documentId}`).emit(
+          "commentAdded",
+          commentData
+        );
       }
     } catch (err) {
       console.error("Error processing comment:", err);
@@ -177,6 +188,13 @@ io.on("connection", (socket) => {
 
       if (activityData.project) {
         io.to(`project-${activityData.project}`).emit(
+          "activityAdded",
+          activityData
+        );
+      }
+
+      if (activityData.document) {
+        io.to(`document-${activityData.document}`).emit(
           "activityAdded",
           activityData
         );

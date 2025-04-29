@@ -32,6 +32,7 @@ const EditProfile = React.lazy(() => import('./views/pages/profile/EditProfile')
 const EditProject = React.lazy(() => import('./views/projects/EditProject'))
 const ForgotPassword = React.lazy(() => import('./views/pages/forgot-password/ForgotPassword'))
 const ResetPassword = React.lazy(() => import('./views/pages/reset-password/ResetPassword'))
+const SharedDocument = React.lazy(() => import('./views/shared/SharedDocument'))
 
 // Components
 const ProtectedRoute = React.lazy(() => import('./components/ProtectedRoute'))
@@ -97,6 +98,12 @@ const App = () => {
                       path="/reset-password/:token"
                       name="Reset Password"
                       element={<ResetPassword />}
+                    />
+                    <Route
+                      exact
+                      path="/shared-document/:token"
+                      name="Shared Document"
+                      element={<SharedDocument />}
                     />
                     <Route
                       exact

@@ -101,6 +101,28 @@ class SocketService {
         console.error('Error in activityUpdated listener:', error)
       }
     })
+
+    // Listen for notifications
+    this.socket.on('notification', (notification) => {
+      try {
+        if (this.listeners.notification) {
+          this.listeners.notification.forEach((callback) => callback(notification))
+        }
+      } catch (error) {
+        console.error('Error in notification listener:', error)
+      }
+    })
+
+    // Listen for project notifications
+    this.socket.on('projectNotification', (notification) => {
+      try {
+        if (this.listeners.projectNotification) {
+          this.listeners.projectNotification.forEach((callback) => callback(notification))
+        }
+      } catch (error) {
+        console.error('Error in projectNotification listener:', error)
+      }
+    })
   }
 
   disconnect() {
@@ -111,15 +133,13 @@ class SocketService {
     }
   }
 
-  // Join a room for a specific task or project
-  joinRoom(entityType, entityId) {
+  // Join a room
+  joinRoom(room) {
     try {
-      if (!entityType || !entityId) {
-        console.warn('Cannot join room: missing entityType or entityId')
+      if (!room) {
+        console.warn('Cannot join room: missing room name')
         return
       }
-
-      const room = `${entityType}-${entityId}`
 
       // If we don't have a socket yet, create one
       if (!this.socket) {
@@ -164,16 +184,14 @@ class SocketService {
   }
 
   // Leave a room
-  leaveRoom(entityType, entityId) {
+  leaveRoom(room) {
     try {
-      if (!entityType || !entityId) {
-        console.warn('Cannot leave room: missing entityType or entityId')
+      if (!room) {
+        console.warn('Cannot leave room: missing room name')
         return
       }
 
       if (!this.socket || !this.connected) return
-
-      const room = `${entityType}-${entityId}`
       this.socket.emit('leaveRoom', room)
       console.log(`Left room: ${room}`)
     } catch (error) {
