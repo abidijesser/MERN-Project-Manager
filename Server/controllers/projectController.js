@@ -1,17 +1,15 @@
 const Project = require("../models/Project");
+const User = require("../models/User");
 
 // GET all projects
 const getAllProjects = async (req, res) => {
   try {
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({
-        success: false,
-        error: "Non authentifié",
-      });
-    }
-    const projects = await Project.find({ owner: req.user.id }).populate(
-      "tasks members owner"
-    );
+    // Find projects where the user is either the owner or a member
+    const projects = await Project.find({
+      $or: [{ owner: req.user.id }, { members: req.user.id }],
+    }).populate("tasks members owner");
+
+    console.log(`Found ${projects.length} projects for user ${req.user.id}`);
     res.status(200).json({ success: true, projects });
   } catch (error) {
     console.error("Erreur lors de la récupération des projets:", error);
@@ -25,15 +23,19 @@ const getAllProjects = async (req, res) => {
 // GET a single project by ID
 const getProjectById = async (req, res) => {
   try {
+    // Find project where the user is either the owner or a member
     const project = await Project.findOne({
       _id: req.params.id,
-      owner: req.user.id,
+      $or: [{ owner: req.user.id }, { members: req.user.id }],
     }).populate("tasks members owner");
 
     if (!project) {
       return res
         .status(404)
-        .json({ success: false, error: "Projet non trouvé" });
+        .json({
+          success: false,
+          error: "Projet non trouvé ou vous n'avez pas accès à ce projet",
+        });
     }
     res.status(200).json({ success: true, project: project });
   } catch (error) {
@@ -160,6 +162,50 @@ const deleteProject = async (req, res) => {
     res.status(500).json({ error: "Erreur lors de la suppression du projet" });
   }
 };
+// GET project members
+const getProjectMembers = async (req, res) => {
+  try {
+    const projectId = req.params.id;
+
+    // Validate project ID
+    if (!projectId) {
+      return res.status(400).json({
+        success: false,
+        error: "ID de projet requis",
+      });
+    }
+
+    // Find the project
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        error: "Projet non trouvé",
+      });
+    }
+
+    // Get members details
+    const members = await User.find(
+      { _id: { $in: project.members } },
+      "_id name email role"
+    );
+
+    res.status(200).json({
+      success: true,
+      members,
+    });
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des membres du projet:",
+      error
+    );
+    res.status(500).json({
+      success: false,
+      error: "Erreur lors de la récupération des membres du projet",
+    });
+  }
+};
+
 module.exports = {
   getAllProjects,
   getProjectById,
@@ -167,4 +213,5 @@ module.exports = {
   addComment,
   updateProject,
   deleteProject,
+  getProjectMembers,
 };

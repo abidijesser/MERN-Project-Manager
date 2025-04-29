@@ -31,4 +31,7 @@ router.put("/:id", auth, projectController.updateProject);
 // DELETE a project
 router.delete("/:id", auth, projectController.deleteProject);
 
+// GET project members
+router.get("/:id/members", projectController.getProjectMembers);
+
 module.exports = router;

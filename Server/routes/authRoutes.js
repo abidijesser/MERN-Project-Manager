@@ -29,27 +29,35 @@ router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
 router.post("/change-password", auth, authController.changePassword);
 
-// Logout route
-router.get("/logout", auth, (req, res) => {
+// Two-Factor Authentication routes
+router.post("/generate-2fa", auth, authController.generate2FA);
+router.post("/verify-2fa", auth, authController.verify2FA);
+router.post("/disable-2fa", auth, authController.disable2FA);
+
+// Profile picture upload route
+router.post(
+  "/upload-profile-picture",
+  auth,
+  authController.uploadUserProfilePicture
+);
+
+// Logout route - version simplifiée sans session
+router.get("/logout", (req, res) => {
   try {
-    // Clear the session
-    req.session.destroy((err) => {
-      if (err) {
-        console.error("Error destroying session:", err);
-        return res.status(500).json({
-          success: false,
-          error: "Error during logout",
-        });
-      }
+    console.log("Logout route called");
 
-      // Clear the token from the response
+    // Pour JWT, la déconnexion est gérée côté client en supprimant le token
+    // Nous renvoyons simplement une réponse de succès
+
+    // Clear the token cookie if it exists
+    if (req.cookies && req.cookies.token) {
       res.clearCookie("token");
+    }
 
-      // Send success response
-      res.json({
-        success: true,
-        message: "Logged out successfully",
-      });
+    // Send success response
+    res.json({
+      success: true,
+      message: "Logged out successfully",
     });
   } catch (error) {
     console.error("Logout error:", error);

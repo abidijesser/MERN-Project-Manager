@@ -13,6 +13,11 @@ const chatRoutes = require("./routes/chat");
 const geminiRoutes = require("./routes/gemini");
 const notificationRoutes = require("./routes/notificationRoutes");
 const statsRoutes = require("./routes/statsRoutes");
+const statisticsRoutes = require("./routes/statisticsRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const calendarRoutes = require("./routes/calendarRoutes");
+const commentRoutes = require("./routes/commentRoutes");
+const activityLogRoutes = require("./routes/activityLogRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
 const Message = require("./models/Message"); // Assurez-vous que le modèle Message existe
@@ -28,12 +33,15 @@ app.use(
     origin: ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173", "http://127.0.0.1:3000"],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id'] // Ajout de 'x-request-id'
   })
 );
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
+
+// Serve static files from the public directory
+app.use("/public", express.static("public"));
 
 // Session configuration
 app.use(
@@ -62,7 +70,11 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/gemini", geminiRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/stats", statsRoutes);
-
+app.use("/api/statistics", statisticsRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/calendar", calendarRoutes);
+app.use("/api/comments", commentRoutes);
+app.use("/api/activity", activityLogRoutes);
 // Add a simple test route
 app.get("/api/test", (req, res) => {
   res.json({ message: "Server is running" });
@@ -101,53 +113,82 @@ const io = new Server(server, {
     origin: ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173", "http://127.0.0.1:3000"],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id'] // Ajout de 'x-request-id'
   },
 });
 
-// WebSocket pour le chat
+// WebSocket implementation
 io.on("connection", (socket) => {
-  console.log("A user connected");
+  console.log("A user connected:", socket.id);
 
-  // Écoute des messages envoyés par le client
+  // Join rooms for specific projects and tasks
+  socket.on("joinRoom", (room) => {
+    console.log(`Socket ${socket.id} joining room: ${room}`);
+    socket.join(room);
+  });
+
+  // Leave rooms
+  socket.on("leaveRoom", (room) => {
+    console.log(`Socket ${socket.id} leaving room: ${room}`);
+    socket.leave(room);
+  });
+
+  // Listen for chat messages
   socket.on("sendMessage", async (messageData) => {
     try {
-      console.log('Message reçu:', messageData);
+      const newMessage = new Message(messageData);
+      await newMessage.save(); // Store message in database
+      io.emit("receiveMessage", messageData); // Broadcast to all clients
+    } catch (err) {
+      console.error("Error saving message:", err);
+    }
+  });
 
-      // Vérifier que le message a tous les champs requis
-      if (!messageData.content || !messageData.type) {
-        console.error('Message invalide:', messageData);
-        return;
-      }
+  // Listen for new comments
+  socket.on("newComment", async (commentData) => {
+    try {
+      console.log("New comment received:", commentData);
 
-      // Ne pas traiter les messages marqués comme locaux
-      if (messageData.local === true) {
-        console.log('Message local, pas de traitement serveur');
-        return;
-      }
-
-      const newMessage = new Message({
-        content: messageData.content,
-        timestamp: messageData.timestamp || new Date(),
-        type: messageData.type,
-        sender: messageData.sender || 'unknown',
-        id: messageData.id || Date.now().toString()
-      });
-
-      await newMessage.save(); // Stocke le message en base de données
-
-      // Ne pas renvoyer les messages de type 'bot' pour éviter les doublons
-      if (messageData.type !== 'bot') {
-        // Envoyer le message à tous les clients SAUF à l'expéditeur
-        socket.broadcast.emit("receiveMessage", messageData);
+      // Broadcast to the appropriate room
+      if (commentData.taskId) {
+        io.to(`task-${commentData.taskId}`).emit("commentAdded", commentData);
+      } else if (commentData.projectId) {
+        io.to(`project-${commentData.projectId}`).emit(
+          "commentAdded",
+          commentData
+        );
       }
     } catch (err) {
-      console.error("Erreur lors de l'enregistrement du message:", err);
+      console.error("Error processing comment:", err);
+    }
+  });
+
+  // Listen for activity logs
+  socket.on("newActivity", (activityData) => {
+    try {
+      console.log("New activity received:", activityData);
+
+      // Broadcast to appropriate rooms
+      if (activityData.task) {
+        io.to(`task-${activityData.task}`).emit("activityAdded", activityData);
+      }
+
+      if (activityData.project) {
+        io.to(`project-${activityData.project}`).emit(
+          "activityAdded",
+          activityData
+        );
+      }
+
+      // Broadcast to all clients for dashboard updates
+      io.emit("activityUpdated", activityData);
+    } catch (err) {
+      console.error("Error processing activity:", err);
     }
   });
 
   socket.on("disconnect", () => {
-    console.log("User disconnected");
+    console.log("User disconnected:", socket.id);
   });
 });
 

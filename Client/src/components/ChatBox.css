@@ -148,10 +148,13 @@
 /* Quick replies */
 .quick-replies {
   display: flex;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.8rem;
   padding: 1rem;
   overflow-x: auto;
   scrollbar-width: none;
+  margin-bottom: 0.5rem;
 }
 
 .quick-replies::-webkit-scrollbar {
@@ -159,19 +162,26 @@
 }
 
 .quick-reply {
-  padding: 0.5rem 1rem;
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
+  padding: 0.7rem 1.2rem;
+  background-color: #e9f5ff;
+  border: 1px solid #b8daff;
   border-radius: 20px;
-  color: #212529;
+  color: #0056b3;
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  max-width: 45%;
+  text-align: center;
 }
 
 .quick-reply:hover {
-  background-color: #e9ecef;
-  border-color: #ced4da;
+  background-color: #cce5ff;
+  border-color: #007bff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Input group */
@@ -285,4 +295,4 @@
   .emoji-grid {
     grid-template-columns: repeat(4, 1fr);
   }
-} 
+}

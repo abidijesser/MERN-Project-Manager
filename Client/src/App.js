@@ -35,6 +35,7 @@ const ResetPassword = React.lazy(() => import('./views/pages/reset-password/Rese
 
 // Components
 const ProtectedRoute = React.lazy(() => import('./components/ProtectedRoute'))
+const ErrorBoundary = React.lazy(() => import('./components/ErrorBoundary'))
 
 const App = () => {
   const { isColorModeSet, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
@@ -67,107 +68,109 @@ const App = () => {
                   </div>
                 }
               >
-                <Routes>
-                  <Route exact path="/login" name="Login Page" element={<Login />} />
-                  <Route exact path="/register" name="Register Page" element={<Register />} />
-                  <Route exact path="/404" name="Page 404" element={<Page404 />} />
-                  <Route exact path="/500" name="Page 500" element={<Page500 />} />
-                  <Route
-                    exact
-                    path="/unauthorized"
-                    name="Unauthorized"
-                    element={<Unauthorized />}
-                  />
-                  <Route
-                    exact
-                    path="/auth-redirect"
-                    name="Auth Redirect"
-                    element={<AuthRedirect />}
-                  />
-                  <Route
-                    exact
-                    path="/forgot-password"
-                    name="Forgot Password"
-                    element={<ForgotPassword />}
-                  />
-                  <Route
-                    exact
-                    path="/reset-password/:token"
-                    name="Reset Password"
-                    element={<ResetPassword />}
-                  />
-                  <Route
-                    exact
-                    path="/profile/:id"
-                    name="Profile Page"
-                    element={
-                      <Suspense
-                        fallback={
-                          <div className="pt-3 text-center">
-                            <CSpinner color="primary" variant="grow" />
-                          </div>
-                        }
-                      >
-                        <ProtectedRoute>
-                          <Profile />
-                        </ProtectedRoute>
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    exact
-                    path="/edit-profile/:id"
-                    name="Edit Profile Page"
-                    element={
-                      <Suspense
-                        fallback={
-                          <div className="pt-3 text-center">
-                            <CSpinner color="primary" variant="grow" />
-                          </div>
-                        }
-                      >
-                        <ProtectedRoute>
-                          <EditProfile />
-                        </ProtectedRoute>
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    exact
-                    path="/projects/edit/:id"
-                    name="Edit Project"
-                    element={
-                      <Suspense
-                        fallback={
-                          <div className="pt-3 text-center">
-                            <CSpinner color="primary" variant="grow" />
-                          </div>
-                        }
-                      >
-                        <ProtectedRoute>
-                          <EditProject />
-                        </ProtectedRoute>
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="*"
-                    name="Home"
-                    element={
-                      <Suspense
-                        fallback={
-                          <div className="pt-3 text-center">
-                            <CSpinner color="primary" variant="grow" />
-                          </div>
-                        }
-                      >
-                        <ProtectedRoute>
-                          <DefaultLayout />
-                        </ProtectedRoute>
-                      </Suspense>
-                    }
-                  />
-                </Routes>
+                <ErrorBoundary>
+                  <Routes>
+                    <Route exact path="/login" name="Login Page" element={<Login />} />
+                    <Route exact path="/register" name="Register Page" element={<Register />} />
+                    <Route exact path="/404" name="Page 404" element={<Page404 />} />
+                    <Route exact path="/500" name="Page 500" element={<Page500 />} />
+                    <Route
+                      exact
+                      path="/unauthorized"
+                      name="Unauthorized"
+                      element={<Unauthorized />}
+                    />
+                    <Route
+                      exact
+                      path="/auth-redirect"
+                      name="Auth Redirect"
+                      element={<AuthRedirect />}
+                    />
+                    <Route
+                      exact
+                      path="/forgot-password"
+                      name="Forgot Password"
+                      element={<ForgotPassword />}
+                    />
+                    <Route
+                      exact
+                      path="/reset-password/:token"
+                      name="Reset Password"
+                      element={<ResetPassword />}
+                    />
+                    <Route
+                      exact
+                      path="/profile/:id"
+                      name="Profile Page"
+                      element={
+                        <Suspense
+                          fallback={
+                            <div className="pt-3 text-center">
+                              <CSpinner color="primary" variant="grow" />
+                            </div>
+                          }
+                        >
+                          <ProtectedRoute>
+                            <Profile />
+                          </ProtectedRoute>
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      exact
+                      path="/edit-profile/:id"
+                      name="Edit Profile Page"
+                      element={
+                        <Suspense
+                          fallback={
+                            <div className="pt-3 text-center">
+                              <CSpinner color="primary" variant="grow" />
+                            </div>
+                          }
+                        >
+                          <ProtectedRoute>
+                            <EditProfile />
+                          </ProtectedRoute>
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      exact
+                      path="/projects/edit/:id"
+                      name="Edit Project"
+                      element={
+                        <Suspense
+                          fallback={
+                            <div className="pt-3 text-center">
+                              <CSpinner color="primary" variant="grow" />
+                            </div>
+                          }
+                        >
+                          <ProtectedRoute>
+                            <EditProject />
+                          </ProtectedRoute>
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="*"
+                      name="Home"
+                      element={
+                        <Suspense
+                          fallback={
+                            <div className="pt-3 text-center">
+                              <CSpinner color="primary" variant="grow" />
+                            </div>
+                          }
+                        >
+                          <ProtectedRoute>
+                            <DefaultLayout />
+                          </ProtectedRoute>
+                        </Suspense>
+                      }
+                    />
+                  </Routes>
+                </ErrorBoundary>
               </Suspense>
             </HashRouter>
           </NotificationsProvider>

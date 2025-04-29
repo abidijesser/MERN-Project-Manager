@@ -106,9 +106,9 @@ const ChatBox = () => {
         const result = await testGeminiConnection();
         if (result.success) {
           console.log('Gemini API connection successful:', result.message);
-          // Optionnel : Afficher un message de bienvenue
+          // Afficher un message de bienvenue avec mention des questions prédéfinies
           sendMessage({
-            content: "Bonjour ! Je suis l'Assistant Gemini. Comment puis-je vous aider aujourd'hui ?",
+            content: "Bonjour ! Je suis l'Assistant Gemini. Je peux vous aider avec vos projets et tâches. Vous pouvez me poser des questions ou utiliser les boutons rapides ci-dessous pour obtenir des informations sur vos tâches d'aujourd'hui, les projets en retard, les membres disponibles ou comment ajouter une nouvelle tâche.",
             timestamp: new Date(),
             type: 'bot',
             local: true
@@ -130,7 +130,12 @@ const ChatBox = () => {
     testConnection();
   }, []);
 
-  const quickReplies = ['Aujourd\'hui', 'Demain', 'Cette semaine', 'Plus tard'];
+  const quickReplies = [
+    'Quelles sont mes tâches aujourd\'hui ?',
+    'Quels projets sont en retard ?',
+    'Qui est disponible dans l\'équipe ?',
+    'Comment ajouter une nouvelle tâche ?'
+  ];
 
   return (
     <div className="chatbox-container">

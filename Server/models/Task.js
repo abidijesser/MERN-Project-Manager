@@ -4,11 +4,11 @@ const Schema = mongoose.Schema;
 const TaskSchema = new Schema({
   title: {
     type: String,
-    required: true,
+    // All fields are now optional
   },
   description: {
     type: String,
-    required: true,
+    // All fields are now optional
   },
   status: {
     type: String,
@@ -22,23 +22,36 @@ const TaskSchema = new Schema({
   },
   dueDate: {
     type: Date,
+    // All fields are now optional
   },
   assignedTo: {
     type: Schema.Types.ObjectId,
     ref: "User",
+    // All fields are now optional
   },
   project: {
     type: Schema.Types.ObjectId,
     ref: "Project",
+    // All fields are now optional
   },
   createdBy: {
     type: Schema.Types.ObjectId,
     ref: "User",
-    required: true,
+    // All fields are now optional
   },
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  comments: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Comment",
+    },
+  ],
+  googleCalendarEventId: {
+    type: String,
+    default: null,
   },
 });
 

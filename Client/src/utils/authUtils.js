@@ -100,10 +100,22 @@ export const login = async (email, password) => {
     if (response.data.success) {
       localStorage.setItem('token', response.data.token)
 
-      // Store user role if available
-      if (response.data.user && response.data.user.role) {
-        localStorage.setItem('userRole', response.data.user.role)
-        console.log('User role stored in authUtils:', response.data.user.role)
+      // Store user role and ID if available
+      if (response.data.user) {
+        if (response.data.user.role) {
+          localStorage.setItem('userRole', response.data.user.role)
+          console.log('User role stored in authUtils:', response.data.user.role)
+        }
+
+        if (response.data.user._id) {
+          localStorage.setItem('userId', response.data.user._id)
+          console.log('User ID stored in authUtils:', response.data.user._id)
+        }
+
+        if (response.data.user.name) {
+          localStorage.setItem('userName', response.data.user.name)
+          console.log('User name stored in authUtils:', response.data.user.name)
+        }
       }
 
       return { success: true, user: response.data.user }
@@ -133,10 +145,22 @@ export const verify2FA = async (email, password, twoFactorToken) => {
     if (response.data.success) {
       localStorage.setItem('token', response.data.token)
 
-      // Store user role if available
-      if (response.data.user && response.data.user.role) {
-        localStorage.setItem('userRole', response.data.user.role)
-        console.log('User role stored in 2FA verification:', response.data.user.role)
+      // Store user role and ID if available
+      if (response.data.user) {
+        if (response.data.user.role) {
+          localStorage.setItem('userRole', response.data.user.role)
+          console.log('User role stored in 2FA verification:', response.data.user.role)
+        }
+
+        if (response.data.user._id) {
+          localStorage.setItem('userId', response.data.user._id)
+          console.log('User ID stored in 2FA verification:', response.data.user._id)
+        }
+
+        if (response.data.user.name) {
+          localStorage.setItem('userName', response.data.user.name)
+          console.log('User name stored in 2FA verification:', response.data.user.name)
+        }
       }
 
       return { success: true, user: response.data.user }

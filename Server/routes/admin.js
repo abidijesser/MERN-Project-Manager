@@ -4,6 +4,7 @@ const {
   getUserById,
   updateUserById,
   getAllProjects,
+  getProjectById,
   getAllTasks,
   getDashboardStats,
 } = require("../controllers/adminController");
@@ -25,6 +26,7 @@ router.put("/users/:id", updateUserById);
 
 // Project management routes
 router.get("/projects", getAllProjects);
+router.get("/projects/:id", getProjectById);
 
 // Task management routes
 router.get("/tasks", getAllTasks);
