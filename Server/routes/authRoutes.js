@@ -17,9 +17,10 @@ router.post("/login", authController.login);
 router.get("/profile", auth, authController.getProfile);
 router.get("/profile/:id", auth, authController.getProfileById);
 router.put("/profile/:id", auth, authController.updateProfile);
-// User management routes - protégées par le middleware adminAuth
-router.get("/users", auth, adminAuth, authController.getAllUsers);
-router.get("/users/:id", auth, adminAuth, authController.getUserById);
+// User management routes
+router.get("/users", auth, authController.getAllUsers); // Allow all authenticated users to get the list of users
+router.get("/users/:id", auth, authController.getUserById); // Allow all authenticated users to get user details
+// Admin-only routes
 router.post("/users", auth, adminAuth, authController.createUserByAdmin); // Nouvelle route pour créer des utilisateurs par les admins
 router.put("/users/:id", auth, adminAuth, authController.updateUser);
 router.delete("/users/:id", auth, adminAuth, authController.deleteUser);

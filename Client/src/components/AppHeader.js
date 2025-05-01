@@ -100,9 +100,9 @@ const AppHeader = () => {
                 </CDropdownMenu>
               </CDropdown>
               <CNavItem>
-                <CNavLink to="/resources" as={NavLink} className="nav-link-custom">
+                <CNavLink to="/media" as={NavLink} className="nav-link-custom">
                   <CIcon icon={cilDescription} className="nav-icon" />
-                  <span>Ressources</span>
+                  <span>Médias</span>
                 </CNavLink>
               </CNavItem>
               <CNavItem>

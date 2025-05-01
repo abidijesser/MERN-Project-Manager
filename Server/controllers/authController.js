@@ -469,13 +469,22 @@ const updateProfile = async (req, res) => {
     ).select("-password");
 
     if (!updatedUser) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
     }
 
-    res.json(updatedUser);
+    res.json({
+      success: true,
+      user: updatedUser,
+    });
   } catch (error) {
     console.error("Error in updateProfile:", error);
-    res.status(500).json({ error: "Error updating profile" });
+    res.status(500).json({
+      success: false,
+      error: "Error updating profile",
+    });
   }
 };
 
@@ -645,7 +654,10 @@ const verifyEmail = async (req, res) => {
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password");
-    res.json(users);
+    res.json({
+      success: true,
+      users: users,
+    });
   } catch (error) {
     console.error("Error in getAllUsers:", error);
     res.status(500).json({

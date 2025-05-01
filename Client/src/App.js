@@ -18,7 +18,7 @@ import { CSpinner, useColorModes } from '@coreui/react'
 import './scss/style.scss'
 
 // Containers
-const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
+import DefaultLayout from './layout/DefaultLayout'
 
 // Pages
 const Login = React.lazy(() => import('./views/pages/login/Login'))
@@ -156,17 +156,9 @@ const App = () => {
                       path="*"
                       name="Home"
                       element={
-                        <Suspense
-                          fallback={
-                            <div className="pt-3 text-center">
-                              <CSpinner color="primary" variant="grow" />
-                            </div>
-                          }
-                        >
-                          <ProtectedRoute>
-                            <DefaultLayout />
-                          </ProtectedRoute>
-                        </Suspense>
+                        <ProtectedRoute>
+                          <DefaultLayout />
+                        </ProtectedRoute>
                       }
                     />
                   </Routes>

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 // project imports
 import { logout, getCurrentUser } from 'utils/authUtils';
+import api from 'utils/api';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -64,6 +65,7 @@ export default function Profile() {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [user, setUser] = useState(null);
+  const [profilePicture, setProfilePicture] = useState(null);
 
   // Fetch user data on component mount
   useEffect(() => {
@@ -72,6 +74,9 @@ export default function Profile() {
         const userData = await getCurrentUser();
         if (userData) {
           setUser(userData);
+          if (userData.profilePicture) {
+            setProfilePicture(userData.profilePicture);
+          }
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -165,7 +170,11 @@ export default function Profile() {
           onClick={handleToggle}
         >
           <Stack direction="row" sx={{ gap: 1.25, alignItems: 'center', p: 0.5 }}>
-            <Avatar alt="profile user" src={avatar1} size="sm" />
+            {profilePicture ? (
+              <Avatar alt="profile user" src={`http://localhost:3001/${profilePicture}`} size="sm" />
+            ) : (
+              <Avatar alt="profile user" src={avatar1} size="sm" />
+            )}
             <Typography variant="subtitle1" sx={{ textTransform: 'capitalize' }}>
               {user ? user.name : 'Loading...'}
             </Typography>
@@ -198,7 +207,11 @@ export default function Profile() {
                       <Grid container justifyContent="space-between" alignItems="center">
                         <Grid>
                           <Stack direction="row" sx={{ gap: 1.25, alignItems: 'center' }}>
-                            <Avatar alt="profile user" src={avatar1} sx={{ width: 32, height: 32 }} />
+                            {profilePicture ? (
+                              <Avatar alt="profile user" src={`http://localhost:3001/${profilePicture}`} sx={{ width: 32, height: 32 }} />
+                            ) : (
+                              <Avatar alt="profile user" src={avatar1} sx={{ width: 32, height: 32 }} />
+                            )}
                             <Stack>
                               <Typography variant="h6">{user ? user.name : 'Loading...'}</Typography>
                               <Typography variant="body2" color="text.secondary">

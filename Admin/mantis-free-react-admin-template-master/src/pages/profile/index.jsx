@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 // material-ui
 import {
@@ -14,7 +14,9 @@ import {
   Snackbar,
   InputAdornment,
   IconButton,
-  CircularProgress
+  CircularProgress,
+  Avatar,
+  Stack
 } from '@mui/material';
 
 // project imports
@@ -29,6 +31,8 @@ import SaveOutlined from '@ant-design/icons/SaveOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
 import MailOutlined from '@ant-design/icons/MailOutlined';
 import LockOutlined from '@ant-design/icons/LockOutlined';
+import UploadOutlined from '@ant-design/icons/UploadOutlined';
+import CameraOutlined from '@ant-design/icons/CameraOutlined';
 
 // ==============================|| PROFILE PAGE ||============================== //
 
@@ -36,10 +40,13 @@ const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+  const [profilePicture, setProfilePicture] = useState(null);
+  const fileInputRef = useRef(null);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -47,7 +54,7 @@ const ProfilePage = () => {
     newPassword: '',
     confirmPassword: ''
   });
-  
+
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -67,6 +74,11 @@ const ProfilePage = () => {
             name: userData.name || '',
             email: userData.email || ''
           });
+
+          // Set profile picture if available
+          if (userData.profilePicture) {
+            setProfilePicture(userData.profilePicture);
+          }
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -94,7 +106,7 @@ const ProfilePage = () => {
   const handleUpdateProfile = async () => {
     try {
       setSaving(true);
-      
+
       // Validate form data
       if (!formData.name.trim()) {
         setSnackbar({
@@ -113,14 +125,35 @@ const ProfilePage = () => {
 
       // Make API call to update profile
       const response = await api.put(`/auth/profile/${user._id}`, updateData);
-      
+
       if (response.data.success) {
         // Update local user data
+        const updatedUser = response.data.user;
         setUser({
           ...user,
-          name: formData.name
+          name: updatedUser.name
         });
-        
+
+        // Update form data
+        setFormData({
+          ...formData,
+          name: updatedUser.name,
+          email: updatedUser.email
+        });
+
+        // Update localStorage
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          try {
+            const parsedUser = JSON.parse(storedUser);
+            parsedUser.name = updatedUser.name;
+            localStorage.setItem('user', JSON.stringify(parsedUser));
+            localStorage.setItem('userName', updatedUser.name);
+          } catch (error) {
+            console.error('Error updating user data in localStorage:', error);
+          }
+        }
+
         setSnackbar({
           open: true,
           message: 'Profile updated successfully',
@@ -148,7 +181,7 @@ const ProfilePage = () => {
   const handleChangePassword = async () => {
     try {
       setSaving(true);
-      
+
       // Validate password data
       if (!formData.currentPassword) {
         setSnackbar({
@@ -159,7 +192,7 @@ const ProfilePage = () => {
         setSaving(false);
         return;
       }
-      
+
       if (!formData.newPassword) {
         setSnackbar({
           open: true,
@@ -169,7 +202,7 @@ const ProfilePage = () => {
         setSaving(false);
         return;
       }
-      
+
       if (formData.newPassword !== formData.confirmPassword) {
         setSnackbar({
           open: true,
@@ -188,7 +221,7 @@ const ProfilePage = () => {
 
       // Make API call to change password
       const response = await api.post('/auth/change-password', passwordData);
-      
+
       if (response.data.success) {
         // Clear password fields
         setFormData({
@@ -197,7 +230,7 @@ const ProfilePage = () => {
           newPassword: '',
           confirmPassword: ''
         });
-        
+
         setSnackbar({
           open: true,
           message: 'Password changed successfully',
@@ -229,6 +262,91 @@ const ProfilePage = () => {
     });
   };
 
+  const handleProfilePictureClick = () => {
+    // Trigger the hidden file input
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+      setSnackbar({
+        open: true,
+        message: 'Please select a valid image file (JPEG, PNG, or GIF)',
+        severity: 'error'
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      setSnackbar({
+        open: true,
+        message: 'Image size should be less than 5MB',
+        severity: 'error'
+      });
+      return;
+    }
+
+    try {
+      setUploading(true);
+
+      // Create form data for file upload
+      const formData = new FormData();
+      formData.append('profilePicture', file);
+
+      // Upload the file
+      const response = await api.post('/auth/upload-profile-picture', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.data.success) {
+        // Update profile picture state
+        setProfilePicture(response.data.profilePicture);
+
+        // Update user state
+        setUser({
+          ...user,
+          profilePicture: response.data.profilePicture
+        });
+
+        setSnackbar({
+          open: true,
+          message: 'Profile picture updated successfully',
+          severity: 'success'
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: response.data.error || 'Error uploading profile picture',
+          severity: 'error'
+        });
+      }
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.error || 'Error uploading profile picture',
+        severity: 'error'
+      });
+    } finally {
+      setUploading(false);
+      // Reset the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
@@ -248,7 +366,63 @@ const ProfilePage = () => {
                 Profile Information
               </Typography>
               <Divider sx={{ mb: 3 }} />
-              
+
+              {/* Profile Picture */}
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                <Box sx={{ position: 'relative' }}>
+                  <Avatar
+                    src={profilePicture ? `http://localhost:3001/${profilePicture}` : ''}
+                    sx={{
+                      width: 100,
+                      height: 100,
+                      cursor: 'pointer',
+                      border: '1px solid',
+                      borderColor: 'divider'
+                    }}
+                    onClick={handleProfilePictureClick}
+                  >
+                    {!profilePicture && (user ? user.name.charAt(0).toUpperCase() : 'U')}
+                  </Avatar>
+
+                  {/* Hidden file input */}
+                  <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleFileChange} />
+
+                  {/* Camera icon overlay */}
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      bottom: 0,
+                      right: 0,
+                      backgroundColor: 'primary.main',
+                      borderRadius: '50%',
+                      width: 32,
+                      height: 32,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      color: 'white',
+                      '&:hover': {
+                        backgroundColor: 'primary.dark'
+                      }
+                    }}
+                    onClick={handleProfilePictureClick}
+                  >
+                    <CameraOutlined />
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Upload status */}
+              {uploading && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <CircularProgress size={20} />
+                    <Typography variant="body2">Uploading...</Typography>
+                  </Stack>
+                </Box>
+              )}
+
               <Grid container spacing={3}>
                 <Grid item xs={12}>
                   <TextField
@@ -306,7 +480,7 @@ const ProfilePage = () => {
                 Change Password
               </Typography>
               <Divider sx={{ mb: 3 }} />
-              
+
               <Grid container spacing={3}>
                 <Grid item xs={12}>
                   <TextField
@@ -324,11 +498,7 @@ const ProfilePage = () => {
                       ),
                       endAdornment: (
                         <InputAdornment position="end">
-                          <IconButton
-                            onClick={() => setShowPassword(!showPassword)}
-                            edge="end"
-                            aria-label="toggle password visibility"
-                          >
+                          <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" aria-label="toggle password visibility">
                             {showPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
                           </IconButton>
                         </InputAdornment>

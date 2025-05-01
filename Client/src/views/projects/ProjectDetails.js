@@ -95,15 +95,15 @@ const ProjectDetails = () => {
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <strong>Détails du projet</strong>
             <div>
-              {localStorage.getItem('userRole') === 'Admin' && (
-                <CButton
-                  color="primary"
-                  className="me-2"
-                  onClick={() => navigate(`/projects/edit/${id}`)}
-                >
-                  Modifier
-                </CButton>
-              )}
+              {/* Show edit button for all users but disable if not owner */}
+              <CButton
+                color="warning"
+                className="me-2"
+                onClick={() => navigate(`/projects/edit/${id}`)}
+                disabled={!(project.owner && project.owner._id === localStorage.getItem('userId'))}
+              >
+                Modifier
+              </CButton>
               <CButton color="secondary" onClick={() => navigate('/projects')}>
                 Retour
               </CButton>
@@ -112,6 +112,10 @@ const ProjectDetails = () => {
           <CCardBody>
             <h2>{project.projectName}</h2>
             <p>{project.description}</p>
+            <p>
+              <strong>Propriétaire:</strong>{' '}
+              {project.owner ? project.owner.name || project.owner.email : 'Non défini'}
+            </p>
             <p>
               <strong>Statut:</strong> {project.status}
             </p>

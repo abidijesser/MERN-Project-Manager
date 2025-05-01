@@ -39,8 +39,8 @@ const createTask = async (req, res) => {
       });
     }
 
-    // Vérifier si l'utilisateur assigné est membre du projet
-    if (project && assignedTo) {
+    // Vérifier si le projet existe
+    if (project) {
       const projectData = await Project.findById(project);
       if (!projectData) {
         return res.status(404).json({
@@ -49,8 +49,17 @@ const createTask = async (req, res) => {
         });
       }
 
+      // Vérifier si l'utilisateur connecté est le propriétaire du projet
+      if (projectData.owner.toString() !== req.user.id) {
+        return res.status(403).json({
+          success: false,
+          error:
+            "Seul le propriétaire du projet peut créer des tâches pour ce projet",
+        });
+      }
+
       // Vérifier si l'utilisateur assigné est membre du projet
-      if (!projectData.members.includes(assignedTo)) {
+      if (assignedTo && !projectData.members.includes(assignedTo)) {
         return res.status(400).json({
           success: false,
           error: "L'utilisateur assigné doit être membre du projet",
@@ -102,10 +111,30 @@ const createTask = async (req, res) => {
 // Obtenir toutes les tâches
 const getAllTasks = async (req, res) => {
   try {
-    const tasks = await Task.find()
+    // Check if project filter is provided
+    const { project } = req.query;
+    console.log("getAllTasks - Project filter:", project);
+
+    // Build query based on filters
+    const query = {};
+    if (project) {
+      query.project = project;
+      console.log("getAllTasks - Filtering tasks by project:", project);
+    }
+
+    const tasks = await Task.find(query)
       .populate("assignedTo", "name email")
-      .populate("project", "projectName")
+      .populate({
+        path: "project",
+        select: "projectName owner",
+        populate: {
+          path: "owner",
+          select: "name email _id",
+        },
+      })
       .populate("createdBy", "name");
+
+    console.log("getAllTasks - Found tasks:", tasks.length);
 
     res.json({
       success: true,
@@ -135,7 +164,14 @@ const getTaskById = async (req, res) => {
 
     const task = await Task.findById(req.params.id)
       .populate("assignedTo", "name email")
-      .populate("project", "projectName")
+      .populate({
+        path: "project",
+        select: "projectName owner",
+        populate: {
+          path: "owner",
+          select: "name email _id",
+        },
+      })
       .populate("createdBy", "name");
 
     console.log("getTaskById - Task found:", task ? "Yes" : "No");
@@ -225,28 +261,75 @@ const updateTask = async (req, res) => {
       });
     }
 
-    // Vérifier si l'utilisateur assigné est membre du projet (mais ne pas bloquer)
-    if (project && assignedTo) {
+    // Vérifier si l'utilisateur est le propriétaire du projet et si l'utilisateur assigné est membre du projet
+    if (project) {
       try {
         const projectData = await Project.findById(project);
         if (!projectData) {
           console.log("updateTask - Project not found:", project);
-          // Continue instead of blocking
-        } else if (!projectData.members.includes(assignedTo)) {
+          return res.status(404).json({
+            success: false,
+            error: "Projet non trouvé",
+          });
+        }
+
+        // Vérifier si l'utilisateur connecté est le propriétaire du projet
+        if (projectData.owner.toString() !== req.user.id) {
+          console.log("updateTask - User is not the project owner");
+          return res.status(403).json({
+            success: false,
+            error:
+              "Seul le propriétaire du projet peut modifier des tâches pour ce projet",
+          });
+        }
+
+        // Vérifier si l'utilisateur assigné est membre du projet
+        if (assignedTo && !projectData.members.includes(assignedTo)) {
           console.log("updateTask - User is not a member of the project:", {
             user: assignedTo,
             project: project,
             members: projectData.members,
           });
-          // Log warning but continue
+          return res.status(400).json({
+            success: false,
+            error: "L'utilisateur assigné doit être membre du projet",
+          });
         }
       } catch (projectError) {
         console.error(
           "updateTask - Error checking project membership:",
           projectError
         );
-        // Continue despite error
+        return res.status(500).json({
+          success: false,
+          error: "Erreur lors de la vérification du projet",
+        });
       }
+    }
+
+    // Vérifier si la tâche existe et si l'utilisateur est le propriétaire du projet associé
+    const taskWithProject = await Task.findById(req.params.id).populate(
+      "project"
+    );
+    if (!taskWithProject) {
+      console.log("updateTask - Task not found before update");
+      return res.status(404).json({
+        success: false,
+        error: "Tâche non trouvée",
+      });
+    }
+
+    // Si la tâche a un projet et que l'utilisateur n'est pas le propriétaire
+    if (
+      taskWithProject.project &&
+      taskWithProject.project.owner &&
+      taskWithProject.project.owner.toString() !== req.user.id
+    ) {
+      console.log("updateTask - User is not the owner of the task's project");
+      return res.status(403).json({
+        success: false,
+        error: "Seul le propriétaire du projet peut modifier cette tâche",
+      });
     }
 
     // Préparer les données de mise à jour
@@ -265,20 +348,7 @@ const updateTask = async (req, res) => {
       (key) => updateData[key] === undefined && delete updateData[key]
     );
 
-    // First check if the task exists
-    const existingTask = await Task.findById(req.params.id);
-    console.log(
-      "updateTask - Existing task found:",
-      existingTask ? "Yes" : "No"
-    );
-
-    if (!existingTask) {
-      console.log("updateTask - Task not found before update");
-      return res.status(404).json({
-        success: false,
-        error: "Tâche non trouvée",
-      });
-    }
+    // We already checked if the task exists with taskWithProject
 
     console.log("updateTask - Updating task with data:", updateData);
 
@@ -329,21 +399,54 @@ const updateTask = async (req, res) => {
 // Supprimer une tâche
 const deleteTask = async (req, res) => {
   try {
+    console.log("deleteTask - Task ID:", req.params.id);
+    console.log(
+      "deleteTask - User:",
+      req.user ? { id: req.user._id, role: req.user.role } : "No user"
+    );
+
     if (!isValidObjectId(req.params.id)) {
+      console.log("deleteTask - Invalid task ID format");
       return res.status(400).json({
         success: false,
         error: "ID de tâche invalide",
       });
     }
 
-    const task = await Task.findByIdAndDelete(req.params.id);
+    // Récupérer la tâche avec les informations du projet
+    const task = await Task.findById(req.params.id).populate("project");
 
     if (!task) {
+      console.log("deleteTask - Task not found");
       return res.status(404).json({
         success: false,
         error: "Tâche non trouvée",
       });
     }
+
+    // Vérifier si l'utilisateur est administrateur ou propriétaire du projet
+    const isAdmin = req.user.role === "Admin";
+    const isProjectOwner =
+      task.project &&
+      task.project.owner &&
+      task.project.owner.toString() === req.user.id;
+
+    console.log("deleteTask - User is admin:", isAdmin);
+    console.log("deleteTask - User is project owner:", isProjectOwner);
+
+    // Autoriser la suppression uniquement pour les administrateurs ou les propriétaires du projet
+    if (!isAdmin && !isProjectOwner) {
+      console.log("deleteTask - User is not authorized to delete this task");
+      return res.status(403).json({
+        success: false,
+        error:
+          "Seuls les administrateurs ou le propriétaire du projet peuvent supprimer cette tâche",
+      });
+    }
+
+    // Supprimer la tâche
+    await Task.findByIdAndDelete(req.params.id);
+    console.log("deleteTask - Task deleted successfully");
 
     res.json({
       success: true,

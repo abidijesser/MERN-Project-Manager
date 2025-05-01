@@ -2,10 +2,9 @@
 import {
   DashboardOutlined,
   UserOutlined,
-  TeamOutlined,
-  PieChartOutlined,
   ProjectOutlined,
-  CheckSquareOutlined,
+  FileTextOutlined,
+  BarChartOutlined,
   CalendarOutlined,
   FileImageOutlined
 } from '@ant-design/icons';
@@ -14,10 +13,9 @@ import {
 const icons = {
   DashboardOutlined,
   UserOutlined,
-  TeamOutlined,
-  PieChartOutlined,
   ProjectOutlined,
-  CheckSquareOutlined,
+  FileTextOutlined,
+  BarChartOutlined,
   CalendarOutlined,
   FileImageOutlined
 };
@@ -42,7 +40,7 @@ const dashboard = {
       title: 'User Management',
       type: 'item',
       url: '/user-management',
-      icon: icons.TeamOutlined,
+      icon: icons.UserOutlined,
       breadcrumbs: false
     },
     {
@@ -58,7 +56,7 @@ const dashboard = {
       title: 'Task Management',
       type: 'item',
       url: '/task-management',
-      icon: icons.CheckSquareOutlined,
+      icon: icons.FileTextOutlined,
       breadcrumbs: false
     },
     {
@@ -66,7 +64,7 @@ const dashboard = {
       title: 'Statistics',
       type: 'item',
       url: '/statistics',
-      icon: icons.PieChartOutlined,
+      icon: icons.BarChartOutlined,
       breadcrumbs: false
     },
     {

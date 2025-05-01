@@ -9,6 +9,7 @@ import ProjectsList from './views/projects/ProjectsList'
 import CreateProject from './views/projects/CreateProject'
 import ProjectDetails from './views/projects/ProjectDetails'
 import Collaboration from './views/Collaboration/Collaboration'
+import MediaPage from './views/media/MediaPage'
 
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Login = React.lazy(() => import('./views/pages/login/Login'))
@@ -50,6 +51,7 @@ const routes = [
   { path: '/collaboration/chat', name: 'Chat', element: Collaboration },
   { path: '/collaboration/notifications', name: 'Notifications', element: Collaboration },
   { path: '/collaboration/meetings', name: 'Réunions', element: Collaboration },
+  { path: '/media', name: 'Gestion des médias', element: MediaPage },
 ]
 
 export default routes

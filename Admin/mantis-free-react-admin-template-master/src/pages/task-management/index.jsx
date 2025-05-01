@@ -847,6 +847,32 @@ const TaskManagement = ({ dashboardView = false }) => {
   const handleDeleteTask = async (taskId) => {
     if (window.confirm('Are you sure you want to delete this task?')) {
       try {
+        // Get the task details to check if the user is the project owner
+        const taskResponse = await api.get(`/tasks/${taskId}`);
+        const task = taskResponse.data.task;
+
+        // Get user info
+        const userRole = localStorage.getItem('userRole');
+        const userId = localStorage.getItem('userId');
+
+        // Check if user is admin or project owner
+        const isAdmin = userRole === 'Admin';
+        const isProjectOwner = task.project && task.project.owner && task.project.owner._id === userId;
+
+        console.log('Task Management - Delete task - Is admin:', isAdmin);
+        console.log('Task Management - Delete task - Is project owner:', isProjectOwner);
+
+        // Only admins or project owners can delete tasks
+        if (!isAdmin && !isProjectOwner) {
+          setSnackbar({
+            open: true,
+            message: 'Only administrators or the project owner can delete this task',
+            severity: 'error'
+          });
+          return;
+        }
+
+        // Proceed with deletion
         const response = await api.delete(`/tasks/${taskId}`);
         if (response.data.success) {
           setSnackbar({
@@ -855,6 +881,11 @@ const TaskManagement = ({ dashboardView = false }) => {
             severity: 'success'
           });
           fetchData(); // Refresh tasks list
+
+          // Close task details dialog if it's open
+          if (openTaskDetails) {
+            setOpenTaskDetails(false);
+          }
         }
       } catch (error) {
         console.error('Error deleting task:', error);
@@ -1232,6 +1263,9 @@ const TaskManagement = ({ dashboardView = false }) => {
           <DialogContent>
             <Grid container spacing={2}>
               <Grid item xs={12}>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Only administrators or the project owner can delete tasks
+                </Alert>
                 <Box sx={{ mb: 2, mt: 1 }}>
                   <Typography variant="h6" gutterBottom>
                     Description
@@ -1684,6 +1718,9 @@ const TaskManagement = ({ dashboardView = false }) => {
               Add Task
             </Button>
           </Box>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Only administrators or the project owner can delete tasks
+          </Alert>
           {renderTasksTable()}
         </MainCard>
       ) : (

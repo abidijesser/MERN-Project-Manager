@@ -35,6 +35,9 @@ const TaskManagement = Loadable(lazy(() => import('pages/task-management')));
 // render - calendar sync
 const CalendarSync = Loadable(lazy(() => import('pages/calendar-sync')));
 
+// render - media management
+const MediaManagement = Loadable(lazy(() => import('pages/media')));
+
 // ==============================|| MAIN ROUTING ||============================== //
 
 const MainRoutes = {
@@ -97,6 +100,10 @@ const MainRoutes = {
     {
       path: 'calendar-sync',
       element: <CalendarSync />
+    },
+    {
+      path: 'media',
+      element: <MediaManagement />
     }
   ]
 };

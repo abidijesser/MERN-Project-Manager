@@ -13,6 +13,7 @@ import {
   CBadge,
   CSpinner,
   CFormInput,
+  CAlert,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilX } from '@coreui/icons'
@@ -85,24 +86,43 @@ const TaskList = () => {
   }
 
   const handleDelete = async (id) => {
-    // Vérifier le rôle de l'utilisateur
-    const userRole = localStorage.getItem('userRole')
-    console.log('TaskList - User role:', userRole)
+    // Récupérer la tâche pour vérifier si l'utilisateur est le propriétaire du projet
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setError('No authentication token found')
+        return
+      }
 
-    // Seuls les administrateurs peuvent supprimer des tâches
-    if (userRole !== 'Admin') {
-      toast.error('Seuls les administrateurs peuvent supprimer des tâches')
-      return
-    }
+      // Vérifier le rôle de l'utilisateur
+      const userRole = localStorage.getItem('userRole')
+      const userId = localStorage.getItem('userId')
+      console.log('TaskList - User role:', userRole)
+      console.log('TaskList - User ID:', userId)
 
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
-      try {
-        const token = localStorage.getItem('token')
-        if (!token) {
-          setError('No authentication token found')
-          return
-        }
+      // Récupérer les détails de la tâche pour vérifier le propriétaire du projet
+      const taskResponse = await axios.get(`http://localhost:3001/api/tasks/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
 
+      const task = taskResponse.data.task
+      const isAdmin = userRole === 'Admin'
+      const isProjectOwner = task.project && task.project.owner && task.project.owner._id === userId
+
+      console.log('TaskList - Is admin:', isAdmin)
+      console.log('TaskList - Is project owner:', isProjectOwner)
+
+      // Seuls les administrateurs ou les propriétaires du projet peuvent supprimer des tâches
+      if (!isAdmin && !isProjectOwner) {
+        toast.error(
+          'Seuls les administrateurs ou le propriétaire du projet peuvent supprimer cette tâche',
+        )
+        return
+      }
+
+      if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
         await axios.delete(`http://localhost:3001/api/tasks/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -110,10 +130,10 @@ const TaskList = () => {
         })
         toast.success('Tâche supprimée avec succès !')
         fetchTasks()
-      } catch (error) {
-        console.error('Error deleting task:', error)
-        toast.error(error.response?.data?.error || 'Erreur lors de la suppression de la tâche')
       }
+    } catch (error) {
+      console.error('Error deleting task:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de la suppression de la tâche')
     }
   }
 
@@ -149,32 +169,37 @@ const TaskList = () => {
 
   return (
     <CCard>
-      <CCardHeader className="d-flex justify-content-between align-items-center">
-        <h5>Liste des tâches</h5>
-        <div className="d-flex align-items-center">
-          <div className="position-relative me-2" style={{ width: '300px' }}>
-            <CFormInput
-              placeholder="Rechercher des tâches..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-5"
-            />
-            {searchQuery && (
-              <CButton
-                color="link"
-                className="position-absolute"
-                style={{ right: '5px', top: '3px' }}
-                onClick={() => setSearchQuery('')}
-              >
-                <CIcon icon={cilX} size="sm" />
-              </CButton>
-            )}
-          </div>
-          {localStorage.getItem('userRole') === 'Admin' && (
+      <CCardHeader>
+        <div className="d-flex justify-content-between align-items-center">
+          <h5>Liste des tâches</h5>
+          <div className="d-flex align-items-center">
+            <div className="position-relative me-2" style={{ width: '300px' }}>
+              <CFormInput
+                placeholder="Rechercher des tâches..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pr-5"
+              />
+              {searchQuery && (
+                <CButton
+                  color="link"
+                  className="position-absolute"
+                  style={{ right: '5px', top: '3px' }}
+                  onClick={() => setSearchQuery('')}
+                >
+                  <CIcon icon={cilX} size="sm" />
+                </CButton>
+              )}
+            </div>
             <CButton color="primary" onClick={() => navigate('/tasks/new')}>
               Nouvelle tâche
             </CButton>
-          )}
+          </div>
+        </div>
+        <div className="mt-2">
+          <CAlert color="info" className="p-2 mb-0 small">
+            Seuls les administrateurs ou le propriétaire du projet peuvent supprimer des tâches
+          </CAlert>
         </div>
       </CCardHeader>
       <CCardBody>
@@ -220,26 +245,59 @@ const TaskList = () => {
                       Détails
                     </CButton>
 
-                    {localStorage.getItem('userRole') === 'Admin' ? (
-                      <>
-                        <CButton
-                          color="primary"
-                          size="sm"
-                          className="me-2"
-                          onClick={() => navigate(`/tasks/edit/${task._id}`)}
-                        >
-                          Modifier
-                        </CButton>
-                        <CButton color="danger" size="sm" onClick={() => handleDelete(task._id)}>
-                          Supprimer
-                        </CButton>
-                      </>
-                    ) : // Vérifier si l'utilisateur connecté est assigné à cette tâche
-                    task.assignedTo && task.assignedTo._id === localStorage.getItem('userId') ? (
+                    {/* Buttons for project owners */}
+                    <CButton
+                      color="primary"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => navigate(`/tasks/edit/${task._id}`)}
+                      disabled={
+                        !(
+                          task.project &&
+                          task.project.owner &&
+                          task.project.owner._id === localStorage.getItem('userId')
+                        )
+                      }
+                      title={
+                        task.project &&
+                        task.project.owner &&
+                        task.project.owner._id === localStorage.getItem('userId')
+                          ? 'Modifier la tâche'
+                          : 'Seul le propriétaire du projet peut modifier la tâche'
+                      }
+                    >
+                      Modifier
+                    </CButton>
+                    <CButton
+                      color="danger"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => handleDelete(task._id)}
+                      disabled={
+                        !(
+                          localStorage.getItem('userRole') === 'Admin' ||
+                          (task.project &&
+                            task.project.owner &&
+                            task.project.owner._id === localStorage.getItem('userId'))
+                        )
+                      }
+                      title={
+                        localStorage.getItem('userRole') === 'Admin' ||
+                        (task.project &&
+                          task.project.owner &&
+                          task.project.owner._id === localStorage.getItem('userId'))
+                          ? 'Supprimer la tâche'
+                          : 'Seuls les administrateurs ou le propriétaire du projet peuvent supprimer cette tâche'
+                      }
+                    >
+                      Supprimer
+                    </CButton>
+
+                    {/* Status modification button for assigned users */}
+                    {task.assignedTo && task.assignedTo._id === localStorage.getItem('userId') ? (
                       <CButton
                         color="warning"
                         size="sm"
-                        className="me-2"
                         onClick={() => navigate(`/tasks/status/${task._id}`)}
                       >
                         Modifier statut
@@ -248,7 +306,6 @@ const TaskList = () => {
                       <CButton
                         color="warning"
                         size="sm"
-                        className="me-2"
                         disabled
                         title="Seul l'utilisateur assigné peut modifier le statut"
                       >

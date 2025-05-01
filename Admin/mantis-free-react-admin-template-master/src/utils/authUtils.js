@@ -115,6 +115,17 @@ export const login = async (email, password) => {
       if (response.data.user && response.data.user.role) {
         localStorage.setItem('userRole', response.data.user.role);
       }
+
+      // Store user name in localStorage
+      if (response.data.user && response.data.user.name) {
+        localStorage.setItem('userName', response.data.user.name);
+      }
+
+      // Store user data in localStorage
+      if (response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+
       return { success: true, user: response.data.user, token: response.data.token };
     } else if (response.data.message === '2FA required') {
       return { success: false, requires2FA: true };
@@ -137,10 +148,22 @@ export const verify2FA = async (email, password, twoFactorToken) => {
 
     if (response.data.success) {
       localStorage.setItem('token', response.data.token);
+
       // Store user role in localStorage
       if (response.data.user && response.data.user.role) {
         localStorage.setItem('userRole', response.data.user.role);
       }
+
+      // Store user name in localStorage
+      if (response.data.user && response.data.user.name) {
+        localStorage.setItem('userName', response.data.user.name);
+      }
+
+      // Store user data in localStorage
+      if (response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+
       return { success: true, user: response.data.user, token: response.data.token };
     } else {
       return { success: false, error: response.data.error || 'Verification failed' };
@@ -160,6 +183,22 @@ export const register = async (userData) => {
     const response = await api.post('/auth/register', userData);
     if (response.data.success) {
       localStorage.setItem('token', response.data.token);
+
+      // Store user role in localStorage
+      if (response.data.user && response.data.user.role) {
+        localStorage.setItem('userRole', response.data.user.role);
+      }
+
+      // Store user name in localStorage
+      if (response.data.user && response.data.user.name) {
+        localStorage.setItem('userName', response.data.user.name);
+      }
+
+      // Store user data in localStorage
+      if (response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+
       return { success: true, user: response.data.user };
     } else {
       return { success: false, error: response.data.error || 'Registration failed' };
@@ -179,9 +218,11 @@ export const logout = async () => {
     // Call the logout endpoint
     const response = await api.get('/auth/logout');
 
-    // Remove token and role from localStorage
+    // Remove all user data from localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('userRole');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('user');
 
     return {
       success: true,
@@ -190,9 +231,11 @@ export const logout = async () => {
   } catch (error) {
     console.error('Logout error:', error);
 
-    // Still remove token and role from localStorage even if the server request fails
+    // Still remove all user data from localStorage even if the server request fails
     localStorage.removeItem('token');
     localStorage.removeItem('userRole');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('user');
 
     return {
       success: true, // Still return success since we've removed the token

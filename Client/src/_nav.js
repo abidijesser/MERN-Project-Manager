@@ -49,8 +49,8 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'Ressources & Documents',
-    to: '/resources',
+    name: 'Gestion des médias',
+    to: '/media',
     icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
   },
   {
