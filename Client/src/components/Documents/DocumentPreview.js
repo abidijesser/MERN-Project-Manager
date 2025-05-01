@@ -70,13 +70,13 @@ const DocumentPreview = ({ document }) => {
   const handleDownload = () => {
     try {
       // Créer un lien pour télécharger le fichier
-      const link = document.createElement('a')
+      const link = window.document.createElement('a')
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
       link.href = `${baseUrl}/${document.filePath}`
       link.setAttribute('download', document.name)
-      document.body.appendChild(link)
+      window.document.body.appendChild(link)
       link.click()
-      document.body.removeChild(link)
+      window.document.body.removeChild(link)
     } catch (error) {
       console.error('Erreur lors du téléchargement du document:', error)
       setError('Erreur lors du téléchargement du document')

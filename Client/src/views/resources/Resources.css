@@ -6,6 +6,8 @@
   border-radius: 0.25rem;
   border: 1px solid #eee;
   transition: all 0.2s ease;
+  margin-bottom: 0.75rem !important;
+  padding: 0.75rem !important;
 }
 
 .document-item:hover {
@@ -16,11 +18,62 @@
 }
 
 .document-icon {
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-right: 12px;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  padding: 6px;
+}
+
+.document-name {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.document-meta {
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* Styles pour les icônes de fichiers par type */
+.file-icon {
+  color: #6c757d;
+}
+
+.file-icon-pdf {
+  color: #dc3545;
+}
+
+.file-icon-doc, .file-icon-docx, .file-icon-txt {
+  color: #0d6efd;
+}
+
+.file-icon-xls, .file-icon-xlsx, .file-icon-csv {
+  color: #198754;
+}
+
+.file-icon-ppt, .file-icon-pptx {
+  color: #fd7e14;
+}
+
+.file-icon-jpg, .file-icon-jpeg, .file-icon-png, .file-icon-gif {
+  color: #0dcaf0;
+}
+
+.file-icon-mp4, .file-icon-avi, .file-icon-mov {
+  color: #6f42c1;
+}
+
+.file-icon-zip, .file-icon-rar {
+  color: #6c757d;
 }
 
 .documents-header {

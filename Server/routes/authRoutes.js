@@ -24,6 +24,9 @@ router.post("/users", auth, adminAuth, authController.createUserByAdmin); // Nou
 router.put("/users/:id", auth, adminAuth, authController.updateUser);
 router.delete("/users/:id", auth, adminAuth, authController.deleteUser);
 
+// Route pour récupérer les utilisateurs pour le partage de documents - accessible à tous les utilisateurs authentifiés
+router.get("/users-for-sharing", auth, authController.getUsersForSharing);
+
 // Password routes
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);

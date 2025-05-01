@@ -63,6 +63,7 @@ const DocumentSchema = new Schema({
     {
       filePath: String,
       fileSize: Number,
+      fileType: String,
       uploadedBy: {
         type: Schema.Types.ObjectId,
         ref: "User",

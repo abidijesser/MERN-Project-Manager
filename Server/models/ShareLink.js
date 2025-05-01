@@ -45,7 +45,29 @@ const ShareLinkSchema = new Schema({
   emailsSent: {
     type: Number,
     default: 0
-  }
+  },
+  securityMetadata: {
+    originalFileType: String,
+    originalFileSize: Number,
+    originalFileName: String,
+    originalChecksum: String,
+    createdAt: Date,
+    userAgent: String,
+    ipAddress: String
+  },
+  accessLog: [{
+    timestamp: {
+      type: Date,
+      default: Date.now
+    },
+    ipAddress: String,
+    userAgent: String,
+    action: {
+      type: String,
+      enum: ['view', 'download', 'password_attempt', 'password_success', 'password_fail']
+    },
+    success: Boolean
+  }]
 });
 
 // Index pour des recherches plus rapides

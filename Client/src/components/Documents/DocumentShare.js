@@ -50,13 +50,13 @@ const DocumentShare = ({ document, visible, onClose }) => {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showEmailForm, setShowEmailForm] = useState(false)
   const [selectedLink, setSelectedLink] = useState(null)
-  
+
   // États pour le formulaire de création de lien
   const [expiresIn, setExpiresIn] = useState('')
   const [accessLevel, setAccessLevel] = useState('view')
   const [usePassword, setUsePassword] = useState(false)
   const [password, setPassword] = useState('')
-  
+
   // États pour le formulaire d'envoi par email
   const [recipientEmail, setRecipientEmail] = useState('')
   const [recipientName, setRecipientName] = useState('')
@@ -73,13 +73,13 @@ const DocumentShare = ({ document, visible, onClose }) => {
   // Récupérer les liens de partage
   const fetchShareLinks = async () => {
     if (!document || !document.id) return
-    
+
     try {
       setLoading(true)
       setError(null)
-      
+
       const response = await axios.get(`/share/document/${document.id}`)
-      
+
       if (response.data.success) {
         setShareLinks(response.data.data)
       } else {
@@ -96,22 +96,22 @@ const DocumentShare = ({ document, visible, onClose }) => {
   // Créer un nouveau lien de partage
   const handleCreateShareLink = async (e) => {
     e.preventDefault()
-    
+
     try {
       setLoading(true)
       setError(null)
-      
+
       const payload = {
         accessLevel,
         expiresIn: expiresIn || null,
       }
-      
+
       if (usePassword && password) {
         payload.password = password
       }
-      
+
       const response = await axios.post(`/share/document/${document.id}`, payload)
-      
+
       if (response.data.success) {
         toast.success('Lien de partage créé avec succès')
         setShareLinks([response.data.data, ...shareLinks])
@@ -132,12 +132,12 @@ const DocumentShare = ({ document, visible, onClose }) => {
     if (!window.confirm('Êtes-vous sûr de vouloir désactiver ce lien de partage ?')) {
       return
     }
-    
+
     try {
       setLoading(true)
-      
+
       const response = await axios.delete(`/share/${token}`)
-      
+
       if (response.data.success) {
         toast.success('Lien de partage désactivé avec succès')
         setShareLinks(shareLinks.filter(link => link.token !== token))
@@ -155,22 +155,22 @@ const DocumentShare = ({ document, visible, onClose }) => {
   // Envoyer un lien par email
   const handleSendEmail = async (e) => {
     e.preventDefault()
-    
+
     if (!selectedLink) return
-    
+
     try {
       setSendingEmail(true)
       setError(null)
-      
+
       const payload = {
         recipientEmail,
         recipientName,
         message: emailMessage,
         documentName: document.name
       }
-      
+
       const response = await axios.post(`/share/${selectedLink.token}/email`, payload)
-      
+
       if (response.data.success) {
         toast.success('Lien de partage envoyé par email avec succès')
         resetEmailForm()
@@ -237,11 +237,11 @@ const DocumentShare = ({ document, visible, onClose }) => {
       </CModalHeader>
       <CModalBody>
         {error && <CAlert color="danger">{error}</CAlert>}
-        
+
         <div className="d-flex justify-content-between mb-3">
           <h5>Liens de partage</h5>
-          <CButton 
-            color="primary" 
+          <CButton
+            color="primary"
             size="sm"
             onClick={() => setShowCreateForm(!showCreateForm)}
           >
@@ -249,7 +249,7 @@ const DocumentShare = ({ document, visible, onClose }) => {
             {showCreateForm ? 'Annuler' : 'Créer un nouveau lien'}
           </CButton>
         </div>
-        
+
         {/* Formulaire de création de lien */}
         {showCreateForm && (
           <CCard className="mb-4">
@@ -266,7 +266,7 @@ const DocumentShare = ({ document, visible, onClose }) => {
                     <option value="edit">Édition complète</option>
                   </CFormSelect>
                 </div>
-                
+
                 <div className="mb-3">
                   <CFormLabel>Expiration</CFormLabel>
                   <CFormSelect
@@ -280,7 +280,7 @@ const DocumentShare = ({ document, visible, onClose }) => {
                     <option value="720">30 jours</option>
                   </CFormSelect>
                 </div>
-                
+
                 <div className="mb-3">
                   <CFormCheck
                     id="usePassword"
@@ -289,7 +289,7 @@ const DocumentShare = ({ document, visible, onClose }) => {
                     onChange={(e) => setUsePassword(e.target.checked)}
                   />
                 </div>
-                
+
                 {usePassword && (
                   <div className="mb-3">
                     <CFormLabel>Mot de passe</CFormLabel>
@@ -301,18 +301,18 @@ const DocumentShare = ({ document, visible, onClose }) => {
                     />
                   </div>
                 )}
-                
+
                 <div className="d-flex justify-content-end">
-                  <CButton 
-                    color="secondary" 
+                  <CButton
+                    color="secondary"
                     variant="outline"
                     className="me-2"
                     onClick={resetCreateForm}
                   >
                     Annuler
                   </CButton>
-                  <CButton 
-                    color="primary" 
+                  <CButton
+                    color="primary"
                     type="submit"
                     disabled={loading || (usePassword && !password)}
                   >
@@ -323,7 +323,7 @@ const DocumentShare = ({ document, visible, onClose }) => {
             </CCardBody>
           </CCard>
         )}
-        
+
         {/* Formulaire d'envoi par email */}
         {showEmailForm && selectedLink && (
           <CCard className="mb-4">
@@ -339,7 +339,7 @@ const DocumentShare = ({ document, visible, onClose }) => {
                     required
                   />
                 </div>
-                
+
                 <div className="mb-3">
                   <CFormLabel>Nom du destinataire (optionnel)</CFormLabel>
                   <CFormInput
@@ -348,7 +348,7 @@ const DocumentShare = ({ document, visible, onClose }) => {
                     onChange={(e) => setRecipientName(e.target.value)}
                   />
                 </div>
-                
+
                 <div className="mb-3">
                   <CFormLabel>Message (optionnel)</CFormLabel>
                   <CFormTextarea
@@ -357,18 +357,18 @@ const DocumentShare = ({ document, visible, onClose }) => {
                     onChange={(e) => setEmailMessage(e.target.value)}
                   />
                 </div>
-                
+
                 <div className="d-flex justify-content-end">
-                  <CButton 
-                    color="secondary" 
+                  <CButton
+                    color="secondary"
                     variant="outline"
                     className="me-2"
                     onClick={resetEmailForm}
                   >
                     Annuler
                   </CButton>
-                  <CButton 
-                    color="primary" 
+                  <CButton
+                    color="primary"
                     type="submit"
                     disabled={sendingEmail || !recipientEmail}
                   >
@@ -379,7 +379,7 @@ const DocumentShare = ({ document, visible, onClose }) => {
             </CCardBody>
           </CCard>
         )}
-        
+
         {/* Liste des liens de partage */}
         {loading ? (
           <div className="text-center my-4">
@@ -441,30 +441,32 @@ const DocumentShare = ({ document, visible, onClose }) => {
                     </span>
                   </CTableDataCell>
                   <CTableDataCell>
-                    <CTooltip content="Envoyer par email">
-                      <CButton
-                        color="info"
-                        variant="ghost"
-                        size="sm"
-                        className="me-1"
-                        onClick={() => {
-                          setSelectedLink(link);
-                          setShowEmailForm(true);
-                        }}
-                      >
-                        <CIcon icon={cilEnvelopeClosed} />
-                      </CButton>
-                    </CTooltip>
-                    <CTooltip content="Désactiver le lien">
-                      <CButton
-                        color="danger"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeactivateLink(link.token)}
-                      >
-                        <CIcon icon={cilTrash} />
-                      </CButton>
-                    </CTooltip>
+                    <div className="d-flex">
+                      <CTooltip content="Envoyer par email">
+                        <CButton
+                          color="info"
+                          variant="ghost"
+                          size="sm"
+                          className="me-1"
+                          onClick={() => {
+                            setSelectedLink(link);
+                            setShowEmailForm(true);
+                          }}
+                        >
+                          <CIcon icon={cilEnvelopeClosed} />
+                        </CButton>
+                      </CTooltip>
+                      <CTooltip content="Désactiver le lien">
+                        <CButton
+                          color="danger"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeactivateLink(link.token)}
+                        >
+                          <CIcon icon={cilTrash} />
+                        </CButton>
+                      </CTooltip>
+                    </div>
                   </CTableDataCell>
                 </CTableRow>
               ))}

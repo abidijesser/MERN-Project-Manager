@@ -50,12 +50,17 @@ const DocumentVersions = ({ document, onVersionRestore }) => {
   const handleDownload = (version) => {
     try {
       // Create a link to download the file
-      const link = document.createElement('a')
-      link.href = `http://localhost:3001/${version.filePath}`
+      const link = window.document.createElement('a')
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      link.href = `${baseUrl}/${version.filePath}`
+
+      // Utiliser le nom du document actuel pour toutes les versions
+      // Cela garantit que le nom du fichier téléchargé est toujours le même
       link.setAttribute('download', document.name)
-      document.body.appendChild(link)
+
+      window.document.body.appendChild(link)
       link.click()
-      document.body.removeChild(link)
+      window.document.body.removeChild(link)
     } catch (error) {
       console.error('Erreur lors du téléchargement de la version:', error)
       toast.error('Erreur lors du téléchargement de la version')

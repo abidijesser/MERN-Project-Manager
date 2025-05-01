@@ -32,6 +32,9 @@ router.put("/:id", documentController.updateDocument);
 // Delete document
 router.delete("/:id", documentController.deleteDocument);
 
+// Get document permissions
+router.get("/:id/permissions", documentController.getPermissions);
+
 // Update document permissions
 router.put("/:id/permissions", documentController.updatePermissions);
 
@@ -50,5 +53,8 @@ router.post("/:id/versions", (req, res, next) => {
 
 // Toggle pin status
 router.put("/:id/pin", documentController.togglePin);
+
+// Télécharger un document
+router.get("/:id/download", documentController.downloadDocument);
 
 module.exports = router;

@@ -4,6 +4,8 @@ import DocumentComments from '../../components/Documents/DocumentComments'
 import DocumentVersions from '../../components/Documents/DocumentVersions'
 import DocumentPreview from '../../components/Documents/DocumentPreview'
 import DocumentShare from '../../components/Documents/DocumentShare'
+import DocumentPermissions from '../../components/Documents/DocumentPermissions'
+import DocumentEdit from '../../components/Documents/DocumentEdit'
 import './Resources.css'
 import axios from '../../utils/axios'
 import { toast } from 'react-toastify'
@@ -53,6 +55,7 @@ import {
   cilUser,
   cilLockLocked,
   cilLockUnlocked,
+  cilCode,
 } from '@coreui/icons'
 
 const Resources = () => {
@@ -67,6 +70,8 @@ const Resources = () => {
   const [filterType, setFilterType] = useState('')
   const [uploadModalVisible, setUploadModalVisible] = useState(false)
   const [shareModalVisible, setShareModalVisible] = useState(false)
+  const [permissionsModalVisible, setPermissionsModalVisible] = useState(false)
+  const [editModalVisible, setEditModalVisible] = useState(false)
 
   // Fetch projects and documents from API
   useEffect(() => {
@@ -213,20 +218,70 @@ const Resources = () => {
 
   // Function to get icon based on file type
   const getFileIcon = (type) => {
-    switch (type) {
-      case 'pdf':
-        return cilFile
-      case 'excel':
-        return cilSpreadsheet
-      case 'powerpoint':
-        return cilNotes
-      case 'image':
-        return cilImage
-      case 'video':
-        return cilMovie
-      default:
-        return cilFile
-    }
+    // Normaliser le type en minuscules
+    const fileType = type ? type.toLowerCase() : '';
+
+    // Documents
+    if (fileType === 'pdf') return cilFile;
+    if (['doc', 'docx', 'rtf', 'txt', 'odt'].includes(fileType)) return cilNotes;
+
+    // Feuilles de calcul
+    if (['xls', 'xlsx', 'csv', 'ods'].includes(fileType)) return cilSpreadsheet;
+
+    // Présentations
+    if (['ppt', 'pptx', 'odp'].includes(fileType)) return cilNotes;
+
+    // Images
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'].includes(fileType)) return cilImage;
+
+    // Vidéos
+    if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'].includes(fileType)) return cilMovie;
+
+    // Archives
+    if (['zip', 'rar', '7z', 'tar', 'gz'].includes(fileType)) return cilLink;
+
+    // Audio
+    if (['mp3', 'wav', 'ogg', 'flac', 'aac'].includes(fileType)) return cilMovie;
+
+    // Code
+    if (['html', 'css', 'js', 'php', 'py', 'java', 'c', 'cpp', 'cs', 'json', 'xml'].includes(fileType)) return cilCode;
+
+    // Par défaut
+    return cilFile;
+  }
+
+  // Function to get badge color based on file type
+  const getFileTypeBadgeColor = (type) => {
+    // Normaliser le type en minuscules
+    const fileType = type ? type.toLowerCase() : '';
+
+    // Documents
+    if (fileType === 'pdf') return 'danger';
+    if (['doc', 'docx', 'rtf', 'txt', 'odt'].includes(fileType)) return 'primary';
+
+    // Feuilles de calcul
+    if (['xls', 'xlsx', 'csv', 'ods'].includes(fileType)) return 'success';
+
+    // Présentations
+    if (['ppt', 'pptx', 'odp'].includes(fileType)) return 'warning';
+
+    // Images
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'].includes(fileType)) return 'info';
+
+    // Vidéos
+    if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'].includes(fileType)) return 'dark';
+
+    // Archives
+    if (['zip', 'rar', '7z', 'tar', 'gz'].includes(fileType)) return 'secondary';
+
+    // Audio
+    if (['mp3', 'wav', 'ogg', 'flac', 'aac'].includes(fileType)) return 'info';
+
+    // Code
+    if (['html', 'css', 'js', 'php', 'py', 'java', 'c', 'cpp', 'cs', 'json', 'xml'].includes(fileType)) return 'primary';
+
+    // Par défaut
+    return 'secondary';
   }
 
   // Filter documents based on search term, selected project, and filter type
@@ -256,19 +311,114 @@ const Resources = () => {
   }
 
   // Function to handle document download
-  const handleDownload = (doc) => {
+  const handleDownload = async (doc) => {
+    // Vérifier si le document existe
+    if (!doc) {
+      console.error('Erreur: Aucun document fourni pour le téléchargement');
+      toast.error('Erreur: Impossible de télécharger le document');
+      return;
+    }
+
     try {
-      // Create a link to download the file
-      const link = document.createElement('a')
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
-      link.href = `${baseUrl}/${doc.filePath}`
-      link.setAttribute('download', doc.name)
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      // Utiliser axios pour télécharger le fichier avec l'authentification
+      const docId = doc.id || doc._id; // Gérer les deux formats possibles d'ID
+
+      if (!docId) {
+        console.error('Erreur: ID du document non trouvé', doc);
+        toast.error('Erreur: ID du document non trouvé');
+        return;
+      }
+
+      console.log('=== DÉBUT DU TÉLÉCHARGEMENT ===');
+      console.log('Téléchargement du document ID:', docId);
+      console.log('Nom du document:', doc.name);
+      console.log('Type du document:', doc.type);
+      console.log('Détails complets du document:', doc);
+
+      // Afficher un toast pour indiquer que le téléchargement a commencé
+      toast.info(`Téléchargement de "${doc.name}" en cours...`);
+
+      // Construire l'URL de téléchargement
+      const downloadUrl = `/documents/${docId}/download`;
+      console.log('URL de téléchargement:', downloadUrl);
+
+      // Utiliser axios pour faire une requête avec le token d'authentification
+      console.log('Envoi de la requête de téléchargement...');
+      const response = await axios.get(downloadUrl, {
+        responseType: 'blob', // Important pour recevoir des données binaires
+        timeout: 60000, // Augmenter le timeout à 60 secondes
+      });
+
+      console.log('Réponse reçue:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+        contentType: response.headers['content-type'],
+        contentLength: response.headers['content-length'],
+        dataSize: response.data?.size
+      });
+
+      // Vérifier si la réponse contient des données
+      if (!response.data || response.data.size === 0) {
+        console.error('Erreur: Réponse vide ou invalide');
+        toast.error(`Erreur: Le fichier "${doc.name}" est vide ou invalide`);
+        return;
+      }
+
+      // Créer un objet URL pour le blob
+      console.log('Création du blob et de l\'URL pour le téléchargement...');
+      const blob = new Blob([response.data], {
+        type: response.headers['content-type'] || 'application/octet-stream'
+      });
+      const url = window.URL.createObjectURL(blob);
+
+      // Déterminer le nom de fichier à utiliser pour le téléchargement
+      const fileName = doc.name || 'document_téléchargé';
+      console.log('Nom du fichier pour le téléchargement:', fileName);
+
+      // Créer un lien pour télécharger le fichier
+      console.log('Création du lien de téléchargement...');
+      const link = window.document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      link.style.display = 'none'; // Cacher le lien
+      window.document.body.appendChild(link);
+
+      // Déclencher le téléchargement
+      console.log('Déclenchement du téléchargement...');
+      link.click();
+
+      // Nettoyer
+      console.log('Nettoyage des ressources...');
+      setTimeout(() => {
+        if (link.parentNode) {
+          window.document.body.removeChild(link);
+        }
+        window.URL.revokeObjectURL(url);
+        console.log('Nettoyage terminé');
+      }, 1000); // Augmenter le délai à 1 seconde
+
+      console.log('=== FIN DU TÉLÉCHARGEMENT ===');
+      toast.success(`Téléchargement de "${doc.name}" réussi`);
     } catch (error) {
-      console.error('Erreur lors du téléchargement du document:', error)
-      toast.error('Erreur lors du téléchargement du document')
+      console.error('=== ERREUR DE TÉLÉCHARGEMENT ===');
+      console.error('Erreur lors du téléchargement du document:', error);
+
+      // Afficher des informations détaillées sur l'erreur
+      if (error.response) {
+        console.error('Détails de l\'erreur:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          headers: error.response.headers,
+          data: error.response.data
+        });
+      } else if (error.request) {
+        console.error('Aucune réponse reçue:', error.request);
+      } else {
+        console.error('Erreur de configuration de la requête:', error.message);
+      }
+
+      toast.error(`Erreur lors du téléchargement de "${doc.name}": ${error.response?.data?.error || error.message}`);
     }
   }
 
@@ -437,19 +587,49 @@ const Resources = () => {
                         >
                           <CCol xs={6} className="d-flex align-items-center">
                             <div className="document-icon me-2">
-                              <CIcon icon={getFileIcon(doc.type)} size="lg" />
+                              <CIcon
+                                icon={getFileIcon(doc.type)}
+                                size="lg"
+                                className={`file-icon file-icon-${doc.type}`}
+                              />
                             </div>
                             <div className="document-name">
-                              {doc.name}
-                              {doc.pinned && (
-                                <CTooltip content="Document épinglé">
-                                  <CIcon
-                                    icon={cilStar}
-                                    className="ms-2 text-warning"
-                                    style={{ width: '14px', height: '14px' }}
-                                  />
-                                </CTooltip>
-                              )}
+                              <div className="d-flex align-items-center">
+                                {doc.name}
+                                {doc.pinned && (
+                                  <CTooltip content="Document épinglé">
+                                    <CIcon
+                                      icon={cilStar}
+                                      className="ms-2 text-warning"
+                                      style={{ width: '14px', height: '14px' }}
+                                    />
+                                  </CTooltip>
+                                )}
+                              </div>
+                              <div className="document-meta">
+                                <CBadge
+                                  color={getFileTypeBadgeColor(doc.type)}
+                                  shape="rounded-pill"
+                                  size="sm"
+                                  className="me-2"
+                                >
+                                  {doc.type.toUpperCase()}
+                                </CBadge>
+                                {doc.isPublic && (
+                                  <CBadge color="info" shape="rounded-pill" size="sm" className="me-2">
+                                    Public
+                                  </CBadge>
+                                )}
+                                {doc.permissions === 'edit' ? (
+                                  <CBadge color="success" shape="rounded-pill" size="sm">
+                                    Éditable
+                                  </CBadge>
+                                ) : (
+                                  <CBadge color="secondary" shape="rounded-pill" size="sm">
+                                    Lecture seule
+                                  </CBadge>
+                                )}
+                              </div>
                             </div>
                           </CCol>
                           <CCol xs={2}>{doc.size}</CCol>
@@ -465,7 +645,22 @@ const Resources = () => {
                                   <CIcon icon={cilMagnifyingGlass} className="me-2" />
                                   Aperçu
                                 </CDropdownItem>
-                                <CDropdownItem onClick={() => handleDownload(doc)}>
+                                <CDropdownItem
+                                  onClick={(e) => {
+                                    e.preventDefault(); // Empêcher le comportement par défaut
+                                    e.stopPropagation(); // Empêcher la propagation de l'événement
+
+                                    // Logs détaillés pour le débogage
+                                    console.log('Clic sur le bouton de téléchargement pour le document:', doc);
+                                    console.log('ID du document:', doc.id || doc._id);
+                                    console.log('Nom du document:', doc.name);
+
+                                    // Appeler la fonction de téléchargement avec un délai pour éviter les conflits d'événements
+                                    setTimeout(() => {
+                                      handleDownload(doc);
+                                    }, 100);
+                                  }}
+                                >
                                   <CIcon icon={cilCloudDownload} className="me-2" />
                                   Télécharger
                                 </CDropdownItem>
@@ -478,7 +673,17 @@ const Resources = () => {
                                 </CDropdownItem>
                                 {doc.permissions === 'edit' && (
                                   <>
-                                    <CDropdownItem>
+                                    <CDropdownItem onClick={() => {
+                                      setSelectedDocument(doc);
+                                      setPermissionsModalVisible(true);
+                                    }}>
+                                      <CIcon icon={cilLockLocked} className="me-2" />
+                                      Permissions
+                                    </CDropdownItem>
+                                    <CDropdownItem onClick={() => {
+                                      setSelectedDocument(doc);
+                                      setEditModalVisible(true);
+                                    }}>
                                       <CIcon icon={cilPencil} className="me-2" />
                                       Modifier
                                     </CDropdownItem>
@@ -519,7 +724,20 @@ const Resources = () => {
                           color="primary"
                           variant="outline"
                           className="me-2"
-                          onClick={() => handleDownload(selectedDocument)}
+                          onClick={(e) => {
+                            e.preventDefault(); // Empêcher le comportement par défaut
+                            e.stopPropagation(); // Empêcher la propagation de l'événement
+
+                            // Logs détaillés pour le débogage
+                            console.log('Téléchargement du document sélectionné:', selectedDocument);
+                            console.log('ID du document:', selectedDocument.id || selectedDocument._id);
+                            console.log('Nom du document:', selectedDocument.name);
+
+                            // Appeler la fonction de téléchargement avec un délai pour éviter les conflits d'événements
+                            setTimeout(() => {
+                              handleDownload(selectedDocument);
+                            }, 100);
+                          }}
                         >
                           <CIcon icon={cilCloudDownload} className="me-2" />
                           Télécharger
@@ -528,22 +746,58 @@ const Resources = () => {
                           color="primary"
                           variant="outline"
                           className="me-2"
-                          onClick={() => setShareModalVisible(true)}
+                          onClick={(e) => {
+                            e.preventDefault(); // Empêcher le comportement par défaut
+                            e.stopPropagation(); // Empêcher la propagation de l'événement
+
+                            console.log('Ouverture du modal de partage pour le document:', selectedDocument.name);
+                            setShareModalVisible(true);
+                          }}
                         >
                           <CIcon icon={cilShareBoxed} className="me-2" />
                           Partager
                         </CButton>
                         {selectedDocument.permissions === 'edit' && (
                           <>
-                            <CButton color="primary" variant="outline" className="me-2">
+                            <CButton
+                              color="primary"
+                              variant="outline"
+                              className="me-2"
+                              onClick={(e) => {
+                                e.preventDefault(); // Empêcher le comportement par défaut
+                                e.stopPropagation(); // Empêcher la propagation de l'événement
+
+                                console.log('Ouverture du modal de permissions pour le document:', selectedDocument.name);
+                                setPermissionsModalVisible(true);
+                              }}
+                            >
+                              <CIcon icon={cilLockLocked} className="me-2" />
+                              Permissions
+                            </CButton>
+                            <CButton
+                              color="primary"
+                              variant="outline"
+                              className="me-2"
+                              onClick={(e) => {
+                                e.preventDefault(); // Empêcher le comportement par défaut
+                                e.stopPropagation(); // Empêcher la propagation de l'événement
+
+                                console.log('Ouverture du modal de modification pour le document:', selectedDocument.name);
+                                setEditModalVisible(true);
+                              }}
+                            >
                               <CIcon icon={cilPencil} className="me-2" />
                               Modifier
                             </CButton>
                             <CButton
                               color="danger"
                               variant="outline"
-                              onClick={() => {
-                                handleDelete(selectedDocument.id)
+                              onClick={(e) => {
+                                e.preventDefault(); // Empêcher le comportement par défaut
+                                e.stopPropagation(); // Empêcher la propagation de l'événement
+
+                                console.log('Suppression du document:', selectedDocument.name);
+                                handleDelete(selectedDocument.id);
                               }}
                             >
                               <CIcon icon={cilTrash} className="me-2" />
@@ -629,6 +883,60 @@ const Resources = () => {
           document={selectedDocument}
           visible={shareModalVisible}
           onClose={() => setShareModalVisible(false)}
+        />
+      )}
+
+      {/* Document Permissions Modal */}
+      {selectedDocument && (
+        <DocumentPermissions
+          document={selectedDocument}
+          visible={permissionsModalVisible}
+          onClose={() => setPermissionsModalVisible(false)}
+          onPermissionsUpdated={(updatedPermissions) => {
+            // Mettre à jour le document sélectionné avec les nouvelles permissions
+            setSelectedDocument({
+              ...selectedDocument,
+              permissions: updatedPermissions
+            });
+
+            // Mettre à jour la liste des documents
+            setDocuments(documents.map(doc =>
+              doc.id === selectedDocument.id
+                ? { ...doc, permissions: updatedPermissions }
+                : doc
+            ));
+          }}
+        />
+      )}
+
+      {/* Document Edit Modal */}
+      {selectedDocument && (
+        <DocumentEdit
+          document={selectedDocument}
+          visible={editModalVisible}
+          onClose={() => setEditModalVisible(false)}
+          onEditSuccess={(updatedDocument) => {
+            // Mettre à jour le document sélectionné
+            const updatedDoc = {
+              ...selectedDocument,
+              name: updatedDocument.name,
+              description: updatedDocument.description,
+              project: updatedDocument.project,
+              isPublic: updatedDocument.isPublic
+            };
+
+            setSelectedDocument(updatedDoc);
+
+            // Mettre à jour la liste des documents
+            setDocuments(documents.map(doc =>
+              doc.id === selectedDocument.id
+                ? updatedDoc
+                : doc
+            ));
+
+            // Rafraîchir la liste des documents
+            fetchDocuments();
+          }}
         />
       )}
     </div>

@@ -62,10 +62,14 @@ const getShareLinks = async (req, res) => {
 
     // Construire les URLs complètes pour chaque lien
     const baseUrl = process.env.CLIENT_URL || 'http://localhost:3000';
-    const shareLinksWithUrls = shareLinks.map(link => ({
-      ...link.toObject(),
-      url: `${baseUrl}/shared-document/${link.token}`
-    }));
+    const shareLinksWithUrls = shareLinks.map(link => {
+      // Convertir en objet simple si c'est un document Mongoose, sinon utiliser directement
+      const linkObj = link.toObject ? link.toObject() : { ...link };
+      return {
+        ...linkObj,
+        url: `${baseUrl}/shared-document/${link.token}`
+      };
+    });
 
     res.status(200).json({
       success: true,
@@ -107,8 +111,14 @@ const validateShareLink = async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
 
+    // Récupérer les informations de la requête pour la journalisation
+    const requestInfo = {
+      ipAddress: req.ip || req.connection.remoteAddress,
+      userAgent: req.headers['user-agent'] || 'Unknown'
+    };
+
     // Valider le lien
-    const result = await shareService.validateShareLink(token, password);
+    const result = await shareService.validateShareLink(token, password, requestInfo);
 
     if (!result.valid && result.requiresPassword) {
       return res.status(401).json({
@@ -122,7 +132,14 @@ const validateShareLink = async (req, res) => {
       success: true,
       data: {
         document: result.document,
-        accessLevel: result.accessLevel
+        accessLevel: result.accessLevel,
+        // Ajouter des informations de sécurité pour le client
+        securityInfo: {
+          originalType: result.document.fileType,
+          isReadOnly: result.accessLevel === 'view',
+          canComment: ['comment', 'edit', 'admin'].includes(result.accessLevel),
+          canEdit: ['edit', 'admin'].includes(result.accessLevel)
+        }
       }
     });
   } catch (error) {

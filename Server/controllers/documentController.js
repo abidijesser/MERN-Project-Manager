@@ -266,6 +266,49 @@ const deleteDocument = async (req, res) => {
   }
 };
 
+// Get document permissions
+const getPermissions = async (req, res) => {
+  try {
+    const document = await Document.findById(req.params.id).populate({
+      path: 'permissions.user',
+      select: 'name email'
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        error: "Document not found",
+      });
+    }
+
+    // Check if user has permission to view this document
+    const hasPermission =
+      document.uploadedBy.toString() === req.user.id ||
+      document.permissions.some(
+        (p) => p.user._id.toString() === req.user.id
+      ) ||
+      document.isPublic;
+
+    if (!hasPermission) {
+      return res.status(403).json({
+        success: false,
+        error: "You don't have permission to view this document",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: document.permissions,
+    });
+  } catch (error) {
+    console.error("Error getting permissions:", error);
+    res.status(500).json({
+      success: false,
+      error: "Server Error",
+    });
+  }
+};
+
 // Update document permissions
 const updatePermissions = async (req, res) => {
   try {
@@ -368,10 +411,27 @@ const uploadNewVersion = async (req, res) => {
       });
     }
 
+    // Vérifier que le type de fichier est le même que l'original
+    const originalFileType = document.fileType;
+    const newFileType = path.extname(req.file.originalname).substring(1);
+
+    if (originalFileType.toLowerCase() !== newFileType.toLowerCase()) {
+      // Supprimer le fichier téléchargé
+      fs.unlink(req.file.path, (err) => {
+        if (err) console.error("Error deleting file:", err);
+      });
+
+      return res.status(400).json({
+        success: false,
+        error: `Le type de fichier doit être le même que l'original (${originalFileType}). Vous avez téléchargé un fichier de type ${newFileType}.`,
+      });
+    }
+
     // Add current version to versions array
     document.versions.push({
       filePath: document.filePath,
       fileSize: document.fileSize,
+      fileType: document.fileType,
       uploadedBy: document.uploadedBy,
       uploadedDate: document.uploadedDate,
       comment: req.body.comment || "Previous version",
@@ -461,13 +521,92 @@ const togglePin = async (req, res) => {
   }
 };
 
+// Télécharger un document
+const downloadDocument = async (req, res) => {
+  try {
+    console.log("Demande de téléchargement pour le document ID:", req.params.id);
+
+    const document = await Document.findById(req.params.id);
+
+    if (!document) {
+      console.log("Document non trouvé:", req.params.id);
+      return res.status(404).json({
+        success: false,
+        error: "Document non trouvé",
+      });
+    }
+
+    console.log("Document trouvé:", document.name);
+    console.log("Chemin du fichier:", document.filePath);
+
+    // Vérifier si l'utilisateur a la permission de voir ce document
+    const hasPermission =
+      document.uploadedBy.toString() === req.user.id ||
+      document.isPublic ||
+      document.permissions.some(
+        (p) => p.user.toString() === req.user.id && ["view", "edit", "admin"].includes(p.access)
+      );
+
+    if (!hasPermission) {
+      console.log("Permission refusée pour l'utilisateur:", req.user.id);
+      return res.status(403).json({
+        success: false,
+        error: "Vous n'avez pas la permission de télécharger ce document",
+      });
+    }
+
+    // Vérifier si le fichier existe
+    if (!fs.existsSync(document.filePath)) {
+      console.log("Fichier non trouvé sur le disque:", document.filePath);
+
+      // Essayer de résoudre le chemin relatif
+      const absolutePath = path.resolve(document.filePath);
+      console.log("Tentative avec le chemin absolu:", absolutePath);
+
+      if (!fs.existsSync(absolutePath)) {
+        return res.status(404).json({
+          success: false,
+          error: "Fichier non trouvé sur le serveur",
+        });
+      }
+
+      // Si le fichier existe avec le chemin absolu, utiliser ce chemin
+      document.filePath = absolutePath;
+    }
+
+    // Extraire le nom de fichier original et l'extension
+    const fileName = document.name;
+    const fileExt = path.extname(document.filePath);
+
+    // S'assurer que le nom du fichier a la bonne extension
+    const fullFileName = fileName.endsWith(fileExt) ? fileName : `${fileName}${fileExt}`;
+
+    console.log("Envoi du fichier:", document.filePath);
+    console.log("Nom du fichier pour le téléchargement:", fullFileName);
+
+    // Enregistrer l'action de téléchargement dans le journal d'accès (si nécessaire)
+    // Vous pourriez ajouter ici un code pour enregistrer les statistiques de téléchargement
+
+    // Envoyer le fichier avec le nom original
+    res.download(document.filePath, fullFileName);
+  } catch (error) {
+    console.error("Erreur lors du téléchargement du document:", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur serveur: " + error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllDocuments,
   getDocumentById,
   createDocument,
   updateDocument,
   deleteDocument,
+  getPermissions,
   updatePermissions,
   uploadNewVersion,
   togglePin,
+  downloadDocument,
 };

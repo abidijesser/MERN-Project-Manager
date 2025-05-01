@@ -19,10 +19,10 @@ const createShareLink = async (documentId, userId, options = {}) => {
     }
 
     // Vérifier si l'utilisateur a le droit de partager ce document
-    const hasPermission = 
+    const hasPermission =
       document.uploadedBy.toString() === userId ||
-      document.permissions.some(p => 
-        p.user.toString() === userId && 
+      document.permissions.some(p =>
+        p.user.toString() === userId &&
         ['edit', 'admin'].includes(p.access)
       );
 
@@ -32,7 +32,7 @@ const createShareLink = async (documentId, userId, options = {}) => {
 
     // Configurer les options de partage
     const { expiresIn, accessLevel = 'view', password = null } = options;
-    
+
     // Calculer la date d'expiration si fournie
     let expiresAt = null;
     if (expiresIn) {
@@ -43,6 +43,17 @@ const createShareLink = async (documentId, userId, options = {}) => {
     // Générer un token unique
     const token = generateShareToken();
 
+    // Ajouter des métadonnées de sécurité
+    const securityMetadata = {
+      originalFileType: document.fileType,
+      originalFileSize: document.fileSize,
+      originalFileName: document.name,
+      originalChecksum: crypto.createHash('md5').update(document.filePath).digest('hex'),
+      createdAt: new Date(),
+      userAgent: options.userAgent || 'Unknown',
+      ipAddress: options.ipAddress || 'Unknown'
+    };
+
     // Créer le lien de partage dans la base de données
     const shareLink = new ShareLink({
       document: documentId,
@@ -51,7 +62,8 @@ const createShareLink = async (documentId, userId, options = {}) => {
       expiresAt,
       accessLevel,
       password: password ? crypto.createHash('sha256').update(password).digest('hex') : null,
-      isActive: true
+      isActive: true,
+      securityMetadata
     });
 
     await shareLink.save();
@@ -69,46 +81,114 @@ const createShareLink = async (documentId, userId, options = {}) => {
 };
 
 // Vérifier si un lien de partage est valide
-const validateShareLink = async (token, password = null) => {
+const validateShareLink = async (token, password = null, requestInfo = {}) => {
   try {
     // Trouver le lien de partage par token
     const shareLink = await ShareLink.findOne({ token }).populate('document');
-    
+
+    // Préparer les informations de la requête pour le journal d'accès
+    const { ipAddress = 'Unknown', userAgent = 'Unknown' } = requestInfo;
+    const logEntry = {
+      timestamp: new Date(),
+      ipAddress,
+      userAgent,
+      success: false
+    };
+
     if (!shareLink) {
+      // Enregistrer la tentative d'accès échouée (si possible)
+      try {
+        // Nous ne pouvons pas enregistrer dans shareLink car il n'existe pas,
+        // mais nous pourrions enregistrer dans un journal d'accès global si nécessaire
+      } catch (logError) {
+        console.error('Erreur lors de l\'enregistrement de la tentative d\'accès:', logError);
+      }
+
       throw new Error('Lien de partage invalide ou expiré');
     }
 
     // Vérifier si le lien est actif
     if (!shareLink.isActive) {
+      logEntry.action = 'view';
+      logEntry.success = false;
+      shareLink.accessLog.push(logEntry);
+      await shareLink.save();
+
       throw new Error('Ce lien de partage a été désactivé');
     }
 
     // Vérifier si le lien a expiré
     if (shareLink.expiresAt && new Date() > shareLink.expiresAt) {
+      logEntry.action = 'view';
+      logEntry.success = false;
+      shareLink.accessLog.push(logEntry);
+
       shareLink.isActive = false;
       await shareLink.save();
+
       throw new Error('Ce lien de partage a expiré');
     }
 
     // Vérifier le mot de passe si nécessaire
     if (shareLink.password) {
       if (!password) {
-        return { 
-          valid: false, 
+        logEntry.action = 'password_attempt';
+        logEntry.success = false;
+        shareLink.accessLog.push(logEntry);
+        await shareLink.save();
+
+        return {
+          valid: false,
           requiresPassword: true,
           document: null,
           accessLevel: null
         };
       }
 
+      logEntry.action = 'password_attempt';
+
       const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
       if (hashedPassword !== shareLink.password) {
+        logEntry.action = 'password_fail';
+        logEntry.success = false;
+        shareLink.accessLog.push(logEntry);
+        await shareLink.save();
+
         throw new Error('Mot de passe incorrect');
+      }
+
+      // Mot de passe correct
+      logEntry.action = 'password_success';
+      logEntry.success = true;
+    } else {
+      // Pas de mot de passe requis
+      logEntry.action = 'view';
+      logEntry.success = true;
+    }
+
+    // Vérifier l'intégrité du document si des métadonnées de sécurité sont disponibles
+    if (shareLink.securityMetadata && shareLink.document) {
+      const document = shareLink.document;
+
+      // Vérifier que le type de fichier n'a pas changé
+      if (shareLink.securityMetadata.originalFileType !== document.fileType) {
+        logEntry.success = false;
+        shareLink.accessLog.push(logEntry);
+        await shareLink.save();
+
+        throw new Error('L\'intégrité du document a été compromise: le type de fichier a changé');
+      }
+
+      // Vérifier que le nom du fichier n'a pas changé
+      if (shareLink.securityMetadata.originalFileName !== document.name) {
+        console.warn('Le nom du document a changé depuis la création du lien de partage');
+        // On ne bloque pas l'accès pour un changement de nom, mais on le note
       }
     }
 
-    // Incrémenter le compteur de vues
+    // Incrémenter le compteur de vues et enregistrer l'accès
     shareLink.viewCount += 1;
+    shareLink.accessLog.push(logEntry);
     await shareLink.save();
 
     return {
@@ -127,7 +207,7 @@ const validateShareLink = async (token, password = null) => {
 const deactivateShareLink = async (token, userId) => {
   try {
     const shareLink = await ShareLink.findOne({ token });
-    
+
     if (!shareLink) {
       throw new Error('Lien de partage non trouvé');
     }
@@ -151,16 +231,16 @@ const deactivateShareLink = async (token, userId) => {
 const getShareLinksForDocument = async (documentId, userId) => {
   try {
     const document = await Document.findById(documentId);
-    
+
     if (!document) {
       throw new Error('Document non trouvé');
     }
 
     // Vérifier si l'utilisateur a le droit de voir les liens de partage
-    const hasPermission = 
+    const hasPermission =
       document.uploadedBy.toString() === userId ||
-      document.permissions.some(p => 
-        p.user.toString() === userId && 
+      document.permissions.some(p =>
+        p.user.toString() === userId &&
         ['edit', 'admin'].includes(p.access)
       );
 
@@ -168,11 +248,12 @@ const getShareLinksForDocument = async (documentId, userId) => {
       throw new Error('Vous n\'avez pas la permission de voir les liens de partage pour ce document');
     }
 
-    const shareLinks = await ShareLink.find({ 
+    const shareLinks = await ShareLink.find({
       document: documentId,
       isActive: true
     }).sort({ createdAt: -1 });
 
+    // Maintenant que nous avons supprimé les statistiques, retournons simplement les liens
     return shareLinks;
   } catch (error) {
     console.error('Erreur lors de la récupération des liens de partage:', error);
@@ -184,7 +265,7 @@ const getShareLinksForDocument = async (documentId, userId) => {
 const sendShareLinkByEmail = async (shareToken, emailData, userId) => {
   try {
     const { recipientEmail, recipientName, message, documentName } = emailData;
-    
+
     // Vérifier si le lien de partage existe
     const shareLink = await ShareLink.findOne({ token: shareToken });
     if (!shareLink) {
@@ -208,24 +289,24 @@ const sendShareLinkByEmail = async (shareToken, emailData, userId) => {
 
     // Construire le contenu de l'email
     const emailSubject = `${sender.name} a partagé un document avec vous: ${documentName}`;
-    
+
     let emailBody = `Bonjour ${recipientName || 'utilisateur'},\n\n`;
     emailBody += `${sender.name} (${sender.email}) a partagé un document avec vous: ${documentName}.\n\n`;
-    
+
     if (message) {
       emailBody += `Message de ${sender.name}:\n${message}\n\n`;
     }
-    
+
     emailBody += `Vous pouvez accéder au document en cliquant sur le lien suivant:\n${shareUrl}\n\n`;
-    
+
     if (shareLink.expiresAt) {
       emailBody += `Ce lien expirera le ${shareLink.expiresAt.toLocaleString()}.\n\n`;
     }
-    
+
     if (shareLink.password) {
       emailBody += `Ce lien est protégé par un mot de passe. Veuillez contacter ${sender.name} pour obtenir le mot de passe.\n\n`;
     }
-    
+
     emailBody += `Cordialement,\nL'équipe de gestion de projet`;
 
     // Envoyer l'email

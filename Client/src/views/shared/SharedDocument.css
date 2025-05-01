@@ -43,3 +43,19 @@
   margin-right: 0.5rem;
   color: #768192;
 }
+
+/* Styles pour la carte d'informations de sécurité */
+.security-info-card {
+  border-left: 4px solid #2eb85c;
+}
+
+.security-info-card .card-header {
+  display: flex;
+  align-items: center;
+  color: #2eb85c;
+  font-weight: 600;
+}
+
+.security-info-card .card-body {
+  font-size: 0.9rem;
+}

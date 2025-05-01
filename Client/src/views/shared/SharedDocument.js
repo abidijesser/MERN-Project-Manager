@@ -15,9 +15,10 @@ import {
   CFormLabel,
   CInputGroup,
   CInputGroupText,
+  CBadge,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilLockLocked, cilCloudDownload, cilArrowLeft } from '@coreui/icons'
+import { cilLockLocked, cilCloudDownload, cilArrowLeft, cilShieldAlt } from '@coreui/icons'
 import axios from '../../utils/axios'
 import { toast } from 'react-toastify'
 import DocumentPreview from '../../components/Documents/DocumentPreview'
@@ -95,14 +96,17 @@ const SharedDocument = () => {
     if (!document) return
 
     try {
-      // Créer un lien pour télécharger le fichier
-      const link = document.createElement('a')
+      // Utiliser la nouvelle route de téléchargement qui enregistre les statistiques
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
-      link.href = `${baseUrl}/${document.filePath}`
+      const downloadUrl = `${baseUrl}/api/share/public/download/${token}`
+
+      // Ouvrir l'URL dans un nouvel onglet ou utiliser un lien invisible
+      const link = window.document.createElement('a')
+      link.href = downloadUrl
       link.setAttribute('download', document.name)
-      document.body.appendChild(link)
+      window.document.body.appendChild(link)
       link.click()
-      document.body.removeChild(link)
+      window.document.body.removeChild(link)
     } catch (error) {
       console.error('Erreur lors du téléchargement du document:', error)
       toast.error('Erreur lors du téléchargement du document')
@@ -266,6 +270,57 @@ const SharedDocument = () => {
                   </CCardBody>
                 </CCard>
               )}
+
+              {/* Informations de sécurité */}
+              <CCard className="mt-4 security-info-card">
+                <CCardHeader>
+                  <CIcon icon={cilShieldAlt} className="me-2" />
+                  Informations de sécurité
+                </CCardHeader>
+                <CCardBody>
+                  <div className="mb-2">
+                    <strong>Type de fichier:</strong> {document.fileType.toUpperCase()}
+                    <CBadge
+                      color="success"
+                      className="ms-2"
+                      title="Le type de fichier est vérifié pour assurer l'intégrité du document"
+                    >
+                      Vérifié
+                    </CBadge>
+                  </div>
+                  <div className="mb-2">
+                    <strong>Niveau d'accès:</strong>{' '}
+                    <CBadge
+                      color={
+                        accessLevel === 'view' ? 'info' :
+                        accessLevel === 'comment' ? 'primary' :
+                        'success'
+                      }
+                    >
+                      {accessLevel === 'view' && 'Lecture seule'}
+                      {accessLevel === 'comment' && 'Commentaires'}
+                      {accessLevel === 'edit' && 'Modification'}
+                    </CBadge>
+                  </div>
+                  <div className="mb-2">
+                    <strong>Modifications:</strong>{' '}
+                    {accessLevel === 'edit' ? (
+                      <span className="text-success">Autorisées</span>
+                    ) : (
+                      <span className="text-danger">Non autorisées</span>
+                    )}
+                  </div>
+                  <div className="mb-0">
+                    <strong>Protection:</strong>{' '}
+                    <CIcon
+                      icon={cilLockLocked}
+                      className="text-primary me-1"
+                      size="sm"
+                    />
+                    Le document est protégé contre les modifications de type et de format
+                  </div>
+                </CCardBody>
+              </CCard>
             </CCol>
           </CRow>
         </CCol>

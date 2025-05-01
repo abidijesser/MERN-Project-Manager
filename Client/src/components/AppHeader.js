@@ -190,66 +190,65 @@ const AppHeader = () => {
 
           <div className="d-flex align-items-center">
             <CHeaderNav className="header-actions">
-              <CNavItem>
-                <CDropdown variant="nav-item">
-                  <CDropdownToggle caret={false} className="action-link">
-                    <div className="icon-wrapper">
-                      <CIcon icon={cilBell} size="lg" />
-                      <CBadge color="danger" shape="rounded-pill" position="top-end" size="sm">
-                        {notifications.filter(notification => !notification.read).length}
-                      </CBadge>
-                    </div>
-                  </CDropdownToggle>
-                  <CDropdownMenu style={{ minWidth: '300px', maxHeight: '400px', overflowY: 'auto' }}>
-                    <CDropdownItem header className="d-flex justify-content-between align-items-center">
-                      <span>Notifications</span>
-                      {loadingNotifications && <CSpinner size="sm" />}
+              {/* Utiliser directement CDropdown au lieu de l'imbriquer dans CNavItem */}
+              <CDropdown variant="nav-item">
+                <CDropdownToggle caret={false} className="action-link">
+                  <div className="icon-wrapper">
+                    <CIcon icon={cilBell} size="lg" />
+                    <CBadge color="danger" shape="rounded-pill" position="top-end" size="sm">
+                      {notifications.filter(notification => !notification.read).length}
+                    </CBadge>
+                  </div>
+                </CDropdownToggle>
+                <CDropdownMenu style={{ minWidth: '300px', maxHeight: '400px', overflowY: 'auto' }}>
+                  <CDropdownItem header="true" className="d-flex justify-content-between align-items-center">
+                    <span>Notifications</span>
+                    {loadingNotifications && <CSpinner size="sm" />}
+                  </CDropdownItem>
+
+                  {notificationError && (
+                    <CDropdownItem className="text-danger">
+                      {notificationError}
                     </CDropdownItem>
+                  )}
 
-                    {notificationError && (
-                      <CDropdownItem className="text-danger">
-                        {notificationError}
-                      </CDropdownItem>
-                    )}
-
-                    {notifications.length > 0 ? (
-                      notifications.map((notification) => (
-                        <CDropdownItem
-                          key={notification._id}
-                          onClick={() => markNotificationAsRead(notification._id)}
-                          style={{
-                            backgroundColor: notification.read ? 'transparent' : '#f0f9ff',
-                            borderLeft: notification.read ? 'none' : '3px solid #1890ff',
-                            padding: '10px 15px',
-                            margin: '2px 0'
-                          }}
-                        >
-                          <div>
-                            <div className="d-flex justify-content-between">
-                              <small className="text-muted">
-                                {new Date(notification.createdAt).toLocaleString()}
-                              </small>
-                              {notification.read && (
-                                <CTooltip content="Lu">
-                                  <CIcon icon={cilCheck} size="sm" className="text-success" />
-                                </CTooltip>
-                              )}
-                            </div>
-                            <div>{notification.message}</div>
+                  {notifications.length > 0 ? (
+                    notifications.map((notification) => (
+                      <CDropdownItem
+                        key={notification._id}
+                        onClick={() => markNotificationAsRead(notification._id)}
+                        style={{
+                          backgroundColor: notification.read ? 'transparent' : '#f0f9ff',
+                          borderLeft: notification.read ? 'none' : '3px solid #1890ff',
+                          padding: '10px 15px',
+                          margin: '2px 0'
+                        }}
+                      >
+                        <div>
+                          <div className="d-flex justify-content-between">
+                            <small className="text-muted">
+                              {new Date(notification.createdAt).toLocaleString()}
+                            </small>
+                            {notification.read && (
+                              <CTooltip content="Lu">
+                                <CIcon icon={cilCheck} size="sm" className="text-success" />
+                              </CTooltip>
+                            )}
                           </div>
-                        </CDropdownItem>
-                      ))
-                    ) : (
-                      <CDropdownItem disabled>Aucune notification</CDropdownItem>
-                    )}
+                          <div>{notification.message}</div>
+                        </div>
+                      </CDropdownItem>
+                    ))
+                  ) : (
+                    <CDropdownItem disabled>Aucune notification</CDropdownItem>
+                  )}
 
-                    <CDropdownItem divider />
-                    <CDropdownItem href="#/collaboration/notifications">
-                      Voir toutes les notifications
-                    </CDropdownItem>
-                  </CDropdownMenu>
-                </CDropdown>
-              </CNavItem>
+                  <CDropdownItem divider="true" />
+                  <CDropdownItem href="#/collaboration/notifications">
+                    Voir toutes les notifications
+                  </CDropdownItem>
+                </CDropdownMenu>
+              </CDropdown>
               <CNavItem>
                 <CNavLink href="#/collaboration/chat" className="action-link">
                   <div className="icon-wrapper">

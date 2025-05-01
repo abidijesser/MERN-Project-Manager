@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const shareController = require('../controllers/shareController');
+const downloadController = require('../controllers/downloadController');
 const auth = require('../middleware/auth');
 
 // Routes protégées par authentification
@@ -18,7 +19,12 @@ router.delete('/:token', shareController.deactivateShareLink);
 // Envoyer un lien de partage par email
 router.post('/:token/email', shareController.sendShareLinkByEmail);
 
-// Route publique pour valider un lien de partage (pas besoin d'authentification)
-router.post('/validate/:token', shareController.validateShareLink);
+// Routes publiques (pas besoin d'authentification)
+router.use('/public', express.Router()
+  // Valider un lien de partage
+  .post('/validate/:token', shareController.validateShareLink)
+  // Télécharger un document partagé
+  .get('/download/:token', downloadController.downloadSharedDocument)
+);
 
 module.exports = router;
