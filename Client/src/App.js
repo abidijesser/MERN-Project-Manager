@@ -134,24 +134,7 @@ const App = () => {
                         </Suspense>
                       }
                     />
-                    <Route
-                      exact
-                      path="/projects/edit/:id"
-                      name="Edit Project"
-                      element={
-                        <Suspense
-                          fallback={
-                            <div className="pt-3 text-center">
-                              <CSpinner color="primary" variant="grow" />
-                            </div>
-                          }
-                        >
-                          <ProtectedRoute>
-                            <EditProject />
-                          </ProtectedRoute>
-                        </Suspense>
-                      }
-                    />
+                    {/* La route de modification de projet est déplacée dans le DefaultLayout */}
                     <Route
                       path="*"
                       name="Home"

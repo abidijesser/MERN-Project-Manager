@@ -197,29 +197,6 @@ const Dashboard = () => {
               </h4>
             </CCardHeader>
             <CCardBody>
-              <CRow>
-                <CCol sm={5}>
-                  <div className="small text-body-secondary mb-2">Janvier - Juillet 2023</div>
-                </CCol>
-                <CCol sm={7} className="d-none d-md-block">
-                  <CButton color="primary" className="float-end btn-sm">
-                    <CIcon icon={cilCloudDownload} className="me-1" /> Exporter
-                  </CButton>
-                  <CButtonGroup className="float-end me-3">
-                    {['Jour', 'Mois', 'Année'].map((value) => (
-                      <CButton
-                        color="outline-primary"
-                        size="sm"
-                        key={value}
-                        className="mx-0"
-                        active={value === 'Mois'}
-                      >
-                        {value}
-                      </CButton>
-                    ))}
-                  </CButtonGroup>
-                </CCol>
-              </CRow>
               <MainChart />
             </CCardBody>
           </CCard>

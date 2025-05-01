@@ -30,6 +30,7 @@ import {
   cilCursor,
   cilDescription,
   cilCalculator,
+  cilLibrary,
 } from '@coreui/icons'
 
 import { AppBreadcrumb } from './index'
@@ -86,6 +87,12 @@ const AppHeader = () => {
                 <CNavLink to="/performances" as={NavLink} className="nav-link-custom">
                   <CIcon icon={cilStar} className="nav-icon" />
                   <span>Performances</span>
+                </CNavLink>
+              </CNavItem>
+              <CNavItem>
+                <CNavLink to="/resources" as={NavLink} className="nav-link-custom">
+                  <CIcon icon={cilLibrary} className="nav-icon" />
+                  <span>Ressources</span>
                 </CNavLink>
               </CNavItem>
               <CDropdown variant="nav-item">

@@ -8,8 +8,10 @@ import TaskStatusForm from './views/tasks/TaskStatusForm'
 import ProjectsList from './views/projects/ProjectsList'
 import CreateProject from './views/projects/CreateProject'
 import ProjectDetails from './views/projects/ProjectDetails'
+import EditProject from './views/projects/EditProject'
 import Collaboration from './views/Collaboration/Collaboration'
 import MediaPage from './views/media/MediaPage'
+import ResourcesPage from './views/resources/ResourcesPage'
 
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Login = React.lazy(() => import('./views/pages/login/Login'))
@@ -45,6 +47,7 @@ const routes = [
   { path: '/tasks/:id', exact: true, name: 'Détails tâche', element: TaskDetail },
   { path: '/projects', exact: true, name: 'Projets', element: ProjectsList },
   { path: '/projects/new', exact: true, name: 'Créer un projet', element: CreateProject },
+  { path: '/projects/edit/:id', exact: true, name: 'Modifier le projet', element: EditProject },
   { path: '/projects/:id', exact: true, name: 'Détails du projet', element: ProjectDetails },
   { path: '/performances', name: 'Suivi des Performances', element: Performances },
   { path: '/collaboration', name: 'Collaboration & Communication', element: Collaboration },
@@ -52,6 +55,7 @@ const routes = [
   { path: '/collaboration/notifications', name: 'Notifications', element: Collaboration },
   { path: '/collaboration/meetings', name: 'Réunions', element: Collaboration },
   { path: '/media', name: 'Gestion des médias', element: MediaPage },
+  { path: '/resources', name: 'Ressources', element: ResourcesPage },
 ]
 
 export default routes
