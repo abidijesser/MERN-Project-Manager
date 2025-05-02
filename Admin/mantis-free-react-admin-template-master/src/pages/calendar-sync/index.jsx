@@ -87,8 +87,27 @@ const CalendarSync = () => {
       const response = await api.post('/calendar/sync-tasks');
       setTaskSyncResult(response.data);
     } catch (err) {
-      setError('Failed to sync tasks with Google Calendar');
-      console.error(err);
+      console.error('Error syncing tasks:', err);
+
+      // Handle specific error codes
+      if (err.response?.data?.code === 'REAUTHORIZATION_REQUIRED' || err.response?.data?.errorCode === 'INVALID_GRANT') {
+        setError('Your Google Calendar authorization has expired. Please reconnect your account.');
+
+        // Automatically remove the invalid token
+        try {
+          await api.post('/calendar/remove-token');
+          console.log('Invalid token removed automatically');
+        } catch (removeErr) {
+          console.error('Error removing invalid token:', removeErr);
+        }
+
+        setIsAuthenticated(false); // Reset authentication status to trigger re-auth
+      } else if (err.response?.data?.code === 'NOT_AUTHENTICATED') {
+        setError('You are not authenticated with Google Calendar. Please connect your account first.');
+        setIsAuthenticated(false);
+      } else {
+        setError('Failed to sync tasks with Google Calendar: ' + (err.response?.data?.error || err.message));
+      }
     } finally {
       setSyncingTasks(false);
     }
@@ -100,8 +119,27 @@ const CalendarSync = () => {
       const response = await api.post('/calendar/sync-projects');
       setProjectSyncResult(response.data);
     } catch (err) {
-      setError('Failed to sync projects with Google Calendar');
-      console.error(err);
+      console.error('Error syncing projects:', err);
+
+      // Handle specific error codes
+      if (err.response?.data?.code === 'REAUTHORIZATION_REQUIRED' || err.response?.data?.errorCode === 'INVALID_GRANT') {
+        setError('Your Google Calendar authorization has expired. Please reconnect your account.');
+
+        // Automatically remove the invalid token
+        try {
+          await api.post('/calendar/remove-token');
+          console.log('Invalid token removed automatically');
+        } catch (removeErr) {
+          console.error('Error removing invalid token:', removeErr);
+        }
+
+        setIsAuthenticated(false); // Reset authentication status to trigger re-auth
+      } else if (err.response?.data?.code === 'NOT_AUTHENTICATED') {
+        setError('You are not authenticated with Google Calendar. Please connect your account first.');
+        setIsAuthenticated(false);
+      } else {
+        setError('Failed to sync projects with Google Calendar: ' + (err.response?.data?.error || err.message));
+      }
     } finally {
       setSyncingProjects(false);
     }
@@ -118,10 +156,36 @@ const CalendarSync = () => {
 
     if (isAuthenticated) {
       return (
-        <Alert severity="success" sx={{ mb: 3 }}>
-          <AlertTitle>Connected to Google Calendar</AlertTitle>
-          Your account is connected to Google Calendar. You can now sync your tasks and projects.
-        </Alert>
+        <Box>
+          <Alert severity="success" sx={{ mb: 2 }}>
+            <AlertTitle>Connected to Google Calendar</AlertTitle>
+            Your account is connected to Google Calendar. You can now sync your tasks and projects.
+          </Alert>
+          <Button
+            variant="outlined"
+            color="secondary"
+            size="small"
+            onClick={async () => {
+              try {
+                setLoading(true);
+                await api.post('/calendar/remove-token');
+                setIsAuthenticated(false);
+                setError(null);
+                setTaskSyncResult(null);
+                setProjectSyncResult(null);
+              } catch (err) {
+                console.error('Error removing token:', err);
+                setError('Failed to disconnect from Google Calendar: ' + (err.response?.data?.error || err.message));
+              } finally {
+                setLoading(false);
+              }
+            }}
+            startIcon={<LinkOutlined />}
+            sx={{ mb: 2 }}
+          >
+            Disconnect from Google Calendar
+          </Button>
+        </Box>
       );
     }
 
@@ -141,9 +205,16 @@ const CalendarSync = () => {
             // Add userId as a state parameter to be preserved through the OAuth flow
             const stateParam = encodeURIComponent(JSON.stringify({ userId }));
             // Open in a new tab to avoid QUIC protocol errors
-            const fullAuthUrl = `${authUrl}&state=${stateParam}`;
+            // Check if the URL already has parameters
+            const separator = authUrl.includes('?') ? '&' : '?';
+            const fullAuthUrl = `${authUrl}${separator}state=${stateParam}`;
             console.log('Full auth URL:', fullAuthUrl);
-            window.open(fullAuthUrl, '_blank');
+
+            // Store the current URL to redirect back after authentication
+            localStorage.setItem('calendarAuthRedirectUrl', window.location.href);
+
+            // Open in the same window to avoid popup blockers
+            window.location.href = fullAuthUrl;
           }}
           sx={{ mt: 2 }}
         >
@@ -182,15 +253,37 @@ const CalendarSync = () => {
 
               {taskSyncResult && (
                 <Box sx={{ mt: 2 }}>
-                  <Alert severity="success">
-                    <AlertTitle>Sync Completed</AlertTitle>
-                    {taskSyncResult.message}
-                  </Alert>
+                  {/* Count successful and failed syncs */}
+                  {(() => {
+                    const successCount = taskSyncResult.results?.filter((r) => r.result.success).length || 0;
+                    const failCount = taskSyncResult.results?.filter((r) => !r.result.success).length || 0;
+                    const overallStatus = failCount === 0 ? 'success' : successCount > 0 ? 'warning' : 'error';
+
+                    return (
+                      <Alert severity={overallStatus}>
+                        <AlertTitle>Sync Completed</AlertTitle>
+                        {taskSyncResult.message}
+                        {failCount > 0 && (
+                          <Typography variant="body2" sx={{ mt: 1 }}>
+                            {failCount} task(s) failed to sync. Check details below.
+                          </Typography>
+                        )}
+                      </Alert>
+                    );
+                  })()}
+
                   {taskSyncResult.results && taskSyncResult.results.length > 0 && (
                     <Paper sx={{ mt: 2, maxHeight: 300, overflow: 'auto' }}>
                       <List dense>
                         {taskSyncResult.results.map((result, index) => (
-                          <ListItem key={index}>
+                          <ListItem
+                            key={index}
+                            sx={{
+                              borderLeft: '4px solid',
+                              borderColor: result.result.success ? 'success.main' : 'error.main',
+                              mb: 1
+                            }}
+                          >
                             <ListItemIcon>
                               {result.result.success ? (
                                 <CheckCircleOutlined style={{ color: 'green' }} />
@@ -200,7 +293,17 @@ const CalendarSync = () => {
                             </ListItemIcon>
                             <ListItemText
                               primary={result.taskTitle}
-                              secondary={result.result.success ? 'Successfully synced' : `Error: ${result.result.error}`}
+                              secondary={
+                                result.result.success ? (
+                                  'Successfully synced'
+                                ) : (
+                                  <Typography component="span" color="error">
+                                    Error: {result.result.error}
+                                    {result.result.error === 'invalid_grant' &&
+                                      ' - Your Google Calendar authorization has expired. Please reconnect your account.'}
+                                  </Typography>
+                                )
+                              }
                             />
                           </ListItem>
                         ))}
@@ -235,15 +338,37 @@ const CalendarSync = () => {
 
               {projectSyncResult && (
                 <Box sx={{ mt: 2 }}>
-                  <Alert severity="success">
-                    <AlertTitle>Sync Completed</AlertTitle>
-                    {projectSyncResult.message}
-                  </Alert>
+                  {/* Count successful and failed syncs */}
+                  {(() => {
+                    const successCount = projectSyncResult.results?.filter((r) => r.result.success).length || 0;
+                    const failCount = projectSyncResult.results?.filter((r) => !r.result.success).length || 0;
+                    const overallStatus = failCount === 0 ? 'success' : successCount > 0 ? 'warning' : 'error';
+
+                    return (
+                      <Alert severity={overallStatus}>
+                        <AlertTitle>Sync Completed</AlertTitle>
+                        {projectSyncResult.message}
+                        {failCount > 0 && (
+                          <Typography variant="body2" sx={{ mt: 1 }}>
+                            {failCount} project(s) failed to sync. Check details below.
+                          </Typography>
+                        )}
+                      </Alert>
+                    );
+                  })()}
+
                   {projectSyncResult.results && projectSyncResult.results.length > 0 && (
                     <Paper sx={{ mt: 2, maxHeight: 300, overflow: 'auto' }}>
                       <List dense>
                         {projectSyncResult.results.map((result, index) => (
-                          <ListItem key={index}>
+                          <ListItem
+                            key={index}
+                            sx={{
+                              borderLeft: '4px solid',
+                              borderColor: result.result.success ? 'success.main' : 'error.main',
+                              mb: 1
+                            }}
+                          >
                             <ListItemIcon>
                               {result.result.success ? (
                                 <CheckCircleOutlined style={{ color: 'green' }} />
@@ -253,7 +378,17 @@ const CalendarSync = () => {
                             </ListItemIcon>
                             <ListItemText
                               primary={result.projectName}
-                              secondary={result.result.success ? 'Successfully synced' : `Error: ${result.result.error}`}
+                              secondary={
+                                result.result.success ? (
+                                  'Successfully synced'
+                                ) : (
+                                  <Typography component="span" color="error">
+                                    Error: {result.result.error}
+                                    {result.result.error === 'invalid_grant' &&
+                                      ' - Your Google Calendar authorization has expired. Please reconnect your account.'}
+                                  </Typography>
+                                )
+                              }
                             />
                           </ListItem>
                         ))}

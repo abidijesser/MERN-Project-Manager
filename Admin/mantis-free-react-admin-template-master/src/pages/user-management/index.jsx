@@ -40,6 +40,8 @@ import DeleteIcon from '@ant-design/icons/DeleteOutlined';
 import AddIcon from '@ant-design/icons/PlusOutlined';
 import SearchIcon from '@ant-design/icons/SearchOutlined';
 import CloseIcon from '@ant-design/icons/CloseOutlined';
+import LockIcon from '@ant-design/icons/LockOutlined';
+import UnlockIcon from '@ant-design/icons/UnlockOutlined';
 
 // ==============================|| USER MANAGEMENT ||============================== //
 
@@ -301,6 +303,36 @@ const UserManagement = () => {
     });
   };
 
+  // Fonction pour bloquer/débloquer un utilisateur
+  const handleToggleBlockUser = async (user) => {
+    try {
+      const newBlockedStatus = !user.isBlocked;
+      const response = await api.put(`/auth/users/${user._id}/block`, { isBlocked: newBlockedStatus });
+
+      if (response.data.success) {
+        setSnackbar({
+          open: true,
+          message: newBlockedStatus ? `User ${user.name} has been blocked` : `User ${user.name} has been unblocked`,
+          severity: 'success'
+        });
+        fetchUsers();
+      } else {
+        setSnackbar({
+          open: true,
+          message: response.data.error || 'Error toggling user block status',
+          severity: 'error'
+        });
+      }
+    } catch (error) {
+      console.error('Error toggling user block status:', error);
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.error || 'Error toggling user block status',
+        severity: 'error'
+      });
+    }
+  };
+
   return (
     <MainCard title="User Management">
       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -339,34 +371,48 @@ const UserManagement = () => {
               <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Role</TableCell>
+              <TableCell>Status</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} align="center">
+                <TableCell colSpan={5} align="center">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} align="center">
+                <TableCell colSpan={5} align="center">
                   No users found
                 </TableCell>
               </TableRow>
             ) : (
               filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user) => (
-                <TableRow key={user._id}>
+                <TableRow key={user._id} sx={{ bgcolor: user.isBlocked ? 'rgba(255, 0, 0, 0.05)' : 'inherit' }}>
                   <TableCell>{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.role}</TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color={user.isBlocked ? 'error' : 'success'} sx={{ fontWeight: 'bold' }}>
+                      {user.isBlocked ? 'Blocked' : 'Active'}
+                    </Typography>
+                  </TableCell>
                   <TableCell>
                     <IconButton color="primary" onClick={() => handleOpenEditDialog(user)}>
                       <EditIcon />
                     </IconButton>
                     <IconButton color="error" onClick={() => handleOpenDeleteDialog(user)}>
                       <DeleteIcon />
+                    </IconButton>
+                    <IconButton
+                      color={user.isBlocked ? 'success' : 'warning'}
+                      onClick={() => handleToggleBlockUser(user)}
+                      disabled={user.role === 'Admin'}
+                      title={user.isBlocked ? 'Unblock User' : 'Block User'}
+                    >
+                      {user.isBlocked ? <UnlockIcon /> : <LockIcon />}
                     </IconButton>
                   </TableCell>
                 </TableRow>

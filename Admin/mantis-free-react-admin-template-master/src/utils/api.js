@@ -52,12 +52,22 @@ api.interceptors.response.use(
 
     // Handle 401 Unauthorized errors (token expired or invalid)
     if (error.response && error.response.status === 401) {
-      console.log('Admin API - 401 Unauthorized error, redirecting to login');
-      // Clear token and redirect to login
-      localStorage.removeItem('token');
-      localStorage.removeItem('userRole');
-      // Redirect to client login page instead of admin login
-      window.location.href = 'http://localhost:3000/#/login';
+      // Check if this is a Google Calendar reauthorization error
+      const isCalendarAuthError =
+        error.response.data?.code === 'REAUTHORIZATION_REQUIRED' ||
+        (error.config?.url?.includes('/calendar/') && error.response.data?.error?.includes('Google Calendar'));
+
+      if (isCalendarAuthError) {
+        console.log('Admin API - Google Calendar auth error, not redirecting to login');
+        // Let the component handle this error
+      } else {
+        console.log('Admin API - 401 Unauthorized error, redirecting to login');
+        // Clear token and redirect to login
+        localStorage.removeItem('token');
+        localStorage.removeItem('userRole');
+        // Redirect to client login page instead of admin login
+        window.location.href = 'http://localhost:3000/#/login';
+      }
     }
     return Promise.reject(error);
   }

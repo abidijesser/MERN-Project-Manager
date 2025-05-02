@@ -170,14 +170,14 @@ export default function Profile() {
           onClick={handleToggle}
         >
           <Stack direction="row" sx={{ gap: 1.25, alignItems: 'center', p: 0.5 }}>
+            <Typography variant="subtitle1" sx={{ textTransform: 'capitalize', fontWeight: 'bold' }}>
+              {user ? user.name : 'Loading...'}
+            </Typography>
             {profilePicture ? (
               <Avatar alt="profile user" src={`http://localhost:3001/${profilePicture}`} size="sm" />
             ) : (
               <Avatar alt="profile user" src={avatar1} size="sm" />
             )}
-            <Typography variant="subtitle1" sx={{ textTransform: 'capitalize' }}>
-              {user ? user.name : 'Loading...'}
-            </Typography>
           </Stack>
         </ButtonBase>
         <Popper

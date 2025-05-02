@@ -45,6 +45,10 @@ const UserSchema = new Schema({
     type: String,
     default: null,
   },
+  isBlocked: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Modifier le middleware pre-save

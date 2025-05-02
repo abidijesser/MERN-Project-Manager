@@ -6,6 +6,7 @@ import MainRoutes from './MainRoutes';
 import LoginRoutes from './LoginRoutes';
 import apiNoRedirect from 'utils/apiNoRedirect';
 import Loader from 'components/Loader';
+import NotFoundPage from 'pages/error/NotFoundPage';
 
 // Redirect component for root path
 const RootRedirect = () => {
@@ -114,7 +115,11 @@ const router = createBrowserRouter(
       element: <RootRedirect />
     },
     MainRoutes,
-    LoginRoutes
+    LoginRoutes,
+    {
+      path: '*',
+      element: <NotFoundPage />
+    }
   ],
   { basename: import.meta.env.VITE_APP_BASE_NAME }
 );

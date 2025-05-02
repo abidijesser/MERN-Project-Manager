@@ -102,15 +102,18 @@ const handleCallback = async (req, res) => {
 
     // Redirect to the calendar sync page with success message
     console.log("Redirecting to calendar sync page with success message");
-    res.redirect("http://localhost:5173/calendar-sync?success=true");
+    // Make sure we're using the correct URL format
+    const redirectUrl = "http://localhost:5173/calendar-sync?success=true";
+    console.log("Redirect URL:", redirectUrl);
+    res.redirect(redirectUrl);
   } catch (error) {
     console.error("Error handling callback:", error);
     // Redirect to the calendar sync page with error message
-    res.redirect(
-      `http://localhost:5173/calendar-sync?error=${encodeURIComponent(
-        error.message
-      )}`
-    );
+    const errorUrl = `http://localhost:5173/calendar-sync?error=${encodeURIComponent(
+      error.message
+    )}`;
+    console.log("Error redirect URL:", errorUrl);
+    res.redirect(errorUrl);
   }
 };
 
@@ -123,6 +126,7 @@ const syncTasks = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "User not authenticated with Google Calendar",
+        code: "NOT_AUTHENTICATED",
       });
     }
 
@@ -131,7 +135,43 @@ const syncTasks = async (req, res) => {
     const content = await fs.readFile(credentialsPath);
     const credentials = JSON.parse(content);
 
-    // Get authorized client
+    // Try to refresh token if needed
+    const refreshResult = await googleCalendarService.refreshToken(
+      credentials,
+      user.googleCalendarToken
+    );
+
+    if (!refreshResult.success) {
+      // If token refresh failed and requires reauthorization
+      if (refreshResult.requiresReauth) {
+        console.log("Token refresh failed - reauthorization required");
+        return res.status(401).json({
+          success: false,
+          error:
+            "Google Calendar authorization expired. Please reconnect your account.",
+          code: "REAUTHORIZATION_REQUIRED",
+          details: refreshResult.error,
+          errorCode: refreshResult.errorCode,
+        });
+      }
+
+      // Other token refresh errors
+      return res.status(500).json({
+        success: false,
+        error: "Failed to refresh Google Calendar token",
+        details: refreshResult.error,
+        code: refreshResult.errorCode,
+      });
+    }
+
+    // Update user's token if it was refreshed
+    if (refreshResult.token !== user.googleCalendarToken) {
+      user.googleCalendarToken = refreshResult.token;
+      await user.save();
+      console.log("Updated user's Google Calendar token");
+    }
+
+    // Get authorized client with the possibly refreshed token
     const auth = googleCalendarService.getAuthorizedClient(
       credentials,
       user.googleCalendarToken
@@ -198,6 +238,7 @@ const syncProjects = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "User not authenticated with Google Calendar",
+        code: "NOT_AUTHENTICATED",
       });
     }
 
@@ -206,7 +247,43 @@ const syncProjects = async (req, res) => {
     const content = await fs.readFile(credentialsPath);
     const credentials = JSON.parse(content);
 
-    // Get authorized client
+    // Try to refresh token if needed
+    const refreshResult = await googleCalendarService.refreshToken(
+      credentials,
+      user.googleCalendarToken
+    );
+
+    if (!refreshResult.success) {
+      // If token refresh failed and requires reauthorization
+      if (refreshResult.requiresReauth) {
+        console.log("Token refresh failed - reauthorization required");
+        return res.status(401).json({
+          success: false,
+          error:
+            "Google Calendar authorization expired. Please reconnect your account.",
+          code: "REAUTHORIZATION_REQUIRED",
+          details: refreshResult.error,
+          errorCode: refreshResult.errorCode,
+        });
+      }
+
+      // Other token refresh errors
+      return res.status(500).json({
+        success: false,
+        error: "Failed to refresh Google Calendar token",
+        details: refreshResult.error,
+        code: refreshResult.errorCode,
+      });
+    }
+
+    // Update user's token if it was refreshed
+    if (refreshResult.token !== user.googleCalendarToken) {
+      user.googleCalendarToken = refreshResult.token;
+      await user.save();
+      console.log("Updated user's Google Calendar token");
+    }
+
+    // Get authorized client with the possibly refreshed token
     const auth = googleCalendarService.getAuthorizedClient(
       credentials,
       user.googleCalendarToken
@@ -275,6 +352,7 @@ const syncTask = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "User not authenticated with Google Calendar",
+        code: "NOT_AUTHENTICATED",
       });
     }
 
@@ -283,7 +361,43 @@ const syncTask = async (req, res) => {
     const content = await fs.readFile(credentialsPath);
     const credentials = JSON.parse(content);
 
-    // Get authorized client
+    // Try to refresh token if needed
+    const refreshResult = await googleCalendarService.refreshToken(
+      credentials,
+      user.googleCalendarToken
+    );
+
+    if (!refreshResult.success) {
+      // If token refresh failed and requires reauthorization
+      if (refreshResult.requiresReauth) {
+        console.log("Token refresh failed - reauthorization required");
+        return res.status(401).json({
+          success: false,
+          error:
+            "Google Calendar authorization expired. Please reconnect your account.",
+          code: "REAUTHORIZATION_REQUIRED",
+          details: refreshResult.error,
+          errorCode: refreshResult.errorCode,
+        });
+      }
+
+      // Other token refresh errors
+      return res.status(500).json({
+        success: false,
+        error: "Failed to refresh Google Calendar token",
+        details: refreshResult.error,
+        code: refreshResult.errorCode,
+      });
+    }
+
+    // Update user's token if it was refreshed
+    if (refreshResult.token !== user.googleCalendarToken) {
+      user.googleCalendarToken = refreshResult.token;
+      await user.save();
+      console.log("Updated user's Google Calendar token");
+    }
+
+    // Get authorized client with the possibly refreshed token
     const auth = googleCalendarService.getAuthorizedClient(
       credentials,
       user.googleCalendarToken
@@ -345,6 +459,7 @@ const syncProject = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "User not authenticated with Google Calendar",
+        code: "NOT_AUTHENTICATED",
       });
     }
 
@@ -353,7 +468,43 @@ const syncProject = async (req, res) => {
     const content = await fs.readFile(credentialsPath);
     const credentials = JSON.parse(content);
 
-    // Get authorized client
+    // Try to refresh token if needed
+    const refreshResult = await googleCalendarService.refreshToken(
+      credentials,
+      user.googleCalendarToken
+    );
+
+    if (!refreshResult.success) {
+      // If token refresh failed and requires reauthorization
+      if (refreshResult.requiresReauth) {
+        console.log("Token refresh failed - reauthorization required");
+        return res.status(401).json({
+          success: false,
+          error:
+            "Google Calendar authorization expired. Please reconnect your account.",
+          code: "REAUTHORIZATION_REQUIRED",
+          details: refreshResult.error,
+          errorCode: refreshResult.errorCode,
+        });
+      }
+
+      // Other token refresh errors
+      return res.status(500).json({
+        success: false,
+        error: "Failed to refresh Google Calendar token",
+        details: refreshResult.error,
+        code: refreshResult.errorCode,
+      });
+    }
+
+    // Update user's token if it was refreshed
+    if (refreshResult.token !== user.googleCalendarToken) {
+      user.googleCalendarToken = refreshResult.token;
+      await user.save();
+      console.log("Updated user's Google Calendar token");
+    }
+
+    // Get authorized client with the possibly refreshed token
     const auth = googleCalendarService.getAuthorizedClient(
       credentials,
       user.googleCalendarToken
@@ -432,6 +583,37 @@ const checkAuth = async (req, res) => {
   }
 };
 
+// Remove Google Calendar token (for when it's invalid)
+const removeToken = async (req, res) => {
+  try {
+    // Get user
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    // Remove token
+    user.googleCalendarToken = null;
+    await user.save();
+    console.log("Removed Google Calendar token for user:", user.email);
+
+    res.status(200).json({
+      success: true,
+      message: "Google Calendar token removed successfully",
+    });
+  } catch (error) {
+    console.error("Error removing token:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to remove Google Calendar token",
+      details: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAuthUrl,
   handleCallback,
@@ -440,4 +622,5 @@ module.exports = {
   syncTask,
   syncProject,
   checkAuth,
+  removeToken,
 };

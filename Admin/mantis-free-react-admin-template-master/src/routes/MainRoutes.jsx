@@ -38,6 +38,9 @@ const CalendarSync = Loadable(lazy(() => import('pages/calendar-sync')));
 // render - media management
 const MediaManagement = Loadable(lazy(() => import('pages/media')));
 
+// render - error pages
+const NotFoundPage = Loadable(lazy(() => import('pages/error/NotFoundPage')));
+
 // ==============================|| MAIN ROUTING ||============================== //
 
 const MainRoutes = {

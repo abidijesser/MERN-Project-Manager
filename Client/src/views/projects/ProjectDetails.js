@@ -26,6 +26,7 @@ const ProjectDetails = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState(1)
+  const [userRole, setUserRole] = useState(localStorage.getItem('userRole') || '')
   const { id } = useParams()
   const navigate = useNavigate()
 
@@ -89,6 +90,13 @@ const ProjectDetails = () => {
     return <div className="alert alert-warning">Projet non trouvé</div>
   }
 
+  // Fonction pour vérifier si l'utilisateur peut modifier le projet
+  const canEditProject = () => {
+    const userId = localStorage.getItem('userId')
+    // L'utilisateur peut modifier s'il est admin ou propriétaire du projet
+    return userRole === 'Admin' || (project.owner && project.owner._id === userId)
+  }
+
   return (
     <CRow>
       <CCol>
@@ -96,12 +104,12 @@ const ProjectDetails = () => {
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <strong>Détails du projet</strong>
             <div>
-              {/* Show edit button for all users but disable if not owner */}
+              {/* Show edit button for all users but disable if not admin or owner */}
               <CButton
                 color="warning"
                 className="me-2"
                 onClick={() => navigate(`/projects/edit/${id}`)}
-                disabled={!(project.owner && project.owner._id === localStorage.getItem('userId'))}
+                disabled={!canEditProject()}
               >
                 Modifier
               </CButton>
@@ -111,6 +119,12 @@ const ProjectDetails = () => {
             </div>
           </CCardHeader>
           <CCardBody>
+            {!canEditProject() && (
+              <div className="alert alert-info mb-3">
+                <strong>Note:</strong> Seuls les administrateurs ou le propriétaire du projet
+                peuvent modifier ce projet.
+              </div>
+            )}
             <h2>{project.projectName}</h2>
             <p>{project.description}</p>
             <p>

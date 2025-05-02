@@ -24,6 +24,60 @@ const getAuthorizedClient = (credentials, token) => {
   return oAuth2Client;
 };
 
+// Refresh token if expired
+const refreshToken = async (credentials, token) => {
+  try {
+    console.log("Attempting to refresh token...");
+    const oAuth2Client = createOAuth2Client(credentials);
+    oAuth2Client.setCredentials(token);
+
+    // Check if token is expired or about to expire
+    const tokenExpiry = token.expiry_date ? new Date(token.expiry_date) : null;
+    const now = new Date();
+    const isExpired = tokenExpiry && tokenExpiry <= now;
+
+    if (isExpired && token.refresh_token) {
+      console.log("Token is expired, refreshing...");
+      const { tokens } = await oAuth2Client.refreshToken(token.refresh_token);
+      console.log("Token refreshed successfully");
+
+      // Merge the new tokens with the old ones to preserve the refresh_token if not returned
+      const newToken = {
+        ...token,
+        ...tokens,
+        refresh_token: tokens.refresh_token || token.refresh_token,
+      };
+
+      return {
+        success: true,
+        token: newToken,
+      };
+    }
+
+    return {
+      success: true,
+      token: token,
+    };
+  } catch (error) {
+    console.error("Error refreshing token:", error);
+
+    // Check for specific error types
+    const isInvalidGrant =
+      error.message?.includes("invalid_grant") ||
+      error.response?.data?.error === "invalid_grant";
+
+    return {
+      success: false,
+      error: error.message,
+      errorCode: isInvalidGrant
+        ? "INVALID_GRANT"
+        : error.code || "UNKNOWN_ERROR",
+      requiresReauth: isInvalidGrant,
+      originalError: error,
+    };
+  }
+};
+
 // Generate authorization URL
 const getAuthUrl = (credentials) => {
   try {
@@ -284,9 +338,11 @@ module.exports = {
   getAuthUrl,
   getToken,
   getAuthorizedClient,
+  refreshToken,
   createTaskEvent,
   createProjectEvent,
   updateTaskEvent,
   updateProjectEvent,
   deleteEvent,
+  getColorIdByPriority,
 };

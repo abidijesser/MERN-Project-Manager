@@ -318,6 +318,16 @@ async function login(req, res) {
       });
     }
 
+    // Check if user is blocked
+    if (user.isBlocked) {
+      console.log("Login failed - user is blocked:", email);
+      return res.status(403).json({
+        success: false,
+        error:
+          "Votre compte a été bloqué. Veuillez contacter l'administrateur.",
+      });
+    }
+
     // Verify the password
     console.log("Verifying password for user:", user.email);
     const isMatched = await bcrypt.compare(password, user.password);
@@ -965,18 +975,75 @@ const getUsersForSharing = async (req, res) => {
   try {
     // Récupérer tous les utilisateurs sauf l'utilisateur actuel
     const users = await User.find({ _id: { $ne: req.user.id } })
-      .select('_id name email profilePicture')
+      .select("_id name email profilePicture")
       .sort({ name: 1 });
 
     res.status(200).json({
       success: true,
-      data: users
+      data: users,
     });
   } catch (error) {
-    console.error('Erreur lors de la récupération des utilisateurs pour le partage:', error);
+    console.error(
+      "Erreur lors de la récupération des utilisateurs pour le partage:",
+      error
+    );
     res.status(500).json({
       success: false,
-      error: 'Erreur lors de la récupération des utilisateurs'
+      error: "Erreur lors de la récupération des utilisateurs",
+    });
+  }
+};
+
+// Fonction pour bloquer/débloquer un utilisateur
+const toggleBlockUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { isBlocked } = req.body;
+
+    if (isBlocked === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: "Le statut de blocage est requis",
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "Utilisateur non trouvé",
+      });
+    }
+
+    // Ne pas permettre de bloquer un administrateur
+    if (user.role === "Admin" && isBlocked) {
+      return res.status(403).json({
+        success: false,
+        error: "Impossible de bloquer un administrateur",
+      });
+    }
+
+    user.isBlocked = isBlocked;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: isBlocked
+        ? "Utilisateur bloqué avec succès"
+        : "Utilisateur débloqué avec succès",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isBlocked: user.isBlocked,
+      },
+    });
+  } catch (error) {
+    console.error("Erreur lors du blocage/déblocage de l'utilisateur:", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur lors du blocage/déblocage de l'utilisateur",
     });
   }
 };
@@ -1001,4 +1068,5 @@ module.exports = {
   disable2FA,
   uploadUserProfilePicture,
   getUsersForSharing,
+  toggleBlockUser,
 };

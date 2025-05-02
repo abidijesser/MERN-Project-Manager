@@ -24,6 +24,7 @@ router.get("/users/:id", auth, authController.getUserById); // Allow all authent
 router.post("/users", auth, adminAuth, authController.createUserByAdmin); // Nouvelle route pour créer des utilisateurs par les admins
 router.put("/users/:id", auth, adminAuth, authController.updateUser);
 router.delete("/users/:id", auth, adminAuth, authController.deleteUser);
+router.put("/users/:id/block", auth, adminAuth, authController.toggleBlockUser); // Route pour bloquer/débloquer un utilisateur
 
 // Route pour récupérer les utilisateurs pour le partage de documents - accessible à tous les utilisateurs authentifiés
 router.get("/users-for-sharing", auth, authController.getUsersForSharing);

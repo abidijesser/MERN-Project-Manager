@@ -25,6 +25,7 @@ const ProjectsList = () => {
   const [filteredProjects, setFilteredProjects] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(false)
+  const [userRole, setUserRole] = useState(localStorage.getItem('userRole') || '')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -96,6 +97,13 @@ const ProjectsList = () => {
     return <CBadge color={statusColors[status] || 'info'}>{status}</CBadge>
   }
 
+  // Fonction pour vérifier si l'utilisateur peut modifier/supprimer un projet
+  const canEditProject = (project) => {
+    const userId = localStorage.getItem('userId')
+    // L'utilisateur peut modifier/supprimer s'il est admin ou propriétaire du projet
+    return userRole === 'Admin' || (project.owner && project.owner._id === userId)
+  }
+
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
@@ -134,6 +142,10 @@ const ProjectsList = () => {
         </div>
       </CCardHeader>
       <CCardBody>
+        <div className="alert alert-info mb-3">
+          <strong>Note:</strong> Seuls les administrateurs ou les propriétaires de projet peuvent
+          modifier ou supprimer un projet.
+        </div>
         <CTable hover responsive>
           <CTableHead>
             <CTableRow>
@@ -181,26 +193,22 @@ const ProjectsList = () => {
                     >
                       Détails
                     </CButton>
-                    {/* Show edit button for all users but disable if not owner */}
+                    {/* Show edit button for all users but disable if not admin or owner */}
                     <CButton
                       color="warning"
                       size="sm"
                       className="me-2"
                       onClick={() => navigate(`/projects/edit/${project._id}`)}
-                      disabled={
-                        !(project.owner && project.owner._id === localStorage.getItem('userId'))
-                      }
+                      disabled={!canEditProject(project)}
                     >
                       Modifier
                     </CButton>
-                    {/* Show delete button for all users but disable if not owner */}
+                    {/* Show delete button for all users but disable if not admin or owner */}
                     <CButton
                       color="danger"
                       size="sm"
                       onClick={() => handleDelete(project._id)}
-                      disabled={
-                        !(project.owner && project.owner._id === localStorage.getItem('userId'))
-                      }
+                      disabled={!canEditProject(project)}
                     >
                       Supprimer
                     </CButton>

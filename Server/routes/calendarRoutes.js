@@ -12,6 +12,7 @@ router.use(auth);
 // Google Calendar authentication routes
 router.get("/auth-url", calendarController.getAuthUrl);
 router.get("/check-auth", calendarController.checkAuth);
+router.post("/remove-token", calendarController.removeToken);
 
 // Sync routes
 router.post("/sync-tasks", calendarController.syncTasks);
