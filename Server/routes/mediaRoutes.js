@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const mediaController = require("../controllers/mediaController");
-const { protect, authorize } = require("../middleware/authMiddleware");
+const auth = require("../middleware/auth");
 
 // Apply authentication middleware to all routes
-router.use(protect);
+router.use(auth);
 
 // Get all media (accessible to all authenticated users)
 router.get("/", mediaController.getAllMedia);

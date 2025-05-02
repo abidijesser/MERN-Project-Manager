@@ -11,11 +11,13 @@ import {
   CDropdownToggle,
   CProgress,
   CImage,
+  CSpinner,
 } from '@coreui/react'
 import { cilSettings, cilTask, cilUser, cilAccountLogout, cilCalendar } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
 import { toast } from 'react-toastify'
 import axios from '../../utils/axios'
+import { getTotalTasksCount } from '../../services/taskService'
 
 const AppHeaderDropdown = () => {
   const navigate = useNavigate()
@@ -23,6 +25,21 @@ const AppHeaderDropdown = () => {
   const [userRole, setUserRole] = useState('Client')
   const [profilePicture, setProfilePicture] = useState(null)
   const [userId, setUserId] = useState(null)
+  const [totalTasks, setTotalTasks] = useState(0)
+  const [loadingTasks, setLoadingTasks] = useState(false)
+
+  // Fonction pour récupérer le nombre total de tâches
+  const fetchTotalTasks = async () => {
+    try {
+      setLoadingTasks(true)
+      const count = await getTotalTasksCount()
+      setTotalTasks(count)
+    } catch (error) {
+      console.error('Error fetching total tasks count:', error)
+    } finally {
+      setLoadingTasks(false)
+    }
+  }
 
   useEffect(() => {
     // Get user name from localStorage
@@ -55,6 +72,9 @@ const AppHeaderDropdown = () => {
 
     // Fetch current user profile to get the latest profile picture
     fetchUserProfile()
+
+    // Fetch total tasks count
+    fetchTotalTasks()
   }, [])
 
   const fetchUserProfile = async () => {
@@ -203,12 +223,16 @@ const AppHeaderDropdown = () => {
           <CIcon icon={cilUser} className="me-2 text-primary" />
           My Profile
         </CDropdownItem>
-        <CDropdownItem href="/tasks">
+        <CDropdownItem onClick={() => navigate('/tasks')}>
           <CIcon icon={cilTask} className="me-2 text-info" />
           My Tasks
-          <CBadge color="info" className="ms-2">
-            5
-          </CBadge>
+          {loadingTasks ? (
+            <CSpinner size="sm" color="info" className="ms-2" />
+          ) : (
+            <CBadge color="info" className="ms-2">
+              {totalTasks}
+            </CBadge>
+          )}
         </CDropdownItem>
         <CDropdownItem href="/calendar">
           <CIcon icon={cilCalendar} className="me-2 text-success" />

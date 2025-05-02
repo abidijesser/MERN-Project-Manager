@@ -73,17 +73,30 @@ const UserManagement = () => {
 
   // Filter users based on search query
   useEffect(() => {
+    // S'assurer que users est un tableau
+    if (!Array.isArray(users)) {
+      console.error('Users is not an array:', users);
+      setFilteredUsers([]);
+      setPage(0);
+      return;
+    }
+
     if (!searchQuery.trim()) {
       setFilteredUsers(users);
     } else {
       const lowercasedQuery = searchQuery.toLowerCase();
-      const filtered = users.filter(
-        (user) =>
-          (user.name && user.name.toLowerCase().includes(lowercasedQuery)) ||
-          (user.email && user.email.toLowerCase().includes(lowercasedQuery)) ||
-          (user.role && user.role.toLowerCase().includes(lowercasedQuery))
-      );
-      setFilteredUsers(filtered);
+      try {
+        const filtered = users.filter(
+          (user) =>
+            (user && user.name && user.name.toLowerCase().includes(lowercasedQuery)) ||
+            (user && user.email && user.email.toLowerCase().includes(lowercasedQuery)) ||
+            (user && user.role && user.role.toLowerCase().includes(lowercasedQuery))
+        );
+        setFilteredUsers(filtered);
+      } catch (error) {
+        console.error('Error filtering users:', error);
+        setFilteredUsers([]);
+      }
     }
     // Reset to first page when search changes
     setPage(0);
@@ -93,10 +106,48 @@ const UserManagement = () => {
     try {
       setLoading(true);
       const response = await api.get('/auth/users');
-      setUsers(response.data);
+
+      // Vérifier la structure de la réponse et extraire le tableau d'utilisateurs
+      console.log('API Response:', response.data);
+
+      if (response.data && response.data.success && Array.isArray(response.data.users)) {
+        // Format correct: { success: true, users: [...] }
+        setUsers(response.data.users);
+      } else if (response.data && Array.isArray(response.data)) {
+        // Format alternatif: directement un tableau
+        setUsers(response.data);
+      } else if (response.data && typeof response.data === 'object') {
+        // Si la réponse est un objet mais pas dans le format attendu
+        // Essayer de trouver une propriété qui contient un tableau
+        const possibleUserArrays = Object.values(response.data).filter((val) => Array.isArray(val));
+        if (possibleUserArrays.length > 0) {
+          // Utiliser le premier tableau trouvé
+          setUsers(possibleUserArrays[0]);
+        } else {
+          // Fallback: créer un tableau vide
+          console.error('Unexpected API response format:', response.data);
+          setUsers([]);
+          setSnackbar({
+            open: true,
+            message: 'Error: Unexpected API response format',
+            severity: 'error'
+          });
+        }
+      } else {
+        // Fallback: créer un tableau vide
+        console.error('Unexpected API response format:', response.data);
+        setUsers([]);
+        setSnackbar({
+          open: true,
+          message: 'Error: Unexpected API response format',
+          severity: 'error'
+        });
+      }
+
       setLoading(false);
     } catch (error) {
       console.error('Error fetching users:', error);
+      setUsers([]); // Initialiser avec un tableau vide en cas d'erreur
       setSnackbar({
         open: true,
         message: 'Error fetching users',

@@ -107,7 +107,7 @@ const MeetingScheduler = () => {
             name="zoomLink"
             value={meetingDetails.zoomLink}
             onChange={handleInputChange}
-            placeholder="Lien Zoom"
+            placeholder="Lien Zoom/Meet"
             className="input-field"
           />
         </div>

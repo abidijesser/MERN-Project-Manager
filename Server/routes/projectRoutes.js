@@ -2,27 +2,34 @@ const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
 const projectController = require("../controllers/projectController");
-
-// Apply auth middleware to all routes
-router.use(auth);
+const Project = require("../models/Project");
 
 // GET all projects
-router.get("/", projectController.getAllProjects);
+router.get("/", auth, async (req, res) => {
+  try {
+    // Filtrer les projets par propriétaire (utilisateur connecté)
+    const projects = await Project.find({ owner: req.user.id }).populate("tasks members owner");
+    res.status(200).json({ success: true, projects });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des projets:", error);
+    res.status(500).json({ success: false, error: "Erreur lors de la récupération des projets" });
+  }
+});
 
 // GET a single project by ID
-router.get("/:id", projectController.getProjectById);
+router.get("/:id", auth, projectController.getProjectById);
 
 // POST create a new project
-router.post("/", projectController.createProject);
+router.post("/", auth, projectController.createProject);
 
 // POST add comment to project
-router.post("/:id/comments", projectController.addComment);
+router.post("/:id/comments", auth, projectController.addComment);
 
 // PUT update an existing project
-router.put("/:id", projectController.updateProject);
+router.put("/:id", auth, projectController.updateProject);
 
 // DELETE a project
-router.delete("/:id", projectController.deleteProject);
+router.delete("/:id", auth, projectController.deleteProject);
 
 // GET project members
 router.get("/:id/members", projectController.getProjectMembers);

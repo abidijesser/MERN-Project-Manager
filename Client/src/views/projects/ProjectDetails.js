@@ -18,6 +18,7 @@ import axios from '../../utils/axios'
 import { toast } from 'react-toastify'
 import CommentList from '../../components/Comments/CommentList'
 import ActivityLogList from '../../components/ActivityLog/ActivityLogList'
+import ProjectDocuments from '../../components/Documents/ProjectDocuments'
 import socketService from '../../services/socketService'
 
 const ProjectDetails = () => {
@@ -149,6 +150,9 @@ const ProjectDetails = () => {
             </div>
           </CCardBody>
         </CCard>
+
+        {/* Project Documents */}
+        <ProjectDocuments projectId={id} />
 
         {/* Tabs for Comments and Activity Log */}
         <CCard>

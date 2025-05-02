@@ -11,7 +11,7 @@ import ProjectDetails from './views/projects/ProjectDetails'
 import EditProject from './views/projects/EditProject'
 import Collaboration from './views/Collaboration/Collaboration'
 import MediaPage from './views/media/MediaPage'
-import ResourcesPage from './views/resources/ResourcesPage'
+import Resources from './views/resources/Resources'
 
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Login = React.lazy(() => import('./views/pages/login/Login'))
@@ -24,6 +24,7 @@ const ForgotPassword = React.lazy(() => import('./views/pages/forgot-password/Fo
 const ResetPassword = React.lazy(() => import('./views/pages/reset-password/ResetPassword'))
 const VerifyEmail = React.lazy(() => import('./views/pages/verify-email/VerifyEmail'))
 const Performances = React.lazy(() => import('./views/Performances/Performances'))
+const EditTask = React.lazy(() => import('./views/tasks/EditTask'))
 const AdminRedirect = React.lazy(() => import('./views/pages/admin-redirect/AdminRedirect'))
 
 const routes = [
@@ -55,7 +56,7 @@ const routes = [
   { path: '/collaboration/notifications', name: 'Notifications', element: Collaboration },
   { path: '/collaboration/meetings', name: 'Réunions', element: Collaboration },
   { path: '/media', name: 'Gestion des médias', element: MediaPage },
-  { path: '/resources', name: 'Ressources', element: ResourcesPage },
+  { path: '/resources', name: 'Ressources', element: Resources },
 ]
 
 export default routes

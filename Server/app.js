@@ -10,6 +10,7 @@ const adminRoutes = require("./routes/admin");
 const taskRoutes = require("./routes/taskRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const chatRoutes = require("./routes/chat");
+const geminiRoutes = require("./routes/gemini");
 const notificationRoutes = require("./routes/notificationRoutes");
 const statsRoutes = require("./routes/statsRoutes");
 const statisticsRoutes = require("./routes/statisticsRoutes");
@@ -18,9 +19,12 @@ const calendarRoutes = require("./routes/calendarRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const activityLogRoutes = require("./routes/activityLogRoutes");
 const mediaRoutes = require("./routes/mediaRoutes");
+const documentRoutes = require("./routes/documentRoutes");
+const shareRoutes = require("./routes/shareRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
 const Message = require("./models/Message"); // Assurez-vous que le modèle Message existe
+const notificationService = require("./services/notificationService");
 require("./config/passportConfig");
 require("./config/facebookStrategy");
 
@@ -30,8 +34,15 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:5173"],
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:3000",
+    ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-request-id"], // Ajout de 'x-request-id'
   })
 );
 app.use(express.json());
@@ -65,6 +76,7 @@ app.use("/admin", adminRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/gemini", geminiRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/statistics", statisticsRoutes);
@@ -73,6 +85,8 @@ app.use("/api/calendar", calendarRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/activity", activityLogRoutes);
 app.use("/api/media", mediaRoutes);
+app.use("/api/documents", documentRoutes);
+app.use("/api/share", shareRoutes);
 // Add a simple test route
 app.get("/api/test", (req, res) => {
   res.json({ message: "Server is running" });
@@ -108,10 +122,20 @@ mongoose
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:5173"],
-    methods: ["GET", "POST"],
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:3000",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "x-request-id"], // Ajout de 'x-request-id'
   },
 });
+
+// Initialize notification service with Socket.io
+notificationService.initializeSocketIO(io);
 
 // WebSocket implementation
 io.on("connection", (socket) => {
@@ -153,6 +177,11 @@ io.on("connection", (socket) => {
           "commentAdded",
           commentData
         );
+      } else if (commentData.documentId) {
+        io.to(`document-${commentData.documentId}`).emit(
+          "commentAdded",
+          commentData
+        );
       }
     } catch (err) {
       console.error("Error processing comment:", err);
@@ -171,6 +200,13 @@ io.on("connection", (socket) => {
 
       if (activityData.project) {
         io.to(`project-${activityData.project}`).emit(
+          "activityAdded",
+          activityData
+        );
+      }
+
+      if (activityData.document) {
+        io.to(`document-${activityData.document}`).emit(
           "activityAdded",
           activityData
         );

@@ -960,6 +960,27 @@ const uploadUserProfilePicture = (req, res) => {
   }
 };
 
+// Fonction pour récupérer les utilisateurs pour le partage de documents
+const getUsersForSharing = async (req, res) => {
+  try {
+    // Récupérer tous les utilisateurs sauf l'utilisateur actuel
+    const users = await User.find({ _id: { $ne: req.user.id } })
+      .select('_id name email profilePicture')
+      .sort({ name: 1 });
+
+    res.status(200).json({
+      success: true,
+      data: users
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des utilisateurs pour le partage:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la récupération des utilisateurs'
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -979,4 +1000,5 @@ module.exports = {
   verify2FA,
   disable2FA,
   uploadUserProfilePicture,
+  getUsersForSharing,
 };

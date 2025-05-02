@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import axios from '../utils/axios'
+import axios from 'axios'
 import { toast } from 'react-toastify'
 import './Notifications.css' // Assurez-vous de créer ce fichier CSS pour les styles
 
-const Notifications = () => {
+const Notifications = ({ socket }) => {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -25,13 +25,37 @@ const Notifications = () => {
     return () => clearInterval(interval)
   }, [])
 
+  useEffect(() => {
+    if (socket) {
+      socket.on('notification', (notification) => {
+        console.log('Notification reçue via socket:', notification)
+        setNotifications((prevNotifications) => [notification, ...prevNotifications])
+      })
+
+      return () => {
+        socket.off('notification')
+      }
+    }
+  }, [socket])
+
   const fetchNotifications = async () => {
     try {
       setLoading(true)
       setError(null)
       console.log('Récupération des notifications...')
+      
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setError('No authentication token found')
+        setLoading(false)
+        return
+      }
 
-      const response = await axios.get('/notifications')
+      const response = await axios.get('http://localhost:3001/api/notifications', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       console.log('Réponse des notifications:', response.data)
 
       if (response.data && response.data.success) {
@@ -63,6 +87,12 @@ const Notifications = () => {
 
   const markAsRead = async (notificationId) => {
     try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('No authentication token found')
+        return
+      }
+
       console.log('Marquage de la notification comme lue:', notificationId)
       await axios.put(`/notifications/${notificationId}/read`)
       setNotifications(

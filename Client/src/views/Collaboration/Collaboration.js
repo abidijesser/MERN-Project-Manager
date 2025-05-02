@@ -80,6 +80,20 @@ const Collaboration = () => {
     }
   }, [])
 
+  useEffect(() => {
+    socket.on('notification', (notification) => {
+      console.log('Nouvelle notification reçue:', notification)
+      if (activeTab === 'notifications') {
+        // Mettre à jour les notifications en temps réel
+        setNotifications((prevNotifications) => [notification, ...prevNotifications])
+      }
+    })
+
+    return () => {
+      socket.off('notification')
+    }
+  }, [activeTab])
+
   // Fonctions
   const sendMessage = () => {
     if (newMessage.trim()) {
@@ -134,6 +148,8 @@ const Collaboration = () => {
       case 'chat':
         return renderChatTab()
       case 'notifications':
+        return <Notifications socket={socket} /> // Passer le socket pour les notifications
+      case 'scheduler':
         return <Notifications />
       case 'meetings':
         return <MeetingScheduler />

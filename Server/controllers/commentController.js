@@ -1,7 +1,9 @@
 const Comment = require("../models/Comment");
 const Task = require("../models/Task");
 const Project = require("../models/Project");
+const Document = require("../models/Document");
 const ActivityLog = require("../models/ActivityLog");
+const notificationService = require("../services/notificationService");
 const mongoose = require("mongoose");
 const { isValidObjectId } = mongoose;
 
@@ -432,11 +434,164 @@ const deleteComment = async (req, res) => {
   }
 };
 
+// Create a comment for a document
+const createDocumentComment = async (req, res) => {
+  try {
+    const { content } = req.body;
+    const { documentId } = req.params;
+
+    console.log("Creating document comment:", {
+      documentId,
+      content,
+      userId: req.user?.id,
+    });
+
+    // Validate documentId
+    if (!isValidObjectId(documentId)) {
+      return res.status(400).json({
+        success: false,
+        error: "ID de document invalide",
+      });
+    }
+
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        error: "Utilisateur non authentifié",
+      });
+    }
+
+    // Check if document exists
+    const document = await Document.findById(documentId);
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        error: "Document non trouvé",
+      });
+    }
+
+    // Create comment
+    const comment = new Comment({
+      content,
+      author: req.user.id,
+      documentId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    try {
+      await comment.save();
+      console.log("Document comment saved successfully:", comment._id);
+    } catch (saveError) {
+      console.error("Error saving document comment:", saveError);
+      return res.status(500).json({
+        success: false,
+        error: "Erreur lors de l'enregistrement du commentaire",
+        details: saveError.message,
+      });
+    }
+
+    // Add comment to document
+    document.comments.push(comment._id);
+    await document.save();
+    console.log("Document updated with new comment");
+
+    // Create activity log
+    const activityLog = new ActivityLog({
+      user: req.user.id,
+      action: "COMMENT",
+      entityType: "DOCUMENT",
+      entityId: documentId,
+      document: documentId,
+      project: document.project,
+      details: {
+        commentId: comment._id,
+        content: content.substring(0, 100), // Store a preview of the comment
+      },
+    });
+
+    await activityLog.save();
+
+    // Create notification
+    try {
+      await notificationService.createDocumentCommentNotification(
+        document,
+        comment,
+        req.user
+      );
+      console.log("Document comment notification created successfully");
+    } catch (notificationError) {
+      console.error("Error creating document comment notification:", notificationError);
+      // Continue despite notification error
+    }
+
+    // Return the comment with author details
+    const populatedComment = await Comment.findById(comment._id).populate(
+      "author",
+      "name email"
+    );
+
+    res.status(201).json({
+      success: true,
+      comment: populatedComment,
+    });
+  } catch (error) {
+    console.error("Error creating document comment:", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur lors de la création du commentaire",
+    });
+  }
+};
+
+// Get comments for a document
+const getDocumentComments = async (req, res) => {
+  try {
+    const { documentId } = req.params;
+
+    // Validate documentId
+    if (!isValidObjectId(documentId)) {
+      return res.status(400).json({
+        success: false,
+        error: "ID de document invalide",
+      });
+    }
+
+    // Check if document exists
+    const document = await Document.findById(documentId);
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        error: "Document non trouvé",
+      });
+    }
+
+    // Get comments for document
+    const comments = await Comment.find({ documentId })
+      .populate("author", "name email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      comments,
+    });
+  } catch (error) {
+    console.error("Error getting document comments:", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur lors de la récupération des commentaires",
+    });
+  }
+};
+
 module.exports = {
   createTaskComment,
   createProjectComment,
   getTaskComments,
   getProjectComments,
+  createDocumentComment,
+  getDocumentComments,
   updateComment,
   deleteComment,
 };

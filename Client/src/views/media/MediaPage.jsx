@@ -12,7 +12,7 @@ import {
   CSpinner,
   CAlert,
 } from '@coreui/react'
-import { UserContext } from '../../context/UserContext'
+import { UserContext } from '../../context/userContext'
 import mediaService from '../../services/mediaService'
 import MediaList from './MediaList'
 import MediaUpload from './MediaUpload'

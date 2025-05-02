@@ -459,13 +459,114 @@ const MediaManagement = () => {
     setOpenViewDialog(true);
   };
 
+  // Vérifier si un projet existe dans la liste des projets
+  const projectExists = (projectId) => {
+    return projects.some((project) => project._id === projectId);
+  };
+
+  // Vérifier si une tâche existe dans la liste des tâches
+  const taskExists = (taskId) => {
+    return tasks.some((task) => task._id === taskId);
+  };
+
+  // Récupérer un projet par son ID
+  const fetchProjectById = async (projectId) => {
+    if (!projectId) return null;
+
+    try {
+      console.log('Fetching project by ID:', projectId);
+      const response = await api.get(`/projects/${projectId}`);
+
+      if (response.data.success && response.data.project) {
+        // Ajouter le projet à la liste des projets s'il n'y est pas déjà
+        if (!projectExists(projectId)) {
+          setProjects((prevProjects) => [...prevProjects, response.data.project]);
+        }
+        return response.data.project;
+      } else if (response.data && !response.data.success) {
+        console.error('Error fetching project:', response.data.error);
+        return null;
+      } else if (response.data) {
+        // Si la réponse est directement le projet
+        if (!projectExists(response.data._id)) {
+          setProjects((prevProjects) => [...prevProjects, response.data]);
+        }
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching project by ID:', error);
+      return null;
+    }
+  };
+
+  // Récupérer une tâche par son ID
+  const fetchTaskById = async (taskId, projectId) => {
+    if (!taskId) return null;
+
+    try {
+      console.log('Fetching task by ID:', taskId);
+      const response = await api.get(`/tasks/${taskId}`);
+
+      if (response.data.success && response.data.task) {
+        // Ajouter la tâche à la liste des tâches si elle n'y est pas déjà
+        if (!taskExists(taskId)) {
+          setTasks((prevTasks) => [...prevTasks, response.data.task]);
+        }
+        return response.data.task;
+      } else if (response.data && !response.data.success) {
+        console.error('Error fetching task:', response.data.error);
+        return null;
+      } else if (response.data) {
+        // Si la réponse est directement la tâche
+        if (!taskExists(response.data._id)) {
+          setTasks((prevTasks) => [...prevTasks, response.data]);
+        }
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching task by ID:', error);
+      return null;
+    }
+  };
+
   // Open edit dialog
-  const openEdit = (media) => {
+  const openEdit = async (media) => {
     setSelectedMedia(media);
+    console.log('Opening edit dialog for media:', media);
 
     // Extract project and task IDs
     const projectId = media.project?._id || media.project || '';
     const taskId = media.task?._id || media.task || '';
+
+    console.log('Project ID:', projectId);
+    console.log('Task ID:', taskId);
+
+    // Vérifier si le projet existe dans la liste des projets
+    let projectValid = projectId ? projectExists(projectId) : true;
+
+    // Si le projet n'existe pas dans la liste mais qu'un ID est fourni, essayer de le récupérer
+    if (projectId && !projectValid) {
+      console.log('Project not in list, fetching...');
+      const project = await fetchProjectById(projectId);
+      projectValid = !!project;
+    }
+
+    // Récupérer les tâches pour le projet si un projet valide est assigné
+    if (projectId && projectValid) {
+      await fetchTasks(projectId);
+    }
+
+    // Vérifier si la tâche existe dans la liste des tâches
+    let taskValid = taskId ? taskExists(taskId) : true;
+
+    // Si la tâche n'existe pas dans la liste mais qu'un ID est fourni, essayer de la récupérer
+    if (taskId && !taskValid && projectId) {
+      console.log('Task not in list, fetching...');
+      const task = await fetchTaskById(taskId, projectId);
+      taskValid = !!task;
+    }
 
     setFormData({
       title: media.title,
@@ -473,14 +574,9 @@ const MediaManagement = () => {
       tags: media.tags ? media.tags.join(', ') : '',
       isPublic: media.isPublic || false,
       file: null,
-      project: projectId,
-      task: taskId
+      project: projectValid ? projectId : '',
+      task: taskValid ? taskId : ''
     });
-
-    // Fetch tasks for the project if a project is assigned
-    if (projectId) {
-      fetchTasks(projectId);
-    }
 
     setOpenEditDialog(true);
   };
@@ -729,6 +825,11 @@ const MediaManagement = () => {
                     </MenuItem>
                   ))}
                 </Select>
+                {formData.project && !projectExists(formData.project) && (
+                  <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                    The selected project is not available in the list. Please select another project.
+                  </Typography>
+                )}
               </FormControl>
             </Grid>
 
@@ -749,6 +850,16 @@ const MediaManagement = () => {
                     </MenuItem>
                   ))}
                 </Select>
+                {formData.task && !taskExists(formData.task) && (
+                  <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                    The selected task is not available in the list. Please select another task.
+                  </Typography>
+                )}
+                {formData.project && tasks.length === 0 && (
+                  <Typography variant="caption" color="info" sx={{ mt: 1, display: 'block' }}>
+                    No tasks available for the selected project.
+                  </Typography>
+                )}
               </FormControl>
             </Grid>
 
@@ -908,6 +1019,11 @@ const MediaManagement = () => {
                     </MenuItem>
                   ))}
                 </Select>
+                {formData.project && !projectExists(formData.project) && (
+                  <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                    The selected project is not available in the list. Please select another project.
+                  </Typography>
+                )}
               </FormControl>
             </Grid>
 
@@ -928,6 +1044,16 @@ const MediaManagement = () => {
                     </MenuItem>
                   ))}
                 </Select>
+                {formData.task && !taskExists(formData.task) && (
+                  <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                    The selected task is not available in the list. Please select another task.
+                  </Typography>
+                )}
+                {formData.project && tasks.length === 0 && (
+                  <Typography variant="caption" color="info" sx={{ mt: 1, display: 'block' }}>
+                    No tasks available for the selected project.
+                  </Typography>
+                )}
               </FormControl>
             </Grid>
 

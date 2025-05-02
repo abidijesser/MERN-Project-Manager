@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
+import axios from 'axios'
 import {
   CContainer,
   CDropdown,
@@ -14,12 +15,13 @@ import {
   CNavItem,
   useColorModes,
   CBadge,
+  CSpinner,
+  CTooltip,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
   cilBell,
   cilContrast,
-  cilEnvelopeOpen,
   cilMenu,
   cilMoon,
   cilSun,
@@ -31,6 +33,7 @@ import {
   cilDescription,
   cilCalculator,
   cilLibrary,
+  cilCheck
 } from '@coreui/icons'
 
 import { AppBreadcrumb } from './index'
@@ -39,15 +42,86 @@ import { AppHeaderDropdown } from './header/index'
 const AppHeader = () => {
   const headerRef = useRef()
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
+  const [notifications, setNotifications] = useState([])
+  const [loadingNotifications, setLoadingNotifications] = useState(false)
+  const [notificationError, setNotificationError] = useState(null)
 
   const dispatch = useDispatch()
   const sidebarShow = useSelector((state) => state.sidebarShow)
+
+  // Fonction pour récupérer les notifications
+  const fetchNotifications = async () => {
+    try {
+      setLoadingNotifications(true)
+      setNotificationError(null)
+
+      const token = localStorage.getItem('token')
+      if (!token) {
+        console.error('Aucun token d\'authentification trouvé')
+        setNotificationError('Vous devez être connecté pour voir vos notifications')
+        setLoadingNotifications(false)
+        return
+      }
+
+      const response = await axios.get('http://localhost:3001/api/notifications', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.data && response.data.success) {
+        setNotifications(response.data.notifications)
+      } else {
+        console.error('Format de réponse invalide:', response.data)
+        setNotificationError('Erreur lors de la récupération des notifications')
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération des notifications:', error)
+      setNotificationError(error.message || 'Erreur lors de la récupération des notifications')
+    } finally {
+      setLoadingNotifications(false)
+    }
+  }
+
+  // Fonction pour marquer une notification comme lue
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
+
+      await axios.put(`http://localhost:3001/api/notifications/${notificationId}/read`, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      // Mettre à jour l'état local
+      setNotifications(prevNotifications =>
+        prevNotifications.map(notification =>
+          notification._id === notificationId
+            ? { ...notification, read: true }
+            : notification
+        )
+      )
+    } catch (error) {
+      console.error('Erreur lors du marquage de la notification comme lue:', error)
+    }
+  }
 
   useEffect(() => {
     document.addEventListener('scroll', () => {
       headerRef.current &&
         headerRef.current.classList.toggle('shadow-sm', document.documentElement.scrollTop > 0)
     })
+
+    // Récupérer toutes les notifications depuis l'API
+    fetchNotifications()
+
+    // Rafraîchir les notifications toutes les 60 secondes
+    const interval = setInterval(fetchNotifications, 60000)
+
+    // Nettoyer l'intervalle lors du démontage du composant
+    return () => clearInterval(interval)
   }, [])
 
   return (
@@ -123,24 +197,91 @@ const AppHeader = () => {
 
           <div className="d-flex align-items-center">
             <CHeaderNav className="header-actions">
-              <CNavItem>
-                <CNavLink href="#" className="action-link">
+              {/* Utiliser directement CDropdown au lieu de l'imbriquer dans CNavItem */}
+              <CDropdown variant="nav-item">
+                <CDropdownToggle caret={false} className="action-link">
                   <div className="icon-wrapper">
                     <CIcon icon={cilBell} size="lg" />
-                    <CBadge color="warning" shape="rounded-pill" position="top-end" size="sm">
-                      3
+                    <CBadge color="danger" shape="rounded-pill" position="top-end" size="sm">
+                      {notifications.filter(notification => !notification.read).length}
                     </CBadge>
                   </div>
-                </CNavLink>
-              </CNavItem>
+                </CDropdownToggle>
+                <CDropdownMenu style={{ minWidth: '300px', maxHeight: '400px', overflowY: 'auto' }}>
+                  <CDropdownItem header="true" className="d-flex justify-content-between align-items-center">
+                    <span>Notifications</span>
+                    {loadingNotifications && <CSpinner size="sm" />}
+                  </CDropdownItem>
+
+                  {notificationError && (
+                    <CDropdownItem className="text-danger">
+                      {notificationError}
+                    </CDropdownItem>
+                  )}
+
+                  {notifications.length > 0 ? (
+                    notifications.map((notification) => (
+                      <CDropdownItem
+                        key={notification._id}
+                        onClick={() => markNotificationAsRead(notification._id)}
+                        style={{
+                          backgroundColor: notification.read ? 'transparent' : '#f0f9ff',
+                          borderLeft: notification.read ? 'none' : '3px solid #1890ff',
+                          padding: '10px 15px',
+                          margin: '2px 0'
+                        }}
+                      >
+                        <div>
+                          <div className="d-flex justify-content-between">
+                            <small className="text-muted">
+                              {new Date(notification.createdAt).toLocaleString()}
+                            </small>
+                            {notification.read && (
+                              <CTooltip content="Lu">
+                                <CIcon icon={cilCheck} size="sm" className="text-success" />
+                              </CTooltip>
+                            )}
+                          </div>
+                          <div>{notification.message}</div>
+                        </div>
+                      </CDropdownItem>
+                    ))
+                  ) : (
+                    <CDropdownItem disabled>Aucune notification</CDropdownItem>
+                  )}
+
+                  <CDropdownItem divider="true" />
+                  <CDropdownItem href="#/collaboration/notifications">
+                    Voir toutes les notifications
+                  </CDropdownItem>
+                </CDropdownMenu>
+              </CDropdown>
               <CNavItem>
-                <CNavLink href="#" className="action-link">
+                <CNavLink href="#/collaboration/chat" className="action-link">
                   <div className="icon-wrapper">
-                    <CIcon icon={cilEnvelopeOpen} size="lg" />
-                    <CBadge color="warning" shape="rounded-pill" position="top-end" size="sm">
-                      5
+                    <div
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        backgroundColor: '#4285F4',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontWeight: 'bold',
+                        fontSize: '16px'
+                      }}
+                    >
+                      G
+                    </div>
+                    <CBadge color="success" shape="rounded-pill" position="top-end" size="sm">
+                      AI
                     </CBadge>
                   </div>
+                  <CTooltip content="Assistant Gemini" placement="bottom">
+                    <span className="visually-hidden">Assistant Gemini</span>
+                  </CTooltip>
                 </CNavLink>
               </CNavItem>
             </CHeaderNav>

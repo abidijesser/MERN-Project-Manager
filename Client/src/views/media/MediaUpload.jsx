@@ -14,7 +14,7 @@ import {
   CCard,
   CCardBody,
 } from '@coreui/react'
-import { UserContext } from '../../context/UserContext'
+import { UserContext } from '../../context/userContext'
 import mediaService from '../../services/mediaService'
 import axios from 'axios'
 

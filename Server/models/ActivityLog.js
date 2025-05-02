@@ -23,7 +23,7 @@ const ActivityLogSchema = new Schema({
   entityType: {
     type: String,
     required: true,
-    enum: ["PROJECT", "TASK", "COMMENT", "USER"],
+    enum: ["PROJECT", "TASK", "COMMENT", "USER", "DOCUMENT"],
   },
   entityId: {
     type: Schema.Types.ObjectId,
@@ -41,6 +41,10 @@ const ActivityLogSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Task",
   },
+  document: {
+    type: Schema.Types.ObjectId,
+    ref: "Document",
+  },
   timestamp: {
     type: Date,
     default: Date.now,
@@ -52,6 +56,7 @@ ActivityLogSchema.index({ entityType: 1, entityId: 1 });
 ActivityLogSchema.index({ user: 1 });
 ActivityLogSchema.index({ project: 1 });
 ActivityLogSchema.index({ task: 1 });
+ActivityLogSchema.index({ document: 1 });
 ActivityLogSchema.index({ timestamp: -1 });
 
 module.exports = mongoose.model("ActivityLog", ActivityLogSchema);

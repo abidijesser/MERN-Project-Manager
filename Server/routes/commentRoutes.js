@@ -14,6 +14,10 @@ router.get("/task/:taskId", commentController.getTaskComments);
 router.post("/project/:projectId", commentController.createProjectComment);
 router.get("/project/:projectId", commentController.getProjectComments);
 
+// Document comments
+router.post("/document/:documentId", commentController.createDocumentComment);
+router.get("/document/:documentId", commentController.getDocumentComments);
+
 // Comment operations
 router.put("/:commentId", commentController.updateComment);
 router.delete("/:commentId", commentController.deleteComment);
