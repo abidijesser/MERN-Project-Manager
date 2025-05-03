@@ -7,15 +7,25 @@ import axios from '../utils/axios';
 // Récupérer toutes les tâches de l'utilisateur
 export const getUserTasks = async () => {
   try {
-    const response = await axios.get('/tasks');
+    console.log('taskService - Fetching tasks from API...');
+    const token = localStorage.getItem('token');
+    console.log('taskService - Token exists:', !!token);
+
+    const response = await axios.get('/api/tasks');
+
+    console.log('taskService - Response received:', response.status);
+    console.log('taskService - Response data:', response.data);
 
     if (response.data && response.data.success) {
+      console.log('taskService - Tasks fetched successfully:', response.data.tasks.length);
       return response.data.tasks;
     } else {
+      console.error('taskService - Response format unexpected:', response.data);
       throw new Error('Failed to fetch tasks');
     }
   } catch (error) {
-    console.error('Error fetching tasks:', error);
+    console.error('taskService - Error fetching tasks:', error);
+    console.error('taskService - Error details:', error.response?.data || 'No response data');
     throw error;
   }
 };

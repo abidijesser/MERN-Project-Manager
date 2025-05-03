@@ -43,11 +43,7 @@ const EditTask = () => {
         return
       }
 
-      const response = await axios.get(`http://localhost:3001/api/tasks/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const response = await axios.get(`/api/tasks/${id}`)
       const taskData = response.data.task
       setTask({
         ...taskData,
@@ -70,16 +66,8 @@ const EditTask = () => {
       }
 
       const [projectsRes, usersRes] = await Promise.all([
-        axios.get('http://localhost:3001/api/projects', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }),
-        axios.get('http://localhost:3001/api/auth/users', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }),
+        axios.get('/api/projects'),
+        axios.get('/api/auth/users'),
       ])
       setProjects(projectsRes.data.projects || [])
       setUsers(usersRes.data.users || [])
@@ -105,11 +93,7 @@ const EditTask = () => {
         return
       }
 
-      await axios.put(`http://localhost:3001/api/tasks/${id}`, task, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      await axios.put(`/api/tasks/${id}`, task)
       toast.success('Tâche modifiée avec succès !')
       navigate('/tasks')
     } catch (error) {

@@ -24,7 +24,7 @@ const EditProfile = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get(`/auth/profile/${id}`)
+        const response = await axios.get(`/api/auth/profile/${id}`)
         setUser(response.data)
       } catch (err) {
         setError('Error fetching user data')
@@ -45,7 +45,7 @@ const EditProfile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await axios.put(`/auth/profile/${id}`, user)
+      await axios.put(`/api/auth/profile/${id}`, user)
       navigate('/profile')
     } catch (err) {
       setError('Error updating profile')

@@ -77,7 +77,7 @@ const Resources = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await axios.get('/projects')
+        const response = await axios.get('/api/projects')
         if (response.data.success && response.data.projects) {
           setProjects(
             response.data.projects.map((project) => ({
@@ -97,7 +97,7 @@ const Resources = () => {
 
     const fetchDocuments = async () => {
       try {
-        const response = await axios.get('/documents')
+        const response = await axios.get('/api/documents')
         if (response.data.success && response.data.data) {
           setDocuments(
             response.data.data.map((doc) => ({
@@ -163,7 +163,7 @@ const Resources = () => {
   const fetchDocuments = async () => {
     try {
       setLoading(true)
-      const response = await axios.get('/documents')
+      const response = await axios.get('/api/documents')
       if (response.data.success && response.data.data) {
         setDocuments(
           response.data.data.map((doc) => ({
@@ -351,7 +351,7 @@ const Resources = () => {
       toast.info(`Téléchargement de "${doc.name}" en cours...`)
 
       // Construire l'URL de téléchargement
-      const downloadUrl = `/documents/${docId}/download`
+      const downloadUrl = `/api/documents/${docId}/download`
       console.log('URL de téléchargement:', downloadUrl)
 
       // Utiliser axios pour faire une requête avec le token d'authentification
@@ -443,7 +443,7 @@ const Resources = () => {
     }
 
     try {
-      const response = await axios.delete(`/documents/${docId}`)
+      const response = await axios.delete(`/api/documents/${docId}`)
       if (response.data.success) {
         // Remove the document from the state
         setDocuments(documents.filter((doc) => doc.id !== docId))
@@ -467,7 +467,7 @@ const Resources = () => {
   // Function to toggle pin status
   const handleTogglePin = async (docId, currentPinned) => {
     try {
-      const response = await axios.put(`/documents/${docId}/pin`)
+      const response = await axios.put(`/api/documents/${docId}/pin`)
       if (response.data.success) {
         // Update the document in the state
         setDocuments(

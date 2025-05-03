@@ -1,6 +1,6 @@
 import axios from '../utils/axios'
 
-const API_URL = '/activity'
+const API_URL = '/api/activity'
 
 // Get activity logs for a project
 export const getProjectActivityLogs = async (projectId, limit = 50, skip = 0) => {

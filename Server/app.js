@@ -21,6 +21,7 @@ const activityLogRoutes = require("./routes/activityLogRoutes");
 const mediaRoutes = require("./routes/mediaRoutes");
 const documentRoutes = require("./routes/documentRoutes");
 const shareRoutes = require("./routes/shareRoutes");
+const meetingRoutes = require("./routes/meetingRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
 const Message = require("./models/Message"); // Assurez-vous que le modèle Message existe
@@ -87,6 +88,7 @@ app.use("/api/activity", activityLogRoutes);
 app.use("/api/media", mediaRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/share", shareRoutes);
+app.use("/api/meetings", meetingRoutes);
 // Add a simple test route
 app.get("/api/test", (req, res) => {
   res.json({ message: "Server is running" });

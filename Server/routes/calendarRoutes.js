@@ -20,4 +20,7 @@ router.post("/sync-projects", calendarController.syncProjects);
 router.post("/sync-task/:taskId", calendarController.syncTask);
 router.post("/sync-project/:projectId", calendarController.syncProject);
 
+// Google Meet link generation
+router.post("/generate-meet-link", calendarController.generateMeetLink);
+
 module.exports = router;

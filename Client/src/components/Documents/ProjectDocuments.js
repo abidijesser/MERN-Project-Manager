@@ -49,7 +49,7 @@ const ProjectDocuments = ({ projectId }) => {
   const fetchDocuments = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(`/documents?projectId=${projectId}`)
+      const response = await axios.get(`/api/documents?projectId=${projectId}`)
       if (response.data.success && response.data.data) {
         setDocuments(response.data.data)
       } else {
@@ -85,7 +85,7 @@ const ProjectDocuments = ({ projectId }) => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) {
       return
     }
-    
+
     try {
       const response = await axios.delete(`/documents/${docId}`)
       if (response.data.success) {
@@ -107,7 +107,7 @@ const ProjectDocuments = ({ projectId }) => {
       const response = await axios.put(`/documents/${docId}/pin`)
       if (response.data.success) {
         // Update the document in the state
-        setDocuments(documents.map(doc => 
+        setDocuments(documents.map(doc =>
           doc._id === docId ? { ...doc, pinned: !currentPinned } : doc
         ))
         toast.success(currentPinned ? 'Document désépinglé' : 'Document épinglé')
@@ -162,7 +162,7 @@ const ProjectDocuments = ({ projectId }) => {
     if (doc.uploadedBy?._id === localStorage.getItem('userId')) {
       return 'edit'
     }
-    
+
     // Check explicit permissions
     if (doc.permissions && doc.permissions.length > 0) {
       const userPermission = doc.permissions.find(p => p.user === localStorage.getItem('userId'))
@@ -170,12 +170,12 @@ const ProjectDocuments = ({ projectId }) => {
         return userPermission.access === 'admin' ? 'edit' : userPermission.access
       }
     }
-    
+
     // If document is public, default to view permission
     if (doc.isPublic) {
       return 'view'
     }
-    
+
     return 'view' // Default permission
   }
 

@@ -334,6 +334,76 @@ const getColorIdByPriority = (priority) => {
   }
 };
 
+// Generate a Google Meet link
+const generateMeetLink = async (auth, date) => {
+  try {
+    console.log("Generating Google Meet link...");
+
+    // Create a temporary event with conferencing
+    const tempEvent = {
+      summary: "Temporary event for Meet link generation",
+      description: "This event will be deleted after generating the Meet link",
+      start: {
+        dateTime: date || new Date().toISOString(),
+        timeZone: "UTC",
+      },
+      end: {
+        dateTime: new Date(new Date(date || Date.now()).getTime() + 30 * 60 * 1000).toISOString(), // 30 minutes after start
+        timeZone: "UTC",
+      },
+      conferenceData: {
+        createRequest: {
+          requestId: `meet-${Date.now()}`,
+          conferenceSolutionKey: {
+            type: "hangoutsMeet"
+          }
+        }
+      }
+    };
+
+    // Insert the temporary event
+    const response = await calendar.events.insert({
+      auth,
+      calendarId: "primary",
+      conferenceDataVersion: 1,
+      resource: tempEvent,
+    });
+
+    console.log("Temporary event created:", response.data.id);
+
+    // Extract the Meet link
+    const meetLink = response.data.conferenceData?.entryPoints?.find(
+      ep => ep.entryPointType === "video"
+    )?.uri;
+
+    if (!meetLink) {
+      throw new Error("No Meet link found in the response");
+    }
+
+    console.log("Meet link generated:", meetLink);
+
+    // Delete the temporary event
+    await calendar.events.delete({
+      auth,
+      calendarId: "primary",
+      eventId: response.data.id,
+    });
+
+    console.log("Temporary event deleted");
+
+    return {
+      success: true,
+      meetLink,
+    };
+  } catch (error) {
+    console.error("Error generating Meet link:", error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+};
+
 module.exports = {
   getAuthUrl,
   getToken,
@@ -345,4 +415,5 @@ module.exports = {
   updateProjectEvent,
   deleteEvent,
   getColorIdByPriority,
+  generateMeetLink,
 };

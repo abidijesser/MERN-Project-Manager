@@ -43,7 +43,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await axios.get('/auth/profile')
+        const response = await axios.get('/api/auth/profile')
         if (response.data.success && response.data.user) {
           setUser(response.data.user)
         } else {
@@ -232,7 +232,7 @@ const Profile = () => {
       const formData = new FormData()
       formData.append('profilePicture', file)
 
-      const response = await axios.post('/auth/upload-profile-picture', formData, {
+      const response = await axios.post('/api/auth/upload-profile-picture', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

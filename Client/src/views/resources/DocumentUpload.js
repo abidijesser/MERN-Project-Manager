@@ -34,7 +34,7 @@ const DocumentUpload = ({ visible, onClose, onUploadSuccess }) => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await axios.get('/projects')
+        const response = await axios.get('/api/projects')
         if (response.data.success && response.data.projects) {
           setProjects(response.data.projects.map(project => ({
             id: project._id,

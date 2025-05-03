@@ -40,8 +40,8 @@ const Login = () => {
     console.log('Attempting to login with email:', email)
 
     try {
-      console.log('Sending login request to:', axios.defaults.baseURL + '/auth/login')
-      const response = await axios.post('/auth/login', {
+      console.log('Sending login request to:', axios.defaults.baseURL + '/api/auth/login')
+      const response = await axios.post('/api/auth/login', {
         email: email,
         password: password,
       })
@@ -135,7 +135,7 @@ const Login = () => {
       const cleanCode = twoFactorCode.toString().replace(/\s+/g, '')
       console.log('Cleaned 2FA code:', cleanCode)
 
-      const response = await axios.post('/auth/login', {
+      const response = await axios.post('/api/auth/login', {
         email: tempUserData.email,
         password: tempUserData.password,
         twoFactorCode: cleanCode,
@@ -228,7 +228,7 @@ const Login = () => {
     // Clear any existing tokens
     localStorage.removeItem('token')
     // Use the full URL for Google auth with explicit scope
-    window.location.href = 'http://localhost:3001/auth/google?scope=profile%20email'
+    window.location.href = 'http://localhost:3001/api/auth/google?scope=profile%20email'
   }
 
   const handleFacebookLogin = () => {

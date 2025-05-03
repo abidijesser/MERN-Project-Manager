@@ -20,6 +20,7 @@ import { cilX } from '@coreui/icons'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import { getUserTasks } from '../../services/taskService'
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([])
@@ -65,21 +66,14 @@ const TaskList = () => {
         return
       }
 
-      const response = await axios.get('http://localhost:3001/api/tasks', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (response.data.success) {
-        setTasks(response.data.tasks)
-      } else {
-        throw new Error('Failed to fetch tasks')
-      }
+      console.log('TaskList - Fetching tasks using taskService...')
+      const tasksData = await getUserTasks()
+      console.log('TaskList - Tasks fetched successfully:', tasksData.length)
+      setTasks(tasksData)
     } catch (error) {
       console.error('Error fetching tasks:', error)
-      setError(error.response?.data?.error || 'Erreur lors de la récupération des tâches')
-      toast.error(error.response?.data?.error || 'Erreur lors de la récupération des tâches')
+      setError('Erreur lors de la récupération des tâches')
+      toast.error('Erreur lors de la récupération des tâches')
     } finally {
       setLoading(false)
     }
@@ -101,11 +95,7 @@ const TaskList = () => {
       console.log('TaskList - User ID:', userId)
 
       // Récupérer les détails de la tâche pour vérifier le propriétaire du projet
-      const taskResponse = await axios.get(`http://localhost:3001/api/tasks/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const taskResponse = await axios.get(`/api/tasks/${id}`)
 
       const task = taskResponse.data.task
       const isAdmin = userRole === 'Admin'
@@ -123,11 +113,7 @@ const TaskList = () => {
       }
 
       if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
-        await axios.delete(`http://localhost:3001/api/tasks/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+        await axios.delete(`/api/tasks/${id}`)
         toast.success('Tâche supprimée avec succès !')
         fetchTasks()
       }

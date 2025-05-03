@@ -51,7 +51,7 @@ const DocumentUpload = ({ visible, onClose, onUploadSuccess }) => {
   const fetchProjects = async () => {
     try {
       setLoading(true)
-      const response = await axios.get('/projects')
+      const response = await axios.get('/api/projects')
       if (response.data.success && response.data.projects) {
         setProjects(response.data.projects)
       } else {
