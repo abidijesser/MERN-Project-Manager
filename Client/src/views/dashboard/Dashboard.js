@@ -31,6 +31,7 @@ import WidgetsBrand from '../widgets/WidgetsBrand'
 import WidgetsDropdown from '../widgets/WidgetsDropdown'
 import MainChart from './MainChart'
 import RecentActivityWidget from '../../components/ActivityLog/RecentActivityWidget'
+import UpcomingEvents from '../../components/UpcomingEvents/UpcomingEvents'
 import socketService from '../../services/socketService'
 
 const Dashboard = () => {
@@ -292,49 +293,7 @@ const Dashboard = () => {
 
       <CRow className="mb-4">
         <CCol md={6}>
-          <CCard className="dashboard-card h-100">
-            <CCardHeader className="dashboard-card-header">
-              <h4 className="mb-0">
-                <CIcon icon={cilCalendar} className="me-2" />
-                Événements à venir
-              </h4>
-            </CCardHeader>
-            <CCardBody>
-              <div className="upcoming-events">
-                {[
-                  {
-                    title: "Réunion d'équipe",
-                    date: "Aujourd'hui, 14:00",
-                    type: 'Réunion',
-                    priority: 'high',
-                  },
-                  {
-                    title: 'Présentation client',
-                    date: 'Demain, 10:30',
-                    type: 'Présentation',
-                    priority: 'medium',
-                  },
-                  {
-                    title: 'Date limite du rapport',
-                    date: '12 Août, 2023',
-                    type: 'Échéance',
-                    priority: 'high',
-                  },
-                ].map((event, index) => (
-                  <div
-                    key={index}
-                    className={`event-item p-3 mb-3 border-start border-4 border-${event.priority === 'high' ? 'danger' : event.priority === 'medium' ? 'warning' : 'info'} rounded`}
-                  >
-                    <div className="d-flex justify-content-between">
-                      <h5 className="mb-1">{event.title}</h5>
-                      <span className="badge bg-light text-dark">{event.type}</span>
-                    </div>
-                    <p className="text-muted mb-0">{event.date}</p>
-                  </div>
-                ))}
-              </div>
-            </CCardBody>
-          </CCard>
+          <UpcomingEvents />
         </CCol>
         <CCol md={6}>
           <CCard className="dashboard-card h-100">
