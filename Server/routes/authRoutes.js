@@ -55,7 +55,7 @@ router.get(
         { expiresIn: "1h" }
       );
 
-      // Stocker le token dans un cookie
+      // Stocker le token et les informations utilisateur dans des cookies
       res.cookie("token", token, { 
         httpOnly: true, 
         secure: false, // En production, mettre à true
@@ -63,12 +63,15 @@ router.get(
         maxAge: 3600000 // 1 heure
       });
 
-      // Rediriger directement vers le dashboard en fonction du rôle
-      if (req.user.role === 'Admin') {
-        res.redirect('http://localhost:3001/free/dashboard');
-      } else {
-        res.redirect('http://localhost:3000/#/dashboard');
-      }
+      // Rediriger vers le dashboard avec les informations utilisateur
+      const userInfo = encodeURIComponent(JSON.stringify({
+        id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role
+      }));
+
+      res.redirect(`http://localhost:3000/#/dashboard?user=${userInfo}&token=${token}`);
     } catch (error) {
       console.error("Erreur dans le callback Facebook:", error);
       res.redirect("http://localhost:3000/#/login?error=auth_failed");

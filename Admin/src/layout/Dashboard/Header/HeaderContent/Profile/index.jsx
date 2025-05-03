@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { handleLogout } from '../../../../../utils/auth';
+import axios from '../../../../../utils/axios';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -73,8 +73,18 @@ export default function Profile() {
     setValue(newValue);
   };
 
-  const handleLogoutClick = () => {
-    handleLogout();
+  const handleLogout = async () => {
+    try {
+      // Appeler l'API de déconnexion
+      await axios.post('/api/auth/logout');
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+    } finally {
+      // Dans tous les cas, supprimer les données locales et rediriger
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.replace('/free/login');
+    }
   };
 
   return (
@@ -142,7 +152,7 @@ export default function Profile() {
                           <IconButton 
                             size="large" 
                             sx={{ color: 'text.primary' }}
-                            onClick={handleLogoutClick}
+                            onClick={handleLogout}
                           >
                             <LogoutOutlined />
                           </IconButton>

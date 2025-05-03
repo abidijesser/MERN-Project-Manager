@@ -27,11 +27,11 @@ const Login = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Vérifier si nous sommes sur la page de login après une redirection
-    const searchParams = new URLSearchParams(window.location.search);
-    const userInfo = searchParams.get('user');
-    const token = searchParams.get('token');
-    const error = searchParams.get('error');
+    // Récupérer les paramètres de l'URL
+    const params = new URLSearchParams(window.location.hash.split('?')[1]);
+    const userInfo = params.get('user');
+    const token = params.get('token');
+    const error = params.get('error');
 
     if (token && userInfo) {
       try {
