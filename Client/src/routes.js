@@ -10,6 +10,7 @@ import CreateProject from './views/projects/CreateProject'
 import ProjectDetails from './views/projects/ProjectDetails'
 import EditProject from './views/projects/EditProject'
 import Collaboration from './views/Collaboration/Collaboration'
+import MeetingRoomNative from './views/meetings/MeetingRoomNative'
 import MediaPage from './views/media/MediaPage'
 import Resources from './views/resources/Resources'
 
@@ -43,7 +44,7 @@ const routes = [
   { path: '/verify-email/:token', name: 'Verify Email', element: VerifyEmail },
   { path: '/tasks', exact: true, name: 'Tâches', element: TaskList },
   { path: '/tasks/new', exact: true, name: 'Nouvelle tâche', element: TaskForm },
-  { path: '/tasks/edit/:id', exact: true, name: 'Modifier tâche', element: TaskForm },
+  { path: '/tasks/edit/:id', exact: true, name: 'Modifier tâche', element: EditTask },
   { path: '/tasks/status/:id', exact: true, name: 'Modifier statut', element: TaskStatusForm },
   { path: '/tasks/:id', exact: true, name: 'Détails tâche', element: TaskDetail },
   { path: '/projects', exact: true, name: 'Projets', element: ProjectsList },
@@ -55,6 +56,7 @@ const routes = [
   { path: '/collaboration/chat', name: 'Chat', element: Collaboration },
   { path: '/collaboration/notifications', name: 'Notifications', element: Collaboration },
   { path: '/collaboration/meetings', name: 'Réunions', element: Collaboration },
+  { path: '/meeting-room/:id', name: 'Meeting Room', element: MeetingRoomNative },
   { path: '/media', name: 'Gestion des médias', element: MediaPage },
   { path: '/resources', name: 'Ressources', element: Resources },
 ]

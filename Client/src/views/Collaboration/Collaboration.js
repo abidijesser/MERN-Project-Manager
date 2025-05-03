@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import io from 'socket.io-client'
 import Notifications from '../../components/Notifications'
-import MeetingScheduler from '../../components/MeetingScheduler'
+import MeetingsList from '../meetings/MeetingsList'
 import ChatBox from '../../components/ChatBox'
 import { FaComments, FaBell, FaCalendarAlt } from 'react-icons/fa'
 import './Collaboration.css'
@@ -152,7 +152,11 @@ const Collaboration = () => {
       case 'scheduler':
         return <Notifications />
       case 'meetings':
-        return <MeetingScheduler />
+        return (
+          <div className="meetings-container">
+            <MeetingsList />
+          </div>
+        )
       default:
         return renderChatTab()
     }

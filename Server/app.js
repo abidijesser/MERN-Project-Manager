@@ -21,10 +21,14 @@ const activityLogRoutes = require("./routes/activityLogRoutes");
 const mediaRoutes = require("./routes/mediaRoutes");
 const documentRoutes = require("./routes/documentRoutes");
 const shareRoutes = require("./routes/shareRoutes");
+const meetingRoutes = require("./routes/meetingRoutes");
+const messageRoutes = require("./routes/messageRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
-const Message = require("./models/Message"); // Assurez-vous que le modèle Message existe
+const Message = require("./models/Message");
+const Meeting = require("./models/Meeting");
 const notificationService = require("./services/notificationService");
+const meetingService = require("./services/meetingService");
 require("./config/passportConfig");
 require("./config/facebookStrategy");
 
@@ -87,6 +91,8 @@ app.use("/api/activity", activityLogRoutes);
 app.use("/api/media", mediaRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/share", shareRoutes);
+app.use("/api/meetings", meetingRoutes);
+app.use("/api/messages", messageRoutes);
 // Add a simple test route
 app.get("/api/test", (req, res) => {
   res.json({ message: "Server is running" });
@@ -142,9 +148,64 @@ io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
 
   // Join rooms for specific projects and tasks
-  socket.on("joinRoom", (room) => {
+  socket.on("joinRoom", async (room) => {
     console.log(`Socket ${socket.id} joining room: ${room}`);
-    socket.join(room);
+
+    // Check if this is a meeting room
+    if (room.startsWith("meeting-")) {
+      try {
+        // Extract meeting ID from room name
+        const meetingId = room.replace("meeting-", "");
+
+        // Get user ID from socket if available
+        const userId = socket.userId;
+
+        if (userId) {
+          // Find the meeting
+          const meeting = await Meeting.findById(meetingId)
+            .populate("organizer", "name email")
+            .populate("participants", "name email");
+
+          if (meeting) {
+            // Check if user is authorized to join this meeting
+            const isOrganizer = meeting.organizer._id.toString() === userId;
+            const isParticipant = meeting.participants.some(
+              (participant) => participant._id.toString() === userId
+            );
+
+            if (isOrganizer || isParticipant) {
+              // User is authorized, allow joining the room
+              socket.join(room);
+              console.log(
+                `User ${userId} authorized to join meeting room ${room}`
+              );
+            } else {
+              // User is not authorized
+              console.log(
+                `User ${userId} NOT authorized to join meeting room ${room}`
+              );
+              socket.emit("error", {
+                message: "You are not authorized to join this meeting",
+              });
+            }
+          } else {
+            // Meeting not found
+            console.log(`Meeting ${meetingId} not found`);
+            socket.join(room); // Allow joining for now, will be handled by the client
+          }
+        } else {
+          // No user ID available, allow joining for now
+          // The client-side will handle authorization
+          socket.join(room);
+        }
+      } catch (err) {
+        console.error("Error checking meeting authorization:", err);
+        socket.join(room); // Allow joining in case of error, client will handle
+      }
+    } else {
+      // Not a meeting room, allow joining
+      socket.join(room);
+    }
   });
 
   // Leave rooms
@@ -156,11 +217,30 @@ io.on("connection", (socket) => {
   // Listen for chat messages
   socket.on("sendMessage", async (messageData) => {
     try {
-      const newMessage = new Message(messageData);
-      await newMessage.save(); // Store message in database
-      io.emit("receiveMessage", messageData); // Broadcast to all clients
+      console.log("Message received:", messageData);
+
+      // Save message to database if it has a valid structure
+      if (messageData && messageData.content && messageData.sender) {
+        // Create a new message with the meeting type
+        const newMessage = new Message({
+          ...messageData,
+          type: "meeting",
+        });
+        await newMessage.save();
+        console.log("Message saved to database:", newMessage._id);
+      }
+
+      // Broadcast to the specific room instead of all clients
+      if (messageData && messageData.room) {
+        console.log(`Broadcasting message to room: ${messageData.room}`);
+        io.to(messageData.room).emit("receiveMessage", messageData);
+      } else {
+        // Fallback to broadcasting to all clients
+        console.log("Broadcasting message to all clients (no room specified)");
+        io.emit("receiveMessage", messageData);
+      }
     } catch (err) {
-      console.error("Error saving message:", err);
+      console.error("Error processing message:", err);
     }
   });
 
@@ -219,8 +299,97 @@ io.on("connection", (socket) => {
     }
   });
 
+  // WebRTC Signaling
+  socket.on("join-meeting", (meetingId, userId, userName) => {
+    const meetingRoom = `meeting-${meetingId}`;
+    socket.join(meetingRoom);
+
+    // Store user info in socket
+    socket.userId = userId;
+    socket.userName = userName;
+    socket.meetingId = meetingId;
+
+    // Notify others in the room that a new user has joined
+    socket.to(meetingRoom).emit("user-joined", {
+      userId,
+      userName,
+      socketId: socket.id,
+    });
+
+    // Send list of connected users to the new participant
+    const roomSockets = io.sockets.adapter.rooms.get(meetingRoom);
+    if (roomSockets) {
+      const connectedUsers = [];
+      for (const socketId of roomSockets) {
+        const connectedSocket = io.sockets.sockets.get(socketId);
+        if (connectedSocket && connectedSocket.id !== socket.id) {
+          connectedUsers.push({
+            userId: connectedSocket.userId,
+            userName: connectedSocket.userName,
+            socketId: connectedSocket.id,
+          });
+        }
+      }
+      socket.emit("connected-users", connectedUsers);
+    }
+  });
+
+  // WebRTC signaling: offer
+  socket.on("webrtc-offer", (data) => {
+    console.log(`WebRTC offer from ${socket.id} to ${data.target}`);
+    io.to(data.target).emit("webrtc-offer", {
+      offer: data.offer,
+      from: socket.id,
+      fromUser: {
+        userId: socket.userId,
+        userName: socket.userName,
+      },
+    });
+  });
+
+  // WebRTC signaling: answer
+  socket.on("webrtc-answer", (data) => {
+    console.log(`WebRTC answer from ${socket.id} to ${data.target}`);
+    io.to(data.target).emit("webrtc-answer", {
+      answer: data.answer,
+      from: socket.id,
+    });
+  });
+
+  // WebRTC signaling: ICE candidate
+  socket.on("webrtc-ice-candidate", (data) => {
+    console.log(`ICE candidate from ${socket.id} to ${data.target}`);
+    io.to(data.target).emit("webrtc-ice-candidate", {
+      candidate: data.candidate,
+      from: socket.id,
+    });
+  });
+
+  // Video started event
+  socket.on("videoStarted", (data) => {
+    console.log(
+      `Video started by ${data.userName} in meeting ${data.meetingId}`
+    );
+    const meetingRoom = `meeting-${data.meetingId}`;
+    socket.to(meetingRoom).emit("user-video-started", {
+      userId: data.userId,
+      userName: data.userName,
+      socketId: socket.id,
+    });
+  });
+
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
+
+    // If user was in a meeting, notify others
+    if (socket.meetingId) {
+      const meetingRoom = `meeting-${socket.meetingId}`;
+      socket.to(meetingRoom).emit("user-left", {
+        userId: socket.userId,
+        userName: socket.userName,
+        socketId: socket.id,
+      });
+    }
   });
 });
 
