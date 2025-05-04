@@ -1,31 +1,22 @@
 pipeline {
     agent any
 
-    parameters {
-        string(name: 'BUILD_NUMBER', defaultValue: '', description: 'Upstream build number')
-    }
-
     environment { 
         registryCredentials = "nexus"
         registry = "192.168.33.10:8083"
+        imageName = "nodemongoapp"
+        imageTag = "latest"
     }
 
     stages {
-        stage('Retrieve Artifacts') {
-            steps {
-                copyArtifacts(
-                    projectName: "pipeline-1-sonar/${env.BRANCH_NAME}",
-                    selector: specific("${env.BUILD_NUMBER}"),
-                    filter: 'Client/build/**',
-                    target: 'Client/build',
-                    flatten: false
-                )
-            }
-        }
-
         stage('Build Docker image') {
             steps {
-                sh 'docker-compose build'
+                script {
+                    sh """
+                        docker-compose build
+                        docker tag ${imageName} ${registry}/${imageName}:${imageTag}
+                    """
+                }
             }
         }
 
@@ -33,20 +24,22 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("http://${registry}", registryCredentials) {
-                        sh 'docker push $registry/nodemongoapp:5.0'
+                        sh "docker push ${registry}/${imageName}:${imageTag}"
                     }
                 }
             }
         }
 
-        stage('Run application') {
-            steps {
-                script {
+        stage('Run application') { 
+            steps { 
+                script { 
                     docker.withRegistry("http://${registry}", registryCredentials) {
-                        sh 'docker pull $registry/nodemongoapp:6.0'
-                        sh 'docker-compose up -d'
+                        sh """
+                            docker pull ${registry}/${imageName}:${imageTag}
+                            docker-compose up -d
+                        """
                     }
-                }
+                } 
             }
         }
     }
