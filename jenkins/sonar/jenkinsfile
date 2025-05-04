@@ -16,31 +16,6 @@ pipeline {
             }
         }
 
-        stage('Unit Test') {
-            steps {
-                echo "No tests yet.."
-            }
-        }
-
-        stage('Build frontend') {
-            steps {
-                script {
-                    dir('Client') {
-                        sh 'npm run build'
-                    }
-                }
-            }
-        }
-
-        stage('Archive frontend build') {
-            steps {
-                dir('Client') {
-                    archiveArtifacts artifacts: 'build/**', fingerprint: true
-                }
-            }
-        }
-
-
         stage('SonarQube Analysis') {
             steps {
                 script {
@@ -48,18 +23,6 @@ pipeline {
                     withSonarQubeEnv {
                         sh "${scannerHome}/bin/sonar-scanner"
                     }
-                }       
-            }
-        }
-
-        stage('Trigger Nexus Pipeline') {
-            steps {
-                script {
-                    def branch = env.BRANCH_NAME
-                    def buildNumber = env.BUILD_NUMBER
-                    build job: "pipeline-2-nexus/${branch}", wait: false, parameters: [
-                        string(name: 'BUILD_NUMBER', value: buildNumber)
-                    ]
                 }
             }
         }
