@@ -47,8 +47,8 @@ const Statistics = () => {
             perUser: 1.68
           },
           tasks: {
-            total: 156,
-            perUser: 6.24
+            total: 10, // Updated to match the actual count from the screenshot
+            perUser: 0.4 // Updated to reflect the correct ratio (10/25 = 0.4)
           }
         }
       };

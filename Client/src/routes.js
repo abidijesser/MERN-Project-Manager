@@ -13,6 +13,7 @@ import Collaboration from './views/Collaboration/Collaboration'
 import MeetingRoomNative from './views/meetings/MeetingRoomNative'
 import MediaPage from './views/media/MediaPage'
 import Resources from './views/resources/Resources'
+import CalendarPage from './views/calendar/CalendarPage'
 
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Login = React.lazy(() => import('./views/pages/login/Login'))
@@ -59,6 +60,7 @@ const routes = [
   { path: '/meeting-room/:id', name: 'Meeting Room', element: MeetingRoomNative },
   { path: '/media', name: 'Gestion des médias', element: MediaPage },
   { path: '/resources', name: 'Ressources', element: Resources },
+  { path: '/calendar', name: 'Calendrier', element: CalendarPage },
 ]
 
 export default routes

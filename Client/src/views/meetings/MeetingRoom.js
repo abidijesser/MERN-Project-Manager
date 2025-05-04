@@ -183,7 +183,7 @@ const MeetingRoom = () => {
         userId: data.fromUser.userId,
         userName: data.fromUser.userName,
         peer,
-      }
+      } 
 
       peersRef.current.push(peerObj)
       setPeers((prev) => [...prev, peerObj])

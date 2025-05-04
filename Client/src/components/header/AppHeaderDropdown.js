@@ -212,7 +212,7 @@ const AppHeaderDropdown = () => {
 
           <div className="w-100 mt-2">
             <div className="d-flex justify-content-between mb-1 small">
-              <span>Profile Completion</span>
+              <span>Profil Complété</span>
               <span>75%</span>
             </div>
             <CProgress value={75} thin color="light" />
@@ -221,11 +221,11 @@ const AppHeaderDropdown = () => {
 
         <CDropdownItem onClick={handleProfileClick}>
           <CIcon icon={cilUser} className="me-2 text-primary" />
-          My Profile
+          Mon Profil
         </CDropdownItem>
         <CDropdownItem onClick={() => navigate('/tasks')}>
           <CIcon icon={cilTask} className="me-2 text-info" />
-          My Tasks
+          Mes Tâches
           {loadingTasks ? (
             <CSpinner size="sm" color="info" className="ms-2" />
           ) : (
@@ -234,18 +234,18 @@ const AppHeaderDropdown = () => {
             </CBadge>
           )}
         </CDropdownItem>
-        <CDropdownItem href="/calendar">
+        <CDropdownItem onClick={() => navigate('/calendar')}>
           <CIcon icon={cilCalendar} className="me-2 text-success" />
-          Calendar
+          Calendrier
         </CDropdownItem>
-        <CDropdownItem href="/settings">
+        <CDropdownItem onClick={() => navigate('/settings')}>
           <CIcon icon={cilSettings} className="me-2 text-secondary" />
-          Settings
+          Paramètres
         </CDropdownItem>
         <CDropdownDivider />
         <CDropdownItem onClick={handleLogout} className="text-danger">
           <CIcon icon={cilAccountLogout} className="me-2" />
-          Logout
+          Déconnexion
         </CDropdownItem>
       </CDropdownMenu>
     </CDropdown>
