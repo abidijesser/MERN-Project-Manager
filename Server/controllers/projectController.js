@@ -1,5 +1,6 @@
 const Project = require("../models/Project");
 const User = require("../models/User");
+const Task = require("../models/Task");
 
 // GET all projects
 const getAllProjects = async (_req, res) => {
@@ -10,9 +11,48 @@ const getAllProjects = async (_req, res) => {
         path: "owner",
         select: "name email",
       })
-      .populate("tasks members");
+      .populate({
+        path: "tasks",
+        model: "Task",
+        select: "title description status priority dueDate assignedTo",
+      })
+      .populate("members");
 
     console.log(`Found ${projects.length} projects in total`);
+
+    // For each project, find all tasks that reference this project
+    for (let i = 0; i < projects.length; i++) {
+      const project = projects[i];
+
+      // If the project has no tasks or empty tasks array, find tasks that reference this project
+      if (!project.tasks || project.tasks.length === 0) {
+        console.log(
+          `Project ${project.projectName} has no tasks in its tasks array. Finding tasks that reference this project...`
+        );
+
+        const tasksForProject = await Task.find({
+          project: project._id,
+        }).select("title description status priority dueDate assignedTo");
+
+        console.log(
+          `Found ${tasksForProject.length} tasks for project ${project.projectName}`
+        );
+
+        // Update the project's tasks array with these tasks
+        if (tasksForProject.length > 0) {
+          await Project.findByIdAndUpdate(project._id, {
+            $set: { tasks: tasksForProject.map((task) => task._id) },
+          });
+
+          // Update the project in our results
+          project.tasks = tasksForProject;
+          console.log(
+            `Updated project ${project.projectName} with ${tasksForProject.length} tasks`
+          );
+        }
+      }
+    }
+
     res.status(200).json({ success: true, projects });
   } catch (error) {
     console.error("Erreur lors de la récupération des projets:", error);
@@ -32,7 +72,11 @@ const getProjectById = async (req, res) => {
         path: "owner",
         select: "name email",
       })
-      .populate("tasks")
+      .populate({
+        path: "tasks",
+        model: "Task",
+        select: "title description status priority dueDate assignedTo",
+      })
       .populate("members");
 
     if (!project) {
@@ -41,6 +85,35 @@ const getProjectById = async (req, res) => {
         error: "Projet non trouvé",
       });
     }
+
+    // If the project has no tasks or empty tasks array, find tasks that reference this project
+    if (!project.tasks || project.tasks.length === 0) {
+      console.log(
+        `Project ${project.projectName} has no tasks in its tasks array. Finding tasks that reference this project...`
+      );
+
+      const tasksForProject = await Task.find({ project: project._id }).select(
+        "title description status priority dueDate assignedTo"
+      );
+
+      console.log(
+        `Found ${tasksForProject.length} tasks for project ${project.projectName}`
+      );
+
+      // Update the project's tasks array with these tasks
+      if (tasksForProject.length > 0) {
+        await Project.findByIdAndUpdate(project._id, {
+          $set: { tasks: tasksForProject.map((task) => task._id) },
+        });
+
+        // Update the project in our results
+        project.tasks = tasksForProject;
+        console.log(
+          `Updated project ${project.projectName} with ${tasksForProject.length} tasks`
+        );
+      }
+    }
+
     res.status(200).json({ success: true, project: project });
   } catch (error) {
     console.error("Erreur lors de la récupération du projet:", error);

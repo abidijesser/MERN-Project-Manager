@@ -84,6 +84,16 @@ const createTask = async (req, res) => {
 
     await task.save();
 
+    // If the task is associated with a project, add it to the project's tasks array
+    if (project) {
+      await Project.findByIdAndUpdate(
+        project,
+        { $push: { tasks: task._id } },
+        { new: true }
+      );
+      console.log(`Added task ${task._id} to project ${project}`);
+    }
+
     // Créer une notification pour la nouvelle tâche
     await notificationService.createTaskNotification(
       task,
@@ -363,6 +373,13 @@ const updateTask = async (req, res) => {
 
     console.log("updateTask - Updating task with data:", updateData);
 
+    // Get the original project ID before updating
+    const originalProjectId = taskWithProject.project
+      ? taskWithProject.project._id
+      : null;
+    const newProjectId = updateData.project;
+
+    // Update the task
     const task = await Task.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
@@ -378,6 +395,48 @@ const updateTask = async (req, res) => {
         success: false,
         error: "Tâche non trouvée",
       });
+    }
+
+    // Handle project changes
+    if (newProjectId !== undefined) {
+      // If project has changed
+      if (
+        originalProjectId &&
+        newProjectId &&
+        originalProjectId.toString() !== newProjectId.toString()
+      ) {
+        // Remove task from old project
+        await Project.findByIdAndUpdate(originalProjectId, {
+          $pull: { tasks: req.params.id },
+        });
+
+        // Add task to new project
+        await Project.findByIdAndUpdate(newProjectId, {
+          $push: { tasks: req.params.id },
+        });
+
+        console.log(
+          `Moved task ${req.params.id} from project ${originalProjectId} to ${newProjectId}`
+        );
+      }
+      // If task didn't have a project before but now has one
+      else if (!originalProjectId && newProjectId) {
+        await Project.findByIdAndUpdate(newProjectId, {
+          $push: { tasks: req.params.id },
+        });
+
+        console.log(`Added task ${req.params.id} to project ${newProjectId}`);
+      }
+      // If task had a project before but now doesn't
+      else if (originalProjectId && !newProjectId) {
+        await Project.findByIdAndUpdate(originalProjectId, {
+          $pull: { tasks: req.params.id },
+        });
+
+        console.log(
+          `Removed task ${req.params.id} from project ${originalProjectId}`
+        );
+      }
     }
 
     // Créer une notification pour la mise à jour de la tâche
@@ -453,6 +512,16 @@ const deleteTask = async (req, res) => {
         error:
           "Seuls les administrateurs ou le propriétaire du projet peuvent supprimer cette tâche",
       });
+    }
+
+    // If the task is associated with a project, remove it from the project's tasks array
+    if (task.project) {
+      await Project.findByIdAndUpdate(task.project._id, {
+        $pull: { tasks: req.params.id },
+      });
+      console.log(
+        `Removed task ${req.params.id} from project ${task.project._id}`
+      );
     }
 
     // Supprimer la tâche

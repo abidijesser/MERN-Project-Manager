@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import {
   FaCalendarAlt,
   FaUser,
+  FaUsers,
   FaLink,
   FaVideo,
   FaClock,
@@ -9,6 +10,7 @@ import {
   FaCheck,
   FaHourglassEnd,
 } from 'react-icons/fa'
+import axios from 'axios'
 import './MeetingScheduler.css'
 
 const MeetingScheduler = () => {
