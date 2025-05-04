@@ -1,44 +1,62 @@
 const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
 
-const MeetingSchema = new Schema({
-  title: {
-    type: String,
-    default: "Réunion",
+const meetingSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
+    startTime: {
+      type: Date,
+      required: true,
+    },
+    endTime: {
+      type: Date,
+      required: true,
+    },
+    location: {
+      type: String,
+      trim: true,
+    },
+    organizer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    participants: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    project: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Project",
+    },
+    status: {
+      type: String,
+      enum: ["scheduled", "in-progress", "completed", "cancelled"],
+      default: "scheduled",
+    },
+    meetingUrl: {
+      type: String,
+      default: null,
+    },
+    meetingCode: {
+      type: String,
+      default: null,
+    },
+    isActive: {
+      type: Boolean,
+      default: false,
+    }
   },
-  date: {
-    type: Date,
-    required: true,
-  },
-  endDate: {
-    type: Date,
-    required: true,
-  },
-  participants: [{
-    type: String,
-    required: true,
-  }],
-  meetingLink: {
-    type: String,
-    required: true,
-  },
-  organizer: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
-  googleCalendarEventId: {
-    type: String,
-    default: null,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  { timestamps: true }
+);
 
-// Index pour des recherches plus rapides
-MeetingSchema.index({ date: 1 });
-MeetingSchema.index({ organizer: 1 });
-
-module.exports = mongoose.model("Meeting", MeetingSchema);
+module.exports = mongoose.model("Meeting", meetingSchema);

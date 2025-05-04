@@ -1,231 +1,239 @@
 const Meeting = require("../models/Meeting");
-const { isValidObjectId } = require("mongoose");
+const meetingService = require("../services/meetingService");
 
-// Créer une nouvelle réunion
-const createMeeting = async (req, res) => {
-  try {
-    const { title, date, participants, meetingLink, googleCalendarEventId } = req.body;
-
-    // Validation de base
-    if (!date || !participants || !meetingLink) {
-      return res.status(400).json({
-        success: false,
-        error: "Veuillez fournir la date, les participants et le lien de la réunion",
-      });
-    }
-
-    // Calculer la date de fin (1 heure après le début par défaut)
-    const endDate = new Date(new Date(date).getTime() + 60 * 60 * 1000);
-
-    // Créer la nouvelle réunion
-    const meeting = new Meeting({
-      title: title || "Réunion",
-      date,
-      endDate,
-      participants: Array.isArray(participants) ? participants : participants.split(",").map(email => email.trim()),
-      meetingLink,
-      organizer: req.user.id,
-      googleCalendarEventId,
-    });
-
-    await meeting.save();
-
-    res.status(201).json({
-      success: true,
-      meeting,
-    });
-  } catch (error) {
-    console.error("Erreur lors de la création de la réunion:", error);
-    res.status(500).json({
-      success: false,
-      error: "Erreur lors de la création de la réunion",
-    });
-  }
-};
-
-// Récupérer toutes les réunions
-const getAllMeetings = async (req, res) => {
+// Get all meetings
+exports.getAllMeetings = async (req, res) => {
   try {
     const meetings = await Meeting.find()
       .populate("organizer", "name email")
-      .sort({ date: 1 });
+      .populate("participants", "name email")
+      .populate("project", "projectName");
 
-    res.status(200).json({
-      success: true,
-      meetings,
-    });
+    res.status(200).json({ success: true, meetings });
   } catch (error) {
-    console.error("Erreur lors de la récupération des réunions:", error);
-    res.status(500).json({
-      success: false,
-      error: "Erreur lors de la récupération des réunions",
-    });
+    console.error("Error fetching meetings:", error);
+    res.status(500).json({ success: false, error: "Error fetching meetings" });
   }
 };
 
-// Récupérer les prochaines réunions
-const getUpcomingMeetings = async (req, res) => {
+// Get meeting by ID
+exports.getMeetingById = async (req, res) => {
   try {
-    const { limit = 5 } = req.query;
-    
-    // Récupérer les réunions dont la date est supérieure ou égale à la date actuelle
-    const meetings = await Meeting.find({ date: { $gte: new Date() } })
-      .populate("organizer", "name email")
-      .sort({ date: 1 })
-      .limit(parseInt(limit));
-
-    res.status(200).json({
-      success: true,
-      meetings,
-    });
-  } catch (error) {
-    console.error("Erreur lors de la récupération des prochaines réunions:", error);
-    res.status(500).json({
-      success: false,
-      error: "Erreur lors de la récupération des prochaines réunions",
-    });
-  }
-};
-
-// Récupérer une réunion par ID
-const getMeetingById = async (req, res) => {
-  try {
-    if (!isValidObjectId(req.params.id)) {
-      return res.status(400).json({
-        success: false,
-        error: "ID de réunion invalide",
-      });
-    }
-
     const meeting = await Meeting.findById(req.params.id)
-      .populate("organizer", "name email");
+      .populate("organizer", "name email")
+      .populate("participants", "name email")
+      .populate("project", "projectName");
 
     if (!meeting) {
-      return res.status(404).json({
-        success: false,
-        error: "Réunion non trouvée",
-      });
+      return res
+        .status(404)
+        .json({ success: false, error: "Meeting not found" });
     }
 
-    res.status(200).json({
-      success: true,
-      meeting,
-    });
+    res.status(200).json({ success: true, meeting });
   } catch (error) {
-    console.error("Erreur lors de la récupération de la réunion:", error);
-    res.status(500).json({
-      success: false,
-      error: "Erreur lors de la récupération de la réunion",
-    });
+    console.error("Error fetching meeting:", error);
+    res.status(500).json({ success: false, error: "Error fetching meeting" });
   }
 };
 
-// Mettre à jour une réunion
-const updateMeeting = async (req, res) => {
+// Create a new meeting
+exports.createMeeting = async (req, res) => {
   try {
-    if (!isValidObjectId(req.params.id)) {
-      return res.status(400).json({
-        success: false,
-        error: "ID de réunion invalide",
-      });
-    }
+    const {
+      title,
+      description,
+      startTime,
+      endTime,
+      location,
+      participants,
+      project,
+    } = req.body;
 
-    const meeting = await Meeting.findById(req.params.id);
-
-    if (!meeting) {
-      return res.status(404).json({
-        success: false,
-        error: "Réunion non trouvée",
-      });
-    }
-
-    // Vérifier si l'utilisateur est l'organisateur de la réunion
-    if (meeting.organizer.toString() !== req.user.id) {
-      return res.status(403).json({
-        success: false,
-        error: "Vous n'êtes pas autorisé à modifier cette réunion",
-      });
-    }
-
-    const { title, date, participants, meetingLink, googleCalendarEventId } = req.body;
-
-    // Mettre à jour les champs
-    if (title) meeting.title = title;
-    if (date) {
-      meeting.date = date;
-      // Mettre à jour la date de fin (1 heure après le début par défaut)
-      meeting.endDate = new Date(new Date(date).getTime() + 60 * 60 * 1000);
-    }
-    if (participants) {
-      meeting.participants = Array.isArray(participants) 
-        ? participants 
-        : participants.split(",").map(email => email.trim());
-    }
-    if (meetingLink) meeting.meetingLink = meetingLink;
-    if (googleCalendarEventId) meeting.googleCalendarEventId = googleCalendarEventId;
+    const meeting = new Meeting({
+      title,
+      description,
+      startTime,
+      endTime,
+      location,
+      organizer: req.user.id,
+      participants,
+      project,
+    });
 
     await meeting.save();
 
-    res.status(200).json({
-      success: true,
-      meeting,
-    });
+    res.status(201).json({ success: true, meeting });
   } catch (error) {
-    console.error("Erreur lors de la mise à jour de la réunion:", error);
-    res.status(500).json({
-      success: false,
-      error: "Erreur lors de la mise à jour de la réunion",
-    });
+    console.error("Error creating meeting:", error);
+    res.status(500).json({ success: false, error: "Error creating meeting" });
   }
 };
 
-// Supprimer une réunion
-const deleteMeeting = async (req, res) => {
+// Update a meeting
+exports.updateMeeting = async (req, res) => {
   try {
-    if (!isValidObjectId(req.params.id)) {
-      return res.status(400).json({
-        success: false,
-        error: "ID de réunion invalide",
-      });
-    }
-
     const meeting = await Meeting.findById(req.params.id);
 
     if (!meeting) {
-      return res.status(404).json({
-        success: false,
-        error: "Réunion non trouvée",
-      });
+      return res
+        .status(404)
+        .json({ success: false, error: "Meeting not found" });
     }
 
-    // Vérifier si l'utilisateur est l'organisateur de la réunion
+    // Check if user is the organizer
     if (meeting.organizer.toString() !== req.user.id) {
-      return res.status(403).json({
-        success: false,
-        error: "Vous n'êtes pas autorisé à supprimer cette réunion",
-      });
+      return res
+        .status(403)
+        .json({
+          success: false,
+          error: "Not authorized to update this meeting",
+        });
+    }
+
+    const updatedMeeting = await Meeting.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json({ success: true, meeting: updatedMeeting });
+  } catch (error) {
+    console.error("Error updating meeting:", error);
+    res.status(500).json({ success: false, error: "Error updating meeting" });
+  }
+};
+
+// Delete a meeting
+exports.deleteMeeting = async (req, res) => {
+  try {
+    const meeting = await Meeting.findById(req.params.id);
+
+    if (!meeting) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Meeting not found" });
+    }
+
+    // Check if user is the organizer
+    if (meeting.organizer.toString() !== req.user.id) {
+      return res
+        .status(403)
+        .json({
+          success: false,
+          error: "Not authorized to delete this meeting",
+        });
     }
 
     await Meeting.findByIdAndDelete(req.params.id);
 
-    res.status(200).json({
-      success: true,
-      message: "Réunion supprimée avec succès",
-    });
+    res
+      .status(200)
+      .json({ success: true, message: "Meeting deleted successfully" });
   } catch (error) {
-    console.error("Erreur lors de la suppression de la réunion:", error);
-    res.status(500).json({
-      success: false,
-      error: "Erreur lors de la suppression de la réunion",
-    });
+    console.error("Error deleting meeting:", error);
+    res.status(500).json({ success: false, error: "Error deleting meeting" });
   }
 };
 
-module.exports = {
-  createMeeting,
-  getAllMeetings,
-  getUpcomingMeetings,
-  getMeetingById,
-  updateMeeting,
-  deleteMeeting,
+// Manually start a meeting
+exports.startMeeting = async (req, res) => {
+  try {
+    const result = await meetingService.activateMeeting(req.params.id);
+
+    if (!result.success) {
+      return res.status(400).json({ success: false, error: result.error });
+    }
+
+    res.status(200).json({ success: true, meeting: result.meeting });
+  } catch (error) {
+    console.error("Error starting meeting:", error);
+    res.status(500).json({ success: false, error: "Error starting meeting" });
+  }
+};
+
+// End a meeting
+exports.endMeeting = async (req, res) => {
+  try {
+    const result = await meetingService.endMeeting(req.params.id);
+
+    if (!result.success) {
+      return res.status(400).json({ success: false, error: result.error });
+    }
+
+    res
+      .status(200)
+      .json({ success: true, message: "Meeting ended successfully" });
+  } catch (error) {
+    console.error("Error ending meeting:", error);
+    res.status(500).json({ success: false, error: "Error ending meeting" });
+  }
+};
+
+// Get active meetings
+exports.getActiveMeetings = async (req, res) => {
+  try {
+    const meetings = await Meeting.find({ isActive: true })
+      .populate("organizer", "name email")
+      .populate("participants", "name email")
+      .populate("project", "projectName");
+
+    res.status(200).json({ success: true, meetings });
+  } catch (error) {
+    console.error("Error fetching active meetings:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Error fetching active meetings" });
+  }
+};
+
+// Join a meeting
+exports.joinMeeting = async (req, res) => {
+  try {
+    const { meetingCode } = req.body;
+    const userId = req.user.id;
+
+    const meeting = await Meeting.findOne({
+      meetingCode,
+      isActive: true,
+    })
+      .populate("organizer", "name email")
+      .populate("participants", "name email");
+
+    if (!meeting) {
+      return res
+        .status(404)
+        .json({
+          success: false,
+          error: "Active meeting not found with this code",
+        });
+    }
+
+    // Check if user is authorized to join this meeting
+    const isOrganizer = meeting.organizer._id.toString() === userId;
+    const isParticipant = meeting.participants.some(
+      (participant) => participant._id.toString() === userId
+    );
+
+    if (!isOrganizer && !isParticipant) {
+      return res.status(403).json({
+        success: false,
+        error:
+          "You are not authorized to join this meeting. Only the organizer and invited participants can join.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      meeting: {
+        _id: meeting._id,
+        title: meeting.title,
+        organizer: meeting.organizer,
+        meetingUrl: meeting.meetingUrl,
+      },
+    });
+  } catch (error) {
+    console.error("Error joining meeting:", error);
+    res.status(500).json({ success: false, error: "Error joining meeting" });
+  }
 };

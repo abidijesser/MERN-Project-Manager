@@ -1,42 +1,71 @@
 import React, { useState, useEffect } from 'react'
-import { FaCalendarAlt, FaUser, FaLink, FaVideo, FaPlus, FaUsers } from 'react-icons/fa'
-import axios from '../utils/axios' // Utiliser l'instance axios configurée
-import { createMeeting, fetchUpcomingMeetings } from '../services/meetingsService'
-import { generateMeetLink, checkGoogleCalendarAuth, getGoogleCalendarAuthUrl } from '../services/googleMeetService'
+import {
+  FaCalendarAlt,
+  FaUser,
+  FaUsers,
+  FaLink,
+  FaVideo,
+  FaClock,
+  FaPlus,
+  FaCheck,
+  FaHourglassEnd,
+} from 'react-icons/fa'
+import axios from 'axios'
 import './MeetingScheduler.css'
 
 const MeetingScheduler = () => {
   const [meetingDetails, setMeetingDetails] = useState({
-    title: 'Réunion',
     date: '',
+    duration: 60, // durée par défaut en minutes
     participants: '',
     zoomLink: '',
+    title: "Réunion d'équipe",
   })
+  const [success, setSuccess] = useState(false)
+  const [meetings, setMeetings] = useState([])
+  const [meetLink, setMeetLink] = useState('')
+  const [generatingMeet, setGeneratingMeet] = useState(false)
+  const [showUserList, setShowUserList] = useState(false)
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(false)
-  const [showUserList, setShowUserList] = useState(false)
-  const [upcomingMeetings, setUpcomingMeetings] = useState([])
-  const [loadingMeetings, setLoadingMeetings] = useState(false)
-  const [generatingMeet, setGeneratingMeet] = useState(false)
-  const [meetLink, setMeetLink] = useState('')
 
-  // Fetch users from the database
+  // Charger les réunions depuis le localStorage au démarrage
   useEffect(() => {
+    const savedMeetings = localStorage.getItem('meetings')
+    if (savedMeetings) {
+      try {
+        const parsedMeetings = JSON.parse(savedMeetings)
+        // Convertir les chaînes de date en objets Date
+        const formattedMeetings = parsedMeetings.map((meeting) => ({
+          ...meeting,
+          startDate: new Date(meeting.startDate),
+          endDate: new Date(meeting.endDate),
+        }))
+        setMeetings(formattedMeetings)
+      } catch (error) {
+        console.error('Erreur lors du chargement des réunions:', error)
+      }
+    }
+
+    // Charger la liste des utilisateurs
     const fetchUsers = async () => {
       try {
         setLoading(true)
-        // L'instance axios est déjà configurée avec le token dans les headers
-        const response = await axios.get('/api/auth/users-for-sharing')
-
-        if (response.data && response.data.success) {
-          setUsers(response.data.data)
-          console.log('Users fetched successfully:', response.data.data.length)
-        } else {
-          console.error('Failed to fetch users')
-        }
+        // Cette fonction est simulée pour l'exemple
+        // Dans une application réelle, vous feriez un appel API
+        setTimeout(() => {
+          const mockUsers = [
+            { _id: '1', name: 'Sophie Martin', email: 'sophie.martin@example.com' },
+            { _id: '2', name: 'Thomas Dubois', email: 'thomas.dubois@example.com' },
+            { _id: '3', name: 'Emma Petit', email: 'emma.petit@example.com' },
+            { _id: '4', name: 'Lucas Bernard', email: 'lucas.bernard@example.com' },
+            { _id: '5', name: 'Julie Moreau', email: 'julie.moreau@example.com' },
+          ]
+          setUsers(mockUsers)
+          setLoading(false)
+        }, 500)
       } catch (error) {
-        console.error('Error fetching users:', error)
-      } finally {
+        console.error('Erreur lors du chargement des utilisateurs:', error)
         setLoading(false)
       }
     }
@@ -44,28 +73,30 @@ const MeetingScheduler = () => {
     fetchUsers()
   }, [])
 
-  // Fetch upcoming meetings
-  useEffect(() => {
-    const loadUpcomingMeetings = async () => {
-      try {
-        setLoadingMeetings(true)
-        const response = await fetchUpcomingMeetings(3) // Récupérer les 3 prochaines réunions
+  // Fonctions pour l'API Google Calendar (simulées pour l'exemple)
+  const checkGoogleCalendarAuth = async () => {
+    // Dans une application réelle, vous feriez un appel API
+    console.log('Vérification de l\'authentification Google Calendar...')
+    return { isAuthenticated: false }
+  }
 
-        if (response && response.success) {
-          setUpcomingMeetings(response.meetings)
-          console.log('Upcoming meetings fetched successfully:', response.meetings.length)
-        } else {
-          console.error('Failed to fetch upcoming meetings')
-        }
-      } catch (error) {
-        console.error('Error fetching upcoming meetings:', error)
-      } finally {
-        setLoadingMeetings(false)
-      }
+  const getGoogleCalendarAuthUrl = async () => {
+    // Dans une application réelle, vous feriez un appel API
+    console.log('Obtention de l\'URL d\'authentification Google Calendar...')
+    return {
+      success: true,
+      authUrl: 'https://accounts.google.com/o/oauth2/auth?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&scope=https://www.googleapis.com/auth/calendar&response_type=code'
     }
+  }
 
-    loadUpcomingMeetings()
-  }, [])
+  const generateMeetLink = async (date) => {
+    // Dans une application réelle, vous feriez un appel API
+    console.log('Génération d\'un lien Google Meet pour la date:', date)
+    return {
+      success: true,
+      meetLink: 'https://meet.google.com/abc-defg-hij'
+    }
+  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -180,63 +211,112 @@ const MeetingScheduler = () => {
 
   const handleCreateMeeting = async () => {
     if (meetingDetails.date && meetingDetails.participants && meetingDetails.zoomLink) {
-      try {
-        // Créer la réunion directement dans notre base de données
-        const meetingData = {
-          title: meetingDetails.title || 'Réunion',
-          date: meetingDetails.date,
-          participants: meetingDetails.participants.split(',').map(email => email.trim()),
-          meetingLink: meetingDetails.zoomLink,
-        }
+      // Calculer la date de début et de fin
+      const startDate = new Date(meetingDetails.date)
+      const endDate = new Date(startDate.getTime())
+      endDate.setMinutes(endDate.getMinutes() + parseInt(meetingDetails.duration))
 
-        console.log('Enregistrement de la réunion dans la base de données...')
-        const dbResponse = await createMeeting(meetingData)
-        console.log('Réunion créée dans la base de données:', dbResponse)
+      // Créer un objet réunion
+      const meeting = {
+        id: Date.now(), // identifiant unique basé sur le timestamp
+        title: meetingDetails.title,
+        startDate: startDate,
+        endDate: endDate,
+        duration: parseInt(meetingDetails.duration),
+        participants: meetingDetails.participants.split(',').map((email) => email.trim()),
+        zoomLink: meetingDetails.zoomLink,
+      }
 
-        // Rafraîchir la liste des prochaines réunions
-        console.log('Rafraîchissement de la liste des prochaines réunions...')
-        const upcomingResponse = await fetchUpcomingMeetings(3)
-        if (upcomingResponse && upcomingResponse.success) {
-          setUpcomingMeetings(upcomingResponse.meetings)
-        }
+      console.log('Réunion créée :', meeting)
 
-        alert('Réunion ajoutée avec succès !')
+      // Ajouter la réunion à la liste
+      const updatedMeetings = [...meetings, meeting]
+      setMeetings(updatedMeetings)
 
-        // Réinitialiser le formulaire
+      // Sauvegarder dans le localStorage
+      localStorage.setItem('meetings', JSON.stringify(updatedMeetings))
+
+      // Afficher un message de succès
+      setSuccess(true)
+
+      // Réinitialiser le formulaire après 3 secondes
+      setTimeout(() => {
         setMeetingDetails({
-          title: 'Réunion',
           date: '',
+          duration: 60,
           participants: '',
           zoomLink: '',
+          title: "Réunion d'équipe",
         })
-        setMeetLink('')
-      } catch (error) {
-        console.error('Erreur lors de la création de la réunion:', error)
-
-        // Message d'erreur plus détaillé
-        let errorMessage = 'Erreur lors de la création de la réunion. ';
-
-        if (error.response?.data?.error) {
-          errorMessage += error.response.data.error;
-        } else if (error.message) {
-          errorMessage += error.message;
-        }
-
-        alert(errorMessage)
-      }
+        setSuccess(false)
+      }, 3000)
     } else {
       alert('Veuillez remplir tous les champs avant de créer la réunion.')
     }
   }
 
-  // Formater la date pour l'affichage
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    return {
-      day: date.getDate(),
-      month: date.toLocaleString('fr-FR', { month: 'short' }),
-      time: date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-    }
+  // Fonction pour formater l'heure (HH:MM)
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  // Fonction pour obtenir le jour et le mois
+  const getDay = (date) => {
+    return date.getDate()
+  }
+
+  const getMonth = (date) => {
+    const months = [
+      'JAN',
+      'FÉV',
+      'MAR',
+      'AVR',
+      'MAI',
+      'JUIN',
+      'JUIL',
+      'AOÛ',
+      'SEP',
+      'OCT',
+      'NOV',
+      'DÉC',
+    ]
+    return months[date.getMonth()]
+  }
+
+  // Fonction pour définir la date à aujourd'hui
+  const setToday = () => {
+    const today = new Date()
+    today.setHours(today.getHours() + 1)
+    today.setMinutes(0)
+
+    const formattedDate = today.toISOString().slice(0, 16)
+    setMeetingDetails((prev) => ({ ...prev, date: formattedDate }))
+  }
+
+  // Fonction pour définir la date à demain
+  const setTomorrow = () => {
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(10)
+    tomorrow.setMinutes(0)
+
+    const formattedDate = tomorrow.toISOString().slice(0, 16)
+    setMeetingDetails((prev) => ({ ...prev, date: formattedDate }))
+  }
+
+  // Fonction pour définir la date à cette semaine (vendredi)
+  const setThisWeek = () => {
+    const today = new Date()
+    const dayOfWeek = today.getDay() // 0 = dimanche, 1 = lundi, ..., 6 = samedi
+    const daysUntilFriday = dayOfWeek <= 5 ? 5 - dayOfWeek : 5 + 7 - dayOfWeek
+
+    const friday = new Date()
+    friday.setDate(today.getDate() + daysUntilFriday)
+    friday.setHours(14)
+    friday.setMinutes(0)
+
+    const formattedDate = friday.toISOString().slice(0, 16)
+    setMeetingDetails((prev) => ({ ...prev, date: formattedDate }))
   }
 
   return (
@@ -247,6 +327,14 @@ const MeetingScheduler = () => {
         <h2 className="meeting-title">Planifier une réunion</h2>
       </div>
 
+      {/* Success message */}
+      {success && (
+        <div className="success-message">
+          <FaCheck className="success-icon" />
+          <span>Réunion créée avec succès!</span>
+        </div>
+      )}
+
       {/* Meeting form */}
       <div className="meeting-form">
         <div className="input-group">
@@ -256,6 +344,32 @@ const MeetingScheduler = () => {
             name="date"
             value={meetingDetails.date}
             onChange={handleInputChange}
+            className="input-field"
+          />
+        </div>
+
+        <div className="input-group">
+          <FaHourglassEnd className="input-icon" />
+          <input
+            type="number"
+            name="duration"
+            value={meetingDetails.duration}
+            onChange={handleInputChange}
+            placeholder="Durée en minutes"
+            className="input-field"
+            min="15"
+            step="15"
+          />
+        </div>
+
+        <div className="input-group">
+          <FaVideo className="input-icon" />
+          <input
+            type="text"
+            name="title"
+            value={meetingDetails.title}
+            onChange={handleInputChange}
+            placeholder="Titre de la réunion"
             className="input-field"
           />
         </div>
@@ -337,15 +451,24 @@ const MeetingScheduler = () => {
         </div>
       </div>
 
-      {/* Note d'information sur l'API Google */}
-      <div className="api-info">
-        <p>
-          <strong>Note:</strong> Pour utiliser la génération automatique de liens Google Meet, vous devez configurer votre propre projet Google Cloud Platform avec les API Calendar et Meet activées.
-        </p>
+      {/* Quick date selection */}
+      <div className="quick-replies">
+        <button className="quick-reply" onClick={setToday}>
+          <FaClock className="quick-reply-icon" />
+          <span>Aujourd'hui</span>
+        </button>
+        <button className="quick-reply" onClick={setTomorrow}>
+          <FaClock className="quick-reply-icon" />
+          <span>Demain</span>
+        </button>
+        <button className="quick-reply" onClick={setThisWeek}>
+          <FaClock className="quick-reply-icon" />
+          <span>Cette semaine</span>
+        </button>
       </div>
 
       {/* Create meeting button */}
-      <button onClick={handleCreateMeeting} className="create-button">
+      <button onClick={handleCreateMeeting} className="create-button" disabled={success}>
         <FaPlus className="create-icon" />
         <span>Créer la Réunion</span>
       </button>
@@ -353,36 +476,30 @@ const MeetingScheduler = () => {
       {/* Upcoming meetings preview */}
       <div className="upcoming-meetings">
         <h3>Prochaines réunions</h3>
-        {loadingMeetings ? (
-          <div className="loading-indicator">Chargement des réunions...</div>
-        ) : upcomingMeetings && upcomingMeetings.length > 0 ? (
-          upcomingMeetings.map(meeting => {
-            const formattedDate = formatDate(meeting.date)
-            return (
-              <div className="meeting-preview" key={meeting._id}>
+
+        {meetings.length === 0 ? (
+          <div className="no-meetings">Aucune réunion planifiée</div>
+        ) : (
+          meetings
+            .sort((a, b) => a.startDate - b.startDate) // Trier par date
+            .map((meeting) => (
+              <div className="meeting-preview" key={meeting.id}>
                 <div className="meeting-preview-date">
-                  <div className="meeting-date">{formattedDate.day}</div>
-                  <div className="meeting-month">{formattedDate.month}</div>
+                  <div className="meeting-date">{getDay(meeting.startDate)}</div>
+                  <div className="meeting-month">{getMonth(meeting.startDate)}</div>
                 </div>
                 <div className="meeting-preview-details">
                   <div className="meeting-preview-title">{meeting.title}</div>
-                  <div className="meeting-preview-time">{formattedDate.time}</div>
-                  <div className="meeting-preview-participants">
-                    {meeting.participants.length} participant{meeting.participants.length > 1 ? 's' : ''}
+                  <div className="meeting-preview-time">
+                    {formatTime(meeting.startDate)} - {formatTime(meeting.endDate)}
                   </div>
-                  {meeting.meetingLink && (
-                    <div className="meeting-preview-link">
-                      <a href={meeting.meetingLink} target="_blank" rel="noopener noreferrer">
-                        Rejoindre la réunion
-                      </a>
-                    </div>
-                  )}
+                  <div className="meeting-preview-participants">
+                    {meeting.participants.length} participant
+                    {meeting.participants.length > 1 ? 's' : ''}
+                  </div>
                 </div>
               </div>
-            )
-          })
-        ) : (
-          <div className="no-meetings">Aucune réunion à venir</div>
+            ))
         )}
       </div>
     </div>

@@ -121,6 +121,13 @@
   box-shadow: 0 4px 12px rgba(24, 119, 242, 0.2);
 }
 
+.create-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .create-icon {
   margin-right: 10px;
 }
@@ -192,158 +199,39 @@
   font-size: 13px;
 }
 
-.meeting-preview-link {
-  margin-top: 5px;
-}
-
-.meeting-preview-link a {
-  color: #1a73e8;
-  font-size: 13px;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-}
-
-.meeting-preview-link a:hover {
-  text-decoration: underline;
-}
-
-.api-info {
-  background-color: #f8f9fa;
-  border-left: 4px solid #1a73e8;
-  padding: 10px 15px;
-  margin: 15px 0;
-  border-radius: 4px;
-}
-
-.api-info p {
-  margin: 0;
-  font-size: 14px;
-  color: #555;
-  line-height: 1.5;
-}
-
-/* User import button and dropdown styles */
-.import-users-btn {
-  background-color: #f0f2f5;
-  border: none;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #1877f2;
-  margin-left: 10px;
-  transition: all 0.2s ease;
-}
-
-.import-users-btn:hover {
-  background-color: #e4e6eb;
-  transform: translateY(-2px);
-}
-
-.generate-meet-btn {
-  background-color: #1a73e8;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  margin-left: 10px;
-  transition: all 0.2s ease;
-}
-
-.generate-meet-btn:hover {
-  background-color: #0d62d1;
-  transform: translateY(-2px);
-}
-
-.generate-meet-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.user-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background-color: white;
+.error-message {
+  color: #d32f2f;
+  background-color: #ffebee;
+  padding: 12px 16px;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  margin-top: 5px;
-  z-index: 100;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.user-dropdown-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 15px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.user-dropdown-header h4 {
-  margin: 0;
-  font-size: 16px;
-  color: #333;
-}
-
-.select-all-btn {
-  background-color: transparent;
-  border: none;
-  color: #1877f2;
+  margin: 15px 0;
   font-size: 14px;
-  cursor: pointer;
-  padding: 5px;
+  border-left: 4px solid #d32f2f;
 }
 
-.select-all-btn:hover {
-  text-decoration: underline;
-}
-
-.user-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.user-item {
-  padding: 10px 15px;
-  border-bottom: 1px solid #f0f0f0;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.user-item:hover {
-  background-color: #f9fafb;
-}
-
-.user-info {
+.success-message {
+  color: #2e7d32;
+  background-color: #e8f5e9;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 15px 0;
+  font-size: 14px;
+  border-left: 4px solid #2e7d32;
   display: flex;
-  flex-direction: column;
+  align-items: center;
 }
 
-.user-name {
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 3px;
+.success-icon {
+  margin-right: 10px;
+  color: #2e7d32;
 }
 
-.user-email {
-  font-size: 13px;
-  color: #666;
-}
-
-.loading-indicator, .no-users {
-  padding: 15px;
+.no-meetings {
+  padding: 20px;
   text-align: center;
   color: #666;
-  font-size: 14px;
+  font-style: italic;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin-top: 10px;
 }

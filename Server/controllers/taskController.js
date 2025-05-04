@@ -49,12 +49,15 @@ const createTask = async (req, res) => {
         });
       }
 
-      // Vérifier si l'utilisateur connecté est le propriétaire du projet
-      if (projectData.owner.toString() !== req.user.id) {
+      // Vérifier si l'utilisateur connecté est le propriétaire du projet ou un administrateur
+      const isAdmin = req.user.role === "Admin";
+      const isProjectOwner = projectData.owner.toString() === req.user.id;
+
+      if (!isAdmin && !isProjectOwner) {
         return res.status(403).json({
           success: false,
           error:
-            "Seul le propriétaire du projet peut créer des tâches pour ce projet",
+            "Seul le propriétaire du projet ou un administrateur peut créer des tâches pour ce projet",
         });
       }
 
@@ -273,13 +276,16 @@ const updateTask = async (req, res) => {
           });
         }
 
-        // Vérifier si l'utilisateur connecté est le propriétaire du projet
-        if (projectData.owner.toString() !== req.user.id) {
-          console.log("updateTask - User is not the project owner");
+        // Vérifier si l'utilisateur connecté est le propriétaire du projet ou un administrateur
+        const isAdmin = req.user.role === "Admin";
+        const isProjectOwner = projectData.owner.toString() === req.user.id;
+
+        if (!isAdmin && !isProjectOwner) {
+          console.log("updateTask - User is not the project owner or admin");
           return res.status(403).json({
             success: false,
             error:
-              "Seul le propriétaire du projet peut modifier des tâches pour ce projet",
+              "Seul le propriétaire du projet ou un administrateur peut modifier des tâches pour ce projet",
           });
         }
 
@@ -319,16 +325,21 @@ const updateTask = async (req, res) => {
       });
     }
 
-    // Si la tâche a un projet et que l'utilisateur n'est pas le propriétaire
+    // Si la tâche a un projet et que l'utilisateur n'est pas le propriétaire ou un administrateur
+    const isAdmin = req.user.role === "Admin";
     if (
       taskWithProject.project &&
       taskWithProject.project.owner &&
-      taskWithProject.project.owner.toString() !== req.user.id
+      taskWithProject.project.owner.toString() !== req.user.id &&
+      !isAdmin
     ) {
-      console.log("updateTask - User is not the owner of the task's project");
+      console.log(
+        "updateTask - User is not the owner of the task's project or an admin"
+      );
       return res.status(403).json({
         success: false,
-        error: "Seul le propriétaire du projet peut modifier cette tâche",
+        error:
+          "Seul le propriétaire du projet ou un administrateur peut modifier cette tâche",
       });
     }
 
@@ -504,18 +515,23 @@ const updateTaskStatus = async (req, res) => {
       });
     }
 
-    // Vérifier si l'utilisateur est assigné à cette tâche
-    if (
-      !existingTask.assignedTo ||
-      existingTask.assignedTo.toString() !== req.user._id.toString()
-    ) {
-      console.log("updateTaskStatus - User is not assigned to this task");
+    // Vérifier si l'utilisateur est assigné à cette tâche ou est un administrateur
+    const isAdmin = req.user.role === "Admin";
+    const isAssignedUser =
+      existingTask.assignedTo &&
+      existingTask.assignedTo.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isAssignedUser) {
+      console.log(
+        "updateTaskStatus - User is not assigned to this task and is not an admin"
+      );
       console.log("Task assignedTo:", existingTask.assignedTo);
       console.log("Current user:", req.user._id);
+      console.log("Is admin:", isAdmin);
       return res.status(403).json({
         success: false,
         error:
-          "Vous n'êtes pas autorisé à modifier le statut de cette tâche. Seul l'utilisateur assigné peut modifier le statut.",
+          "Vous n'êtes pas autorisé à modifier le statut de cette tâche. Seul l'utilisateur assigné ou un administrateur peut modifier le statut.",
       });
     }
 

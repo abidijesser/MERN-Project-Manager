@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Select, DatePicker, Button, Row, Col, Alert, Spin, Table, Tag, Progress, Empty, Modal, Tabs, Statistic } from 'antd';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
-import { getProjectsPerformance, exportToPDF, exportToCSV } from '../../services/performanceService';
-import { DownloadOutlined, FilterOutlined, ReloadOutlined, FileExcelOutlined, FilePdfOutlined, BarChartOutlined, PieChartOutlined, RadarChartOutlined } from '@ant-design/icons';
+import { Card, Select, DatePicker, Button, Row, Col, Alert, Spin, Table, Tag, Progress, Modal, Tabs, Statistic, message } from 'antd';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
+import { getProjectsPerformance } from '../../services/performanceService';
+import { FilterOutlined, ReloadOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import './Performances.css';
 
 const { TabPane } = Tabs;
 
@@ -16,10 +18,6 @@ const Performances = () => {
     });
     const [selectedProject, setSelectedProject] = useState(null);
     const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
-    const [exportLoading, setExportLoading] = useState({
-        pdf: false,
-        csv: false
-    });
 
     // Charger les données de performance
     const fetchData = async (filterParams = {}) => {
@@ -42,6 +40,61 @@ const Performances = () => {
 
     // Appliquer les filtres
     const handleApplyFilters = () => {
+        console.log('Applying filters:', filters);
+        setLoading(true);
+
+        // Vérifier si des filtres sont appliqués
+        const hasProjectFilter = !!filters.projectId;
+        const hasDateFilter = filters.dateRange && filters.dateRange.length === 2 && filters.dateRange[0] && filters.dateRange[1];
+
+        // Vérifier que les dates sont valides si une plage de dates est sélectionnée
+        if (hasDateFilter) {
+            try {
+                // Convertir les objets dayjs en objets Date si nécessaire
+                const startDate = filters.dateRange[0].$d ? new Date(filters.dateRange[0].$d) : new Date(filters.dateRange[0]);
+                const endDate = filters.dateRange[1].$d ? new Date(filters.dateRange[1].$d) : new Date(filters.dateRange[1]);
+
+                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                    message.error('Dates invalides');
+                    setLoading(false);
+                    return;
+                }
+
+                if (startDate > endDate) {
+                    message.error('La date de début doit être antérieure à la date de fin');
+                    setLoading(false);
+                    return;
+                }
+
+                // Formater les dates pour l'affichage
+                const formatDate = (date) => {
+                    return date.toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    });
+                };
+
+                const dateMessage = `Filtrage par période: du ${formatDate(startDate)} au ${formatDate(endDate)}`;
+                message.info(dateMessage);
+            } catch (error) {
+                console.error('Erreur lors du traitement des dates:', error);
+                message.error('Erreur lors du traitement des dates');
+                setLoading(false);
+                return;
+            }
+        }
+
+        if (hasProjectFilter) {
+            const projectName = projectsPerformance?.projects.find(p => p._id === filters.projectId)?.projectName || filters.projectId;
+            message.info(`Filtrage par projet: ${projectName}`);
+        }
+
+        // Si aucun filtre n'est appliqué, informer l'utilisateur
+        if (!hasProjectFilter && !hasDateFilter) {
+            message.info('Aucun filtre appliqué, affichage de toutes les données');
+        }
+
         fetchData(filters);
     };
 
@@ -52,34 +105,10 @@ const Performances = () => {
             dateRange: null
         });
         fetchData();
+        message.success('Filtres réinitialisés');
     };
 
-    // Gestion des exports
-    const handleExportPDF = async () => {
-        try {
-            setExportLoading(prev => ({ ...prev, pdf: true }));
-            const result = await exportToPDF(projectsPerformance);
-            alert(`Rapport PDF exporté avec succès: ${result.filename}`);
-        } catch (error) {
-            console.error('Erreur lors de l\'export PDF:', error);
-            alert('Erreur lors de l\'export PDF');
-        } finally {
-            setExportLoading(prev => ({ ...prev, pdf: false }));
-        }
-    };
 
-    const handleExportCSV = async () => {
-        try {
-            setExportLoading(prev => ({ ...prev, csv: true }));
-            const result = await exportToCSV(projectsPerformance);
-            alert(`Rapport CSV exporté avec succès: ${result.filename}`);
-        } catch (error) {
-            console.error('Erreur lors de l\'export CSV:', error);
-            alert('Erreur lors de l\'export CSV');
-        } finally {
-            setExportLoading(prev => ({ ...prev, csv: false }));
-        }
-    };
 
     // Afficher les détails d'un projet
     const showProjectDetails = (project) => {
@@ -122,372 +151,1021 @@ const Performances = () => {
     }
 
     return (
-        <div className="performances-page">
+        <div className="performance-dashboard">
             {/* En-tête */}
-            <header>
-                <h1 style={{ color: '#1890ff' }}>Suivi des Performances</h1>
-                <div className="filters">
-                    <Select
-                        placeholder="Sélectionner un projet"
-                        style={{ width: 200 }}
-                        value={filters.projectId}
-                        onChange={(value) => setFilters(prev => ({ ...prev, projectId: value }))}
-                        allowClear
-                        options={projectsPerformance?.projects.map(project => ({
-                            value: project._id,
-                            label: project.projectName || `Projet ${project._id.substring(0, 5)}`
-                        })) || []}
-                    />
-                    <DatePicker.RangePicker
-                        style={{ marginLeft: 10 }}
-                        value={filters.dateRange}
-                        onChange={(dates) => setFilters(prev => ({ ...prev, dateRange: dates }))}
-                    />
-                    <Button
-                        type="primary"
-                        icon={<FilterOutlined />}
-                        style={{ marginLeft: 10 }}
-                        onClick={handleApplyFilters}
-                    >
-                        Filtrer
-                    </Button>
-                    <Button
-                        icon={<ReloadOutlined />}
-                        style={{ marginLeft: 10 }}
-                        onClick={handleResetFilters}
-                    >
-                        Réinitialiser
-                    </Button>
-                </div>
+            <header style={{ marginBottom: '24px' }}>
+                <Row align="middle" justify="center" style={{ marginBottom: '16px' }}>
+                    <Col>
+                        <h1 style={{ color: '#1890ff', margin: 0, fontSize: '28px', fontWeight: 'bold', textAlign: 'center' }}>
+                            Tableau de Bord des Performances
+                        </h1>
+                    </Col>
+                </Row>
+
+                {/* Indicateur de filtres actifs */}
+                {(filters.projectId || (filters.dateRange && filters.dateRange.length === 2 && filters.dateRange[0] && filters.dateRange[1])) && (
+                    <div style={{ marginBottom: '16px' }}>
+                        <Alert
+                            message="Filtres actifs"
+                            description={
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                    {filters.projectId && (
+                                        <Tag color="blue" style={{ padding: '4px 8px', fontSize: '14px' }}>
+                                            <strong>Projet:</strong> {projectsPerformance?.projects.find(p => p._id === filters.projectId)?.projectName || filters.projectId}
+                                        </Tag>
+                                    )}
+                                    {filters.dateRange && filters.dateRange.length === 2 && filters.dateRange[0] && filters.dateRange[1] && (
+                                        <Tag color="green" style={{ padding: '4px 8px', fontSize: '14px' }}>
+                                            <strong>Période:</strong> {filters.dateRange[0].$d
+                                                ? new Date(filters.dateRange[0].$d).toLocaleDateString('fr-FR')
+                                                : new Date(filters.dateRange[0]).toLocaleDateString('fr-FR')
+                                            } - {
+                                                filters.dateRange[1].$d
+                                                ? new Date(filters.dateRange[1].$d).toLocaleDateString('fr-FR')
+                                                : new Date(filters.dateRange[1]).toLocaleDateString('fr-FR')
+                                            }
+                                        </Tag>
+                                    )}
+                                </div>
+                            }
+                            type="info"
+                            showIcon
+                            closable
+                            onClose={handleResetFilters}
+                        />
+                    </div>
+                )}
+
+                <Card style={{ marginBottom: '16px' }}>
+                    <Row gutter={16} align="middle">
+                        <Col xs={24} sm={24} md={8} lg={8} xl={8}>
+                            <div style={{ marginBottom: '8px' }}>
+                                <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Projet</label>
+                                <Select
+                                    placeholder="Sélectionner un projet"
+                                    style={{ width: '100%' }}
+                                    value={filters.projectId}
+                                    onChange={(value) => setFilters(prev => ({ ...prev, projectId: value }))}
+                                    allowClear
+                                    options={projectsPerformance?.projects.map(project => ({
+                                        value: project._id,
+                                        label: project.projectName || `Projet ${project._id.substring(0, 5)}`
+                                    })) || []}
+                                />
+                            </div>
+                        </Col>
+                        <Col xs={24} sm={24} md={10} lg={10} xl={10}>
+                            <div style={{ marginBottom: '8px' }}>
+                                <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Période</label>
+                                <DatePicker.RangePicker
+                                    style={{ width: '100%' }}
+                                    value={filters.dateRange}
+                                    onChange={(dates) => setFilters(prev => ({ ...prev, dateRange: dates }))}
+                                    placeholder={['Date de début', 'Date de fin']}
+                                    format="DD/MM/YYYY"
+                                    allowClear
+                                    presets={[
+                                        {
+                                            label: 'Aujourd\'hui',
+                                            value: [
+                                                dayjs(new Date()),
+                                                dayjs(new Date())
+                                            ]
+                                        },
+                                        {
+                                            label: 'Cette semaine',
+                                            value: [
+                                                dayjs(new Date(new Date().setDate(new Date().getDate() - new Date().getDay()))),
+                                                dayjs(new Date(new Date().setDate(new Date().getDate() + (6 - new Date().getDay()))))
+                                            ]
+                                        },
+                                        {
+                                            label: 'Ce mois',
+                                            value: [
+                                                dayjs(new Date(new Date().setDate(1))),
+                                                dayjs(new Date(new Date(new Date().setMonth(new Date().getMonth() + 1)).setDate(0)))
+                                            ]
+                                        },
+                                        {
+                                            label: 'Cette année',
+                                            value: [
+                                                dayjs(new Date(new Date().getFullYear(), 0, 1)),
+                                                dayjs(new Date(new Date().getFullYear(), 11, 31))
+                                            ]
+                                        }
+                                    ]}
+                                />
+                            </div>
+                        </Col>
+                        <Col xs={24} sm={24} md={6} lg={6} xl={6} style={{ textAlign: 'right' }}>
+                            <Button
+                                type="primary"
+                                icon={<FilterOutlined />}
+                                style={{ marginRight: '8px' }}
+                                onClick={handleApplyFilters}
+                            >
+                                Appliquer
+                            </Button>
+                            <Button
+                                icon={<ReloadOutlined />}
+                                onClick={handleResetFilters}
+                            >
+                                Réinitialiser
+                            </Button>
+                        </Col>
+                    </Row>
+                </Card>
             </header>
 
             {/* Section 1 : Vue Globale */}
-            <section>
-                <Row gutter={16}>
-                    <Col span={6}>
-                        <Card title="Taux d'avancement (%)" style={{ backgroundColor: '#e6f7ff' }}>
-                            <h2 style={{ color: '#1890ff' }}>
-                                {projectsPerformance ? `${projectsPerformance.kpis.averageCompletionRate}%` : '75%'}
-                            </h2>
+            <section style={{ marginBottom: '24px' }}>
+                <Row gutter={[16, 16]}>
+                    <Col xs={24} sm={12} md={12} lg={6} xl={6}>
+                        <Card
+                            className="card-shadow"
+                            style={{
+                                height: '100%'
+                            }}
+                        >
+                            <Statistic
+                                title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>Taux d'avancement</span>}
+                                value={projectsPerformance && projectsPerformance.kpis ? projectsPerformance.kpis.averageCompletionRate : 0}
+                                suffix="%"
+                                valueStyle={{
+                                    color: '#1890ff',
+                                    fontSize: '28px',
+                                    fontWeight: 'bold'
+                                }}
+                                prefix={<Progress
+                                    type="circle"
+                                    percent={projectsPerformance?.kpis?.averageCompletionRate || 0}
+                                    size="small"
+                                    format={() => ''}
+                                    style={{ marginRight: '16px' }}
+                                />}
+                                loading={!projectsPerformance || !projectsPerformance.kpis}
+                            />
+                            <div style={{ marginTop: '8px', fontSize: '14px', color: '#8c8c8c' }}>
+                                Progression globale des projets
+                            </div>
                         </Card>
                     </Col>
-                    <Col span={6}>
-                        <Card title="Efficacité temporelle" style={{ backgroundColor: '#fffbe6' }}>
-                            <h2 style={{ color: '#faad14' }}>
-                                {projectsPerformance ? `${projectsPerformance.kpis.averageTimeEfficiency}%` : '80%'}
-                            </h2>
+                    <Col xs={24} sm={12} md={12} lg={6} xl={6}>
+                        <Card
+                            className="card-shadow"
+                            style={{
+                                height: '100%'
+                            }}
+                        >
+                            <Statistic
+                                title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>Efficacité temporelle</span>}
+                                value={projectsPerformance && projectsPerformance.kpis ? projectsPerformance.kpis.averageTimeEfficiency : 0}
+                                suffix="%"
+                                valueStyle={{
+                                    color: '#52c41a',
+                                    fontSize: '28px',
+                                    fontWeight: 'bold'
+                                }}
+                                prefix={<Progress
+                                    type="circle"
+                                    percent={projectsPerformance?.kpis?.averageTimeEfficiency || 0}
+                                    size="small"
+                                    format={() => ''}
+                                    strokeColor="#52c41a"
+                                    style={{ marginRight: '16px' }}
+                                />}
+                                loading={!projectsPerformance || !projectsPerformance.kpis}
+                            />
+                            <div style={{ marginTop: '8px', fontSize: '14px', color: '#8c8c8c' }}>
+                                Respect des délais prévus
+                            </div>
                         </Card>
                     </Col>
-                    <Col span={6}>
-                        <Card title="Projets à risque" style={{ backgroundColor: '#f6ffed' }}>
-                            <h2 style={{ color: '#52c41a' }}>
-                                {projectsPerformance ? projectsPerformance.kpis.projectsAtRisk : '2'}
-                            </h2>
+                    <Col xs={24} sm={12} md={12} lg={6} xl={6}>
+                        <Card
+                            className="card-shadow"
+                            style={{
+                                height: '100%'
+                            }}
+                        >
+                            <Statistic
+                                title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>Projets à risque</span>}
+                                value={projectsPerformance && projectsPerformance.kpis ? projectsPerformance.kpis.projectsAtRisk : 0}
+                                valueStyle={{
+                                    color: '#f5222d',
+                                    fontSize: '28px',
+                                    fontWeight: 'bold'
+                                }}
+                                prefix={<div
+                                    style={{
+                                        width: '50px',
+                                        height: '50px',
+                                        borderRadius: '25px',
+                                        backgroundColor: '#fff1f0',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        marginRight: '16px'
+                                    }}
+                                >
+                                    <span style={{ color: '#f5222d', fontSize: '24px' }}>⚠️</span>
+                                </div>}
+                                loading={!projectsPerformance || !projectsPerformance.kpis}
+                            />
+                            <div style={{ marginTop: '8px', fontSize: '14px', color: '#8c8c8c' }}>
+                                Projets nécessitant attention
+                            </div>
                         </Card>
                     </Col>
-                    <Col span={6}>
-                        <Card title="Risques détectés" style={{ backgroundColor: '#fff1f0' }}>
-                            <h2 style={{ color: '#f5222d' }}>
-                                {projectsPerformance ? projectsPerformance.kpis.totalRisks : '5'}
-                            </h2>
+                    <Col xs={24} sm={12} md={12} lg={6} xl={6}>
+                        <Card
+                            className="card-shadow"
+                            style={{
+                                height: '100%'
+                            }}
+                        >
+                            <Statistic
+                                title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>Risques détectés</span>}
+                                value={projectsPerformance && projectsPerformance.kpis ? projectsPerformance.kpis.totalRisks : 0}
+                                valueStyle={{
+                                    color: '#fa8c16',
+                                    fontSize: '28px',
+                                    fontWeight: 'bold'
+                                }}
+                                prefix={<div
+                                    style={{
+                                        width: '50px',
+                                        height: '50px',
+                                        borderRadius: '25px',
+                                        backgroundColor: '#fff7e6',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        marginRight: '16px'
+                                    }}
+                                >
+                                    <span style={{ color: '#fa8c16', fontSize: '24px' }}>🔍</span>
+                                </div>}
+                                loading={!projectsPerformance || !projectsPerformance.kpis}
+                            />
+                            <div style={{ marginTop: '8px', fontSize: '14px', color: '#8c8c8c' }}>
+                                Tâches en retard identifiées
+                            </div>
                         </Card>
                     </Col>
                 </Row>
             </section>
 
             {/* Section 2 : Graphiques */}
-            <section>
-                <Row gutter={16}>
-                    <Col span={12}>
-                        <Card title="Performance des projets">
-                            <ResponsiveContainer width="100%" height={300}>
-                                <BarChart data={[
-                                    { name: 'Projet A', completion: 75, efficiency: 80, risk: 15 },
-                                    { name: 'Projet B', completion: 45, efficiency: 60, risk: 30 },
-                                    { name: 'Projet C', completion: 90, efficiency: 95, risk: 5 }
-                                ]}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="name" />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Legend />
-                                    <Bar dataKey="completion" fill="#1890ff" name="Taux d'achèvement" />
-                                    <Bar dataKey="efficiency" fill="#52c41a" name="Efficacité temporelle" />
-                                    <Bar dataKey="risk" fill="#f5222d" name="Niveau de risque" />
-                                </BarChart>
-                            </ResponsiveContainer>
+            <section style={{ marginBottom: '24px' }}>
+                <Row gutter={[16, 16]}>
+                    <Col xs={24} md={24} lg={12} xl={12}>
+                        <Card
+                            title={<span style={{ fontSize: '18px', fontWeight: 'bold' }}>Performance des projets</span>}
+                            style={{
+                                height: '100%',
+                                borderRadius: '8px',
+                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)'
+                            }}
+                            extra={
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', marginRight: '16px' }}>
+                                        <div style={{ width: '12px', height: '12px', backgroundColor: '#1890ff', marginRight: '4px', borderRadius: '2px' }}></div>
+                                        <span style={{ fontSize: '12px' }}>Achèvement</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', marginRight: '16px' }}>
+                                        <div style={{ width: '12px', height: '12px', backgroundColor: '#52c41a', marginRight: '4px', borderRadius: '2px' }}></div>
+                                        <span style={{ fontSize: '12px' }}>Efficacité</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <div style={{ width: '12px', height: '12px', backgroundColor: '#f5222d', marginRight: '4px', borderRadius: '2px' }}></div>
+                                        <span style={{ fontSize: '12px' }}>Risque</span>
+                                    </div>
+                                </div>
+                            }
+                        >
+                            <div style={{ height: '350px', position: 'relative' }}>
+                                {projectsPerformance && projectsPerformance.charts && projectsPerformance.charts.performanceChartData && projectsPerformance.charts.performanceChartData.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart
+                                            data={projectsPerformance.charts.performanceChartData}
+                                            margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                            <XAxis
+                                                dataKey="name"
+                                                tick={{ fontSize: 12 }}
+                                                angle={-45}
+                                                textAnchor="end"
+                                                height={60}
+                                            />
+                                            <YAxis
+                                                tick={{ fontSize: 12 }}
+                                                domain={[0, 100]}
+                                                tickFormatter={(value) => `${value}%`}
+                                            />
+                                            <Tooltip
+                                                formatter={(value) => [`${value}%`, '']}
+                                                labelStyle={{ fontWeight: 'bold' }}
+                                                contentStyle={{
+                                                    borderRadius: '4px',
+                                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                                                    border: 'none'
+                                                }}
+                                            />
+                                            <Bar
+                                                dataKey="completion"
+                                                fill="#1890ff"
+                                                name="Taux d'achèvement"
+                                                radius={[4, 4, 0, 0]}
+                                                barSize={20}
+                                            />
+                                            <Bar
+                                                dataKey="efficiency"
+                                                fill="#52c41a"
+                                                name="Efficacité temporelle"
+                                                radius={[4, 4, 0, 0]}
+                                                barSize={20}
+                                            />
+                                            <Bar
+                                                dataKey="risk"
+                                                fill="#f5222d"
+                                                name="Niveau de risque"
+                                                radius={[4, 4, 0, 0]}
+                                                barSize={20}
+                                            />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        height: '100%',
+                                        flexDirection: 'column',
+                                        backgroundColor: '#fafafa',
+                                        borderRadius: '8px'
+                                    }}>
+                                        <span style={{ fontSize: '24px', marginBottom: '8px' }}>📊</span>
+                                        <p style={{ color: '#8c8c8c' }}>Aucune donnée disponible</p>
+                                    </div>
+                                )}
+                            </div>
                         </Card>
                     </Col>
-                    <Col span={12}>
-                        <Card title="Répartition des statuts de projets">
-                            <ResponsiveContainer width="100%" height={300}>
-                                <PieChart>
-                                    <Pie
-                                        data={[
-                                            { name: 'Terminés', value: 2, color: statusColors['completed'] },
-                                            { name: 'En cours', value: 5, color: statusColors['in-progress'] },
-                                            { name: 'En retard', value: 1, color: statusColors['delayed'] },
-                                            { name: 'À risque', value: 2, color: statusColors['at-risk'] }
-                                        ]}
-                                        cx="50%"
-                                        cy="50%"
-                                        labelLine={false}
-                                        outerRadius={80}
-                                        fill="#8884d8"
-                                        dataKey="value"
-                                        nameKey="name"
-                                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                                    >
-                                        {[
-                                            { name: 'Terminés', value: 2, color: statusColors['completed'] },
-                                            { name: 'En cours', value: 5, color: statusColors['in-progress'] },
-                                            { name: 'En retard', value: 1, color: statusColors['delayed'] },
-                                            { name: 'À risque', value: 2, color: statusColors['at-risk'] }
-                                        ].map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip />
-                                    <Legend />
-                                </PieChart>
-                            </ResponsiveContainer>
+                    <Col xs={24} md={24} lg={12} xl={12}>
+                        <Card
+                            title={<span style={{ fontSize: '18px', fontWeight: 'bold' }}>Répartition des statuts de projets</span>}
+                            style={{
+                                height: '100%',
+                                borderRadius: '8px',
+                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)'
+                            }}
+                        >
+                            <div style={{ height: '350px', position: 'relative' }}>
+                                {projectsPerformance && projectsPerformance.charts && projectsPerformance.charts.statusDistribution ? (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={[
+                                                    { name: 'Terminés', value: projectsPerformance.charts.statusDistribution.completed, color: statusColors['completed'] },
+                                                    { name: 'En cours', value: projectsPerformance.charts.statusDistribution.inProgress, color: statusColors['in-progress'] },
+                                                    { name: 'En retard', value: projectsPerformance.charts.statusDistribution.delayed, color: statusColors['delayed'] },
+                                                    { name: 'À risque', value: projectsPerformance.charts.statusDistribution.atRisk, color: statusColors['at-risk'] }
+                                                ].filter(item => item.value > 0)} // Ne montrer que les statuts avec des valeurs
+                                                cx="50%"
+                                                cy="50%"
+                                                labelLine={true}
+                                                outerRadius={120}
+                                                innerRadius={60}
+                                                fill="#8884d8"
+                                                dataKey="value"
+                                                nameKey="name"
+                                                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                                paddingAngle={2}
+                                            >
+                                                {[
+                                                    { name: 'Terminés', value: projectsPerformance.charts.statusDistribution.completed, color: statusColors['completed'] },
+                                                    { name: 'En cours', value: projectsPerformance.charts.statusDistribution.inProgress, color: statusColors['in-progress'] },
+                                                    { name: 'En retard', value: projectsPerformance.charts.statusDistribution.delayed, color: statusColors['delayed'] },
+                                                    { name: 'À risque', value: projectsPerformance.charts.statusDistribution.atRisk, color: statusColors['at-risk'] }
+                                                ]
+                                                .filter(item => item.value > 0) // Ne montrer que les statuts avec des valeurs
+                                                .map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color} stroke="#fff" strokeWidth={2} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip
+                                                formatter={(value, name) => [`${value} projet(s)`, name]}
+                                                contentStyle={{
+                                                    borderRadius: '4px',
+                                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                                                    border: 'none'
+                                                }}
+                                            />
+                                            <Legend
+                                                layout="horizontal"
+                                                verticalAlign="bottom"
+                                                align="center"
+                                                iconType="circle"
+                                                iconSize={10}
+                                                formatter={(value) => <span style={{ color: '#333', fontSize: '14px' }}>{value}</span>}
+                                            />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        height: '100%',
+                                        flexDirection: 'column',
+                                        backgroundColor: '#fafafa',
+                                        borderRadius: '8px'
+                                    }}>
+                                        <span style={{ fontSize: '24px', marginBottom: '8px' }}>🥧</span>
+                                        <p style={{ color: '#8c8c8c' }}>Aucune donnée disponible</p>
+                                    </div>
+                                )}
+                            </div>
                         </Card>
                     </Col>
                 </Row>
             </section>
 
             {/* Section 3 : Analyse détaillée */}
-            <section>
-                <Card title="Performance détaillée des projets">
-                    <Table
-                        columns={[
-                            {
-                                title: 'Projet',
-                                dataIndex: 'name',
-                                key: 'name',
-                            },
-                            {
-                                title: 'Statut',
-                                dataIndex: 'status',
-                                key: 'status',
-                                render: (status) => {
-                                    let color = statusColors[status] || '#1890ff';
-                                    let text = 'Inconnu';
-
-                                    if (status === 'completed') text = 'Terminé';
-                                    else if (status === 'in-progress') text = 'En cours';
-                                    else if (status === 'delayed') text = 'En retard';
-                                    else if (status === 'at-risk') text = 'À risque';
-
-                                    return <Tag color={color}>{text}</Tag>;
-                                }
-                            },
-                            {
-                                title: 'Progression',
-                                dataIndex: 'completion',
-                                key: 'completion',
-                                render: (completion) => <Progress percent={completion} size="small" />
-                            },
-                            {
-                                title: 'Efficacité',
-                                dataIndex: 'efficiency',
-                                key: 'efficiency',
-                                render: (efficiency) => {
-                                    let color = '#52c41a';
-                                    if (efficiency < 70) color = '#f5222d';
-                                    else if (efficiency < 90) color = '#faad14';
-
-                                    return <span style={{ color }}>{efficiency}%</span>;
-                                }
-                            },
-                            {
-                                title: 'Risque',
-                                dataIndex: 'risk',
-                                key: 'risk',
-                                render: (risk) => {
-                                    let color = '#52c41a';
-                                    if (risk > 30) color = '#f5222d';
-                                    else if (risk > 10) color = '#faad14';
-
-                                    return <span style={{ color }}>{risk}%</span>;
-                                }
-                            },
-                            {
-                                title: 'Actions',
-                                key: 'actions',
-                                render: (_, record, index) => (
-                                    <Button
-                                        type="primary"
-                                        size="small"
-                                        onClick={() => showProjectDetails({
-                                            _id: record.key,
-                                            projectName: record.name,
-                                            performance: {
-                                                completionRate: record.completion,
-                                                timeEfficiency: record.efficiency,
-                                                riskLevel: record.risk,
-                                                resourceUtilization: 85,
-                                                taskCount: 10,
-                                                completedTaskCount: Math.round(10 * record.completion / 100),
-                                                lateTaskCount: Math.round(10 * record.risk / 100)
-                                            }
-                                        })}
-                                    >
-                                        Détails
-                                    </Button>
-                                )
-                            }
-                        ]}
-                        dataSource={[
-                            { key: 1, name: 'Projet A', status: 'in-progress', completion: 75, efficiency: 80, risk: 15 },
-                            { key: 2, name: 'Projet B', status: 'delayed', completion: 45, efficiency: 60, risk: 30 },
-                            { key: 3, name: 'Projet C', status: 'completed', completion: 90, efficiency: 95, risk: 5 }
-                        ]}
-                        pagination={false}
-                    />
-                </Card>
-
-                <Card title="Recommandations IA" style={{ marginTop: 16 }}>
-                    <Alert
-                        message="Projet à risque détecté"
-                        description="Le projet B présente un niveau de risque élevé. Considérez une révision des échéances ou une réallocation des ressources."
-                        type="warning"
-                        showIcon
-                        style={{ marginBottom: 10 }}
-                    />
-                    <Alert
-                        message="Efficacité temporelle faible"
-                        description="L'efficacité temporelle moyenne des projets est de 80%. Envisagez de revoir la planification des projets."
-                        type="info"
-                        showIcon
-                        style={{ marginBottom: 10 }}
-                    />
-                    <Alert
-                        message="Projet performant: Projet C"
-                        description="Le projet C montre d'excellentes performances. Analysez ses méthodes de gestion pour les appliquer à d'autres projets."
-                        type="success"
-                        showIcon
-                        style={{ marginBottom: 10 }}
-                    />
-                </Card>
-            </section>
-
-            {/* Section 4 : Actions */}
-            <section>
-                <Card title="Exporter rapports" style={{ marginTop: 16 }}>
-                    <Button
-                        type="primary"
-                        icon={<FilePdfOutlined />}
-                        onClick={handleExportPDF}
-                        loading={exportLoading.pdf}
-                    >
-                        Exporter en PDF
-                    </Button>
-                    <Button
-                        style={{ marginLeft: 10 }}
-                        icon={<FileExcelOutlined />}
-                        onClick={handleExportCSV}
-                        loading={exportLoading.csv}
-                    >
-                        Exporter en CSV
-                    </Button>
-                </Card>
-
-                {/* Modal de détails du projet */}
-                <Modal
-                    title={selectedProject ? `Détails du projet: ${selectedProject.projectName}` : 'Détails du projet'}
-                    open={isDetailModalVisible}
-                    onCancel={handleCloseDetailModal}
-                    width={800}
-                    footer={[
-                        <Button key="close" onClick={handleCloseDetailModal}>
-                            Fermer
-                        </Button>
-                    ]}
-                >
-                    {selectedProject && (
-                        <Tabs defaultActiveKey="1">
-                            <TabPane tab="Informations générales" key="1">
-                                <Row gutter={16}>
-                                    <Col span={12}>
-                                        <Statistic title="Taux d'achèvement" value={selectedProject.performance.completionRate} suffix="%" />
-                                    </Col>
-                                    <Col span={12}>
-                                        <Statistic title="Efficacité temporelle" value={selectedProject.performance.timeEfficiency} suffix="%" />
-                                    </Col>
-                                </Row>
-                                <Row gutter={16} style={{ marginTop: 20 }}>
-                                    <Col span={12}>
-                                        <Statistic title="Niveau de risque" value={selectedProject.performance.riskLevel} suffix="%" />
-                                    </Col>
-                                    <Col span={12}>
-                                        <Statistic title="Utilisation des ressources" value={selectedProject.performance.resourceUtilization} suffix="%" />
-                                    </Col>
-                                </Row>
-                            </TabPane>
-                            <TabPane tab="Tâches" key="2">
-                                <Row>
-                                    <Col span={8}>
-                                        <Statistic title="Total des tâches" value={selectedProject.performance.taskCount} />
-                                    </Col>
-                                    <Col span={8}>
-                                        <Statistic title="Tâches terminées" value={selectedProject.performance.completedTaskCount} />
-                                    </Col>
-                                    <Col span={8}>
-                                        <Statistic title="Tâches en retard" value={selectedProject.performance.lateTaskCount} />
-                                    </Col>
-                                </Row>
-                                <div style={{ marginTop: 20 }}>
-                                    <Progress
-                                        percent={selectedProject.performance.completionRate}
-                                        status={selectedProject.performance.completionRate === 100 ? 'success' : 'active'}
-                                        strokeColor={{
-                                            '0%': '#108ee9',
-                                            '100%': '#87d068',
-                                        }}
-                                    />
+            <section style={{ marginBottom: '24px' }}>
+                <Row gutter={[16, 16]}>
+                    <Col span={24}>
+                        <Card
+                            title={<span style={{ fontSize: '18px', fontWeight: 'bold' }}>Performance détaillée des projets</span>}
+                            style={{
+                                borderRadius: '8px',
+                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)'
+                            }}
+                            extra={
+                                <div>
+                                    {projectsPerformance && projectsPerformance.projects && projectsPerformance.projects.length > 0 && (
+                                        <span style={{ color: '#8c8c8c', marginRight: '8px' }}>
+                                            {projectsPerformance.projects.length} projet(s) trouvé(s)
+                                        </span>
+                                    )}
                                 </div>
-                            </TabPane>
-                            <TabPane tab="Analyse de performance" key="3">
-                                <ResponsiveContainer width="100%" height={300}>
-                                    <RadarChart outerRadius={90} data={[
-                                        {
-                                            subject: 'Achèvement',
-                                            value: selectedProject.performance.completionRate,
-                                            fullMark: 100
-                                        },
-                                        {
-                                            subject: 'Efficacité',
-                                            value: selectedProject.performance.timeEfficiency,
-                                            fullMark: 100
-                                        },
-                                        {
-                                            subject: 'Ressources',
-                                            value: selectedProject.performance.resourceUtilization,
-                                            fullMark: 100
-                                        },
-                                        {
-                                            subject: 'Qualité',
-                                            value: 100 - selectedProject.performance.riskLevel,
-                                            fullMark: 100
-                                        },
-                                        {
-                                            subject: 'Respect des délais',
-                                            value: selectedProject.performance.timeEfficiency > 80 ? 90 : 70,
-                                            fullMark: 100
+                            }
+                        >
+                            <Table
+                                columns={[
+                                    {
+                                        title: 'Projet',
+                                        dataIndex: 'name',
+                                        key: 'name',
+                                        sorter: (a, b) => a.name.localeCompare(b.name),
+                                        render: (text) => <span style={{ fontWeight: 'bold' }}>{text}</span>
+                                    },
+                                    {
+                                        title: 'Statut',
+                                        dataIndex: 'status',
+                                        key: 'status',
+                                        filters: [
+                                            { text: 'Terminé', value: 'completed' },
+                                            { text: 'En cours', value: 'in-progress' },
+                                            { text: 'En retard', value: 'delayed' },
+                                            { text: 'À risque', value: 'at-risk' }
+                                        ],
+                                        onFilter: (value, record) => record.status === value,
+                                        render: (status) => {
+                                            let color = statusColors[status] || '#1890ff';
+                                            let text = 'Inconnu';
+
+                                            if (status === 'completed') text = 'Terminé';
+                                            else if (status === 'in-progress') text = 'En cours';
+                                            else if (status === 'delayed') text = 'En retard';
+                                            else if (status === 'at-risk') text = 'À risque';
+
+                                            return <Tag color={color} style={{ padding: '2px 8px', borderRadius: '4px' }}>{text}</Tag>;
                                         }
-                                    ]}>
-                                        <PolarGrid />
-                                        <PolarAngleAxis dataKey="subject" />
-                                        <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                                        <Radar name="Performance" dataKey="value" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-                                    </RadarChart>
-                                </ResponsiveContainer>
-                            </TabPane>
-                        </Tabs>
-                    )}
-                </Modal>
+                                    },
+                                    {
+                                        title: 'Progression',
+                                        dataIndex: 'completion',
+                                        key: 'completion',
+                                        sorter: (a, b) => a.completion - b.completion,
+                                        render: (completion) => (
+                                            <div style={{ width: '100%' }}>
+                                                <Progress
+                                                    percent={completion}
+                                                    size="small"
+                                                    strokeColor={{
+                                                        '0%': '#108ee9',
+                                                        '100%': '#87d068',
+                                                    }}
+                                                    style={{ marginRight: '8px' }}
+                                                />
+                                                <span style={{ fontSize: '12px', color: '#8c8c8c' }}>{completion}%</span>
+                                            </div>
+                                        )
+                                    },
+                                    {
+                                        title: 'Efficacité',
+                                        dataIndex: 'efficiency',
+                                        key: 'efficiency',
+                                        sorter: (a, b) => a.efficiency - b.efficiency,
+                                        render: (efficiency) => {
+                                            let color = '#52c41a';
+                                            if (efficiency < 70) color = '#f5222d';
+                                            else if (efficiency < 90) color = '#faad14';
+
+                                            return (
+                                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                    <div style={{
+                                                        width: '8px',
+                                                        height: '8px',
+                                                        borderRadius: '50%',
+                                                        backgroundColor: color,
+                                                        marginRight: '8px'
+                                                    }}></div>
+                                                    <span style={{ fontWeight: 'bold', color }}>{efficiency}%</span>
+                                                </div>
+                                            );
+                                        }
+                                    },
+                                    {
+                                        title: 'Risque',
+                                        dataIndex: 'risk',
+                                        key: 'risk',
+                                        sorter: (a, b) => a.risk - b.risk,
+                                        render: (risk) => {
+                                            let color = '#52c41a';
+                                            let text = 'Faible';
+
+                                            if (risk > 30) {
+                                                color = '#f5222d';
+                                                text = 'Élevé';
+                                            } else if (risk > 10) {
+                                                color = '#faad14';
+                                                text = 'Moyen';
+                                            }
+
+                                            return (
+                                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                    <Tag color={color} style={{ padding: '0px 8px', borderRadius: '10px' }}>
+                                                        {text}
+                                                    </Tag>
+                                                    <span style={{ marginLeft: '4px', fontSize: '12px', color: '#8c8c8c' }}>
+                                                        ({risk}%)
+                                                    </span>
+                                                </div>
+                                            );
+                                        }
+                                    },
+                                    {
+                                        title: 'Actions',
+                                        key: 'actions',
+                                        render: (_, record) => (
+                                            <Button
+                                                type="primary"
+                                                size="small"
+                                                style={{ borderRadius: '4px' }}
+                                                onClick={() => showProjectDetails({
+                                                    _id: record.key,
+                                                    projectName: record.name,
+                                                    performance: {
+                                                        completionRate: record.completion,
+                                                        timeEfficiency: record.efficiency,
+                                                        riskLevel: record.risk,
+                                                        resourceUtilization: 85,
+                                                        taskCount: 10,
+                                                        completedTaskCount: Math.round(10 * record.completion / 100),
+                                                        lateTaskCount: Math.round(10 * record.risk / 100)
+                                                    }
+                                                })}
+                                            >
+                                                Détails
+                                            </Button>
+                                        )
+                                    }
+                                ]}
+                                dataSource={projectsPerformance && projectsPerformance.projects ?
+                                    projectsPerformance.projects.map(project => ({
+                                        key: project._id,
+                                        name: project.projectName || `Projet ${project._id.substring(0, 5)}`,
+                                        status: project.performance.status,
+                                        completion: project.performance.completionRate,
+                                        efficiency: project.performance.timeEfficiency,
+                                        risk: project.performance.riskLevel
+                                    })) : []
+                                }
+                                pagination={{
+                                    pageSize: 5,
+                                    showSizeChanger: true,
+                                    pageSizeOptions: ['5', '10', '20'],
+                                    showTotal: (total, range) => `${range[0]}-${range[1]} sur ${total} projets`
+                                }}
+                                rowClassName={(record) => {
+                                    if (record.status === 'at-risk') return 'table-row-risk';
+                                    if (record.status === 'completed') return 'table-row-completed';
+                                    return '';
+                                }}
+                                style={{ marginBottom: '16px' }}
+                                loading={!projectsPerformance}
+                            />
+                        </Card>
+                    </Col>
+                </Row>
+
+                <Row gutter={[16, 16]}>
+                    <Col span={24}>
+                        <Card
+                            title={
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '18px', fontWeight: 'bold', marginRight: '8px' }}>Recommandations IA</span>
+                                    <Tag color="purple">Powered by AI</Tag>
+                                </div>
+                            }
+                            style={{
+                                borderRadius: '8px',
+                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)'
+                            }}
+                        >
+                            {projectsPerformance && projectsPerformance.recommendations && projectsPerformance.recommendations.length > 0 ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    {projectsPerformance.recommendations.map((recommendation, index) => {
+                                        const iconMap = {
+                                            'warning': '⚠️',
+                                            'info': 'ℹ️',
+                                            'success': '✅',
+                                            'error': '❌'
+                                        };
+
+                                        return (
+                                            <Alert
+                                                key={`recommendation-${index}`}
+                                                message={
+                                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                        <span style={{ marginRight: '8px', fontSize: '18px' }}>
+                                                            {iconMap[recommendation.type] || 'ℹ️'}
+                                                        </span>
+                                                        <span style={{ fontWeight: 'bold', fontSize: '16px' }}>
+                                                            {recommendation.title}
+                                                        </span>
+                                                    </div>
+                                                }
+                                                description={
+                                                    <div style={{ marginLeft: '26px', marginTop: '8px' }}>
+                                                        {recommendation.description}
+                                                    </div>
+                                                }
+                                                type={recommendation.type}
+                                                showIcon={false}
+                                                style={{
+                                                    marginBottom: 10,
+                                                    borderRadius: '8px',
+                                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+                                                }}
+                                            />
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div style={{
+                                    textAlign: 'center',
+                                    padding: '40px 20px',
+                                    backgroundColor: '#fafafa',
+                                    borderRadius: '8px',
+                                    color: '#8c8c8c'
+                                }}>
+                                    <div style={{ fontSize: '24px', marginBottom: '16px' }}>🤖</div>
+                                    <p style={{ fontSize: '16px', marginBottom: '8px' }}>Aucune recommandation disponible pour le moment</p>
+                                    <p style={{ fontSize: '14px' }}>Les recommandations apparaîtront ici lorsque l'IA aura analysé suffisamment de données</p>
+                                </div>
+                            )}
+                        </Card>
+                    </Col>
+                </Row>
             </section>
+
+            {/* Modal de détails du projet */}
+            <Modal
+                title={
+                    selectedProject ? (
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>
+                                Détails du projet: {selectedProject.projectName}
+                            </span>
+                        </div>
+                    ) : 'Détails du projet'
+                }
+                open={isDetailModalVisible}
+                onCancel={handleCloseDetailModal}
+                width={900}
+                footer={[
+                    <Button
+                        key="close"
+                        onClick={handleCloseDetailModal}
+                        size="large"
+                        style={{ borderRadius: '4px' }}
+                    >
+                        Fermer
+                    </Button>
+                ]}
+                style={{ top: 20 }}
+                className="detail-modal"
+            >
+                {selectedProject && (
+                    <Tabs
+                        defaultActiveKey="1"
+                        type="card"
+                        size="large"
+                        style={{ marginTop: '8px' }}
+                    >
+                        <TabPane tab="Informations générales" key="1">
+                            <div style={{ padding: '16px 0' }}>
+                                <Row gutter={[24, 24]}>
+                                    <Col xs={24} sm={12} md={12} lg={6} xl={6}>
+                                        <Card
+                                            className="card-shadow"
+                                            style={{
+                                                height: '100%'
+                                            }}
+                                        >
+                                            <Statistic
+                                                title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>Taux d'achèvement</span>}
+                                                value={selectedProject.performance.completionRate}
+                                                suffix="%"
+                                                valueStyle={{ color: '#1890ff', fontSize: '24px', fontWeight: 'bold' }}
+                                                prefix={<Progress
+                                                    type="circle"
+                                                    percent={selectedProject.performance.completionRate}
+                                                    size="small"
+                                                    format={() => ''}
+                                                    style={{ marginRight: '16px' }}
+                                                />}
+                                            />
+                                        </Card>
+                                    </Col>
+                                    <Col xs={24} sm={12} md={12} lg={6} xl={6}>
+                                        <Card
+                                            className="card-shadow"
+                                            style={{
+                                                height: '100%'
+                                            }}
+                                        >
+                                            <Statistic
+                                                title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>Efficacité temporelle</span>}
+                                                value={selectedProject.performance.timeEfficiency}
+                                                suffix="%"
+                                                valueStyle={{ color: '#52c41a', fontSize: '24px', fontWeight: 'bold' }}
+                                                prefix={<Progress
+                                                    type="circle"
+                                                    percent={selectedProject.performance.timeEfficiency}
+                                                    size="small"
+                                                    format={() => ''}
+                                                    strokeColor="#52c41a"
+                                                    style={{ marginRight: '16px' }}
+                                                />}
+                                            />
+                                        </Card>
+                                    </Col>
+                                    <Col xs={24} sm={12} md={12} lg={6} xl={6}>
+                                        <Card
+                                            className="card-shadow"
+                                            style={{
+                                                height: '100%'
+                                            }}
+                                        >
+                                            <Statistic
+                                                title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>Niveau de risque</span>}
+                                                value={selectedProject.performance.riskLevel}
+                                                suffix="%"
+                                                valueStyle={{ color: '#f5222d', fontSize: '24px', fontWeight: 'bold' }}
+                                                prefix={<div
+                                                    style={{
+                                                        width: '50px',
+                                                        height: '50px',
+                                                        borderRadius: '25px',
+                                                        backgroundColor: '#fff1f0',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        marginRight: '16px'
+                                                    }}
+                                                >
+                                                    <span style={{ color: '#f5222d', fontSize: '24px' }}>⚠️</span>
+                                                </div>}
+                                            />
+                                        </Card>
+                                    </Col>
+                                    <Col xs={24} sm={12} md={12} lg={6} xl={6}>
+                                        <Card
+                                            className="card-shadow"
+                                            style={{
+                                                height: '100%'
+                                            }}
+                                        >
+                                            <Statistic
+                                                title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>Utilisation des ressources</span>}
+                                                value={selectedProject.performance.resourceUtilization}
+                                                suffix="%"
+                                                valueStyle={{ color: '#722ed1', fontSize: '24px', fontWeight: 'bold' }}
+                                                prefix={<div
+                                                    style={{
+                                                        width: '50px',
+                                                        height: '50px',
+                                                        borderRadius: '25px',
+                                                        backgroundColor: '#f9f0ff',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        marginRight: '16px'
+                                                    }}
+                                                >
+                                                    <span style={{ color: '#722ed1', fontSize: '24px' }}>📊</span>
+                                                </div>}
+                                            />
+                                        </Card>
+                                    </Col>
+                                </Row>
+                            </div>
+                        </TabPane>
+                        <TabPane tab="Tâches" key="2">
+                            <div style={{ padding: '16px 0' }}>
+                                <Row gutter={[24, 24]}>
+                                    <Col xs={24} sm={8} md={8}>
+                                        <Card
+                                            className="card-shadow stat-card"
+                                            style={{
+                                                textAlign: 'center'
+                                            }}
+                                        >
+                                            <Statistic
+                                                title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>Total des tâches</span>}
+                                                value={selectedProject.performance.taskCount}
+                                                valueStyle={{ fontSize: '28px', fontWeight: 'bold' }}
+                                            />
+                                            <div style={{ marginTop: '8px', fontSize: '14px', color: '#8c8c8c' }}>
+                                                Nombre total de tâches dans ce projet
+                                            </div>
+                                        </Card>
+                                    </Col>
+                                    <Col xs={24} sm={8} md={8}>
+                                        <Card
+                                            className="card-shadow stat-card"
+                                            style={{
+                                                textAlign: 'center'
+                                            }}
+                                        >
+                                            <Statistic
+                                                title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>Tâches terminées</span>}
+                                                value={selectedProject.performance.completedTaskCount}
+                                                valueStyle={{ color: '#52c41a', fontSize: '28px', fontWeight: 'bold' }}
+                                            />
+                                            <div style={{ marginTop: '8px', fontSize: '14px', color: '#8c8c8c' }}>
+                                                {Math.round((selectedProject.performance.completedTaskCount / selectedProject.performance.taskCount) * 100)}% des tâches sont terminées
+                                            </div>
+                                        </Card>
+                                    </Col>
+                                    <Col xs={24} sm={8} md={8}>
+                                        <Card
+                                            className="card-shadow stat-card"
+                                            style={{
+                                                textAlign: 'center'
+                                            }}
+                                        >
+                                            <Statistic
+                                                title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>Tâches en retard</span>}
+                                                value={selectedProject.performance.lateTaskCount}
+                                                valueStyle={{ color: '#f5222d', fontSize: '28px', fontWeight: 'bold' }}
+                                            />
+                                            <div style={{ marginTop: '8px', fontSize: '14px', color: '#8c8c8c' }}>
+                                                {Math.round((selectedProject.performance.lateTaskCount / selectedProject.performance.taskCount) * 100)}% des tâches sont en retard
+                                            </div>
+                                        </Card>
+                                    </Col>
+                                </Row>
+                                <div style={{ marginTop: '24px' }}>
+                                    <Card
+                                        title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>Progression des tâches</span>}
+                                        className="card-shadow"
+                                    >
+                                        <Progress
+                                            percent={selectedProject.performance.completionRate}
+                                            status={selectedProject.performance.completionRate === 100 ? 'success' : 'active'}
+                                            strokeColor={{
+                                                '0%': '#108ee9',
+                                                '100%': '#87d068',
+                                            }}
+                                            strokeWidth={15}
+                                            style={{ marginBottom: '16px' }}
+                                        />
+                                        <Row gutter={16}>
+                                            <Col span={8}>
+                                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                    <div style={{ width: '12px', height: '12px', backgroundColor: '#108ee9', marginRight: '8px', borderRadius: '2px' }}></div>
+                                                    <span>À faire: {selectedProject.performance.taskCount - selectedProject.performance.completedTaskCount - selectedProject.performance.lateTaskCount}</span>
+                                                </div>
+                                            </Col>
+                                            <Col span={8}>
+                                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                    <div style={{ width: '12px', height: '12px', backgroundColor: '#87d068', marginRight: '8px', borderRadius: '2px' }}></div>
+                                                    <span>Terminées: {selectedProject.performance.completedTaskCount}</span>
+                                                </div>
+                                            </Col>
+                                            <Col span={8}>
+                                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                    <div style={{ width: '12px', height: '12px', backgroundColor: '#f5222d', marginRight: '8px', borderRadius: '2px' }}></div>
+                                                    <span>En retard: {selectedProject.performance.lateTaskCount}</span>
+                                                </div>
+                                            </Col>
+                                        </Row>
+                                    </Card>
+                                </div>
+                            </div>
+                        </TabPane>
+                        <TabPane tab="Analyse de performance" key="3">
+                            <div style={{ padding: '16px 0' }}>
+                                <Card
+                                    className="card-shadow"
+                                >
+                                    <div style={{ height: '400px' }}>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <RadarChart
+                                                outerRadius={150}
+                                                data={[
+                                                    {
+                                                        subject: 'Achèvement',
+                                                        value: selectedProject.performance.completionRate,
+                                                        fullMark: 100
+                                                    },
+                                                    {
+                                                        subject: 'Efficacité',
+                                                        value: selectedProject.performance.timeEfficiency,
+                                                        fullMark: 100
+                                                    },
+                                                    {
+                                                        subject: 'Ressources',
+                                                        value: selectedProject.performance.resourceUtilization,
+                                                        fullMark: 100
+                                                    },
+                                                    {
+                                                        subject: 'Qualité',
+                                                        value: 100 - selectedProject.performance.riskLevel,
+                                                        fullMark: 100
+                                                    },
+                                                    {
+                                                        subject: 'Respect des délais',
+                                                        value: selectedProject.performance.timeEfficiency > 80 ? 90 : 70,
+                                                        fullMark: 100
+                                                    }
+                                                ]}
+                                            >
+                                                <PolarGrid stroke="#e8e8e8" />
+                                                <PolarAngleAxis
+                                                    dataKey="subject"
+                                                    tick={{ fontSize: 14, fill: '#333' }}
+                                                />
+                                                <PolarRadiusAxis
+                                                    angle={30}
+                                                    domain={[0, 100]}
+                                                    tick={{ fontSize: 12 }}
+                                                    tickFormatter={(value) => `${value}%`}
+                                                />
+                                                <Radar
+                                                    name="Performance"
+                                                    dataKey="value"
+                                                    stroke="#1890ff"
+                                                    fill="#1890ff"
+                                                    fillOpacity={0.6}
+                                                    strokeWidth={2}
+                                                />
+                                                <Tooltip
+                                                    formatter={(value) => [`${value}%`, '']}
+                                                    labelStyle={{ fontWeight: 'bold' }}
+                                                    contentStyle={{
+                                                        borderRadius: '4px',
+                                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                                                        border: 'none'
+                                                    }}
+                                                />
+                                                <Legend
+                                                    iconType="circle"
+                                                    iconSize={10}
+                                                    formatter={(value) => <span style={{ color: '#333', fontSize: '14px' }}>{value}</span>}
+                                                />
+                                            </RadarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <div style={{ marginTop: '16px', textAlign: 'center' }}>
+                                        <p style={{ fontSize: '14px', color: '#8c8c8c' }}>
+                                            Ce graphique radar montre les performances du projet dans 5 dimensions clés.
+                                            Plus la surface colorée est grande, meilleure est la performance globale.
+                                        </p>
+                                    </div>
+                                </Card>
+                            </div>
+                        </TabPane>
+                    </Tabs>
+                )}
+            </Modal>
         </div>
     );
 };
