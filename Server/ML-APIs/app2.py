@@ -7,23 +7,20 @@ app = Flask(__name__)
 
 CORS(app)
 
-# Charger le modèle et les encodeurs
-model = joblib.load("random_forest_duration.pkl")
-label_encoders = joblib.load("duration_label_encoders.pkl")
-
+# Charger le modèle et les encodeurs pour le budget
 model = joblib.load("linear_regression_model.pkl")
 scaler = joblib.load("scaler.pkl")
 label_encoders = joblib.load("label_encoders.pkl")
 
-# Colonnes attendues dans l'ordre
+# Colonnes attendues dans l'ordre pour le budget
 expected_columns = [
-    'Budget', 'Actual Cost', 'Progress', 'Delay',
-    'Budget Deviation', 'Project Type', 'Priority',
-    'Task Status', 'Resource Usage Ratio'
+    'Actual Cost', 'Progress', 'Budget Deviation', 
+    'Project Type', 'Priority', 'Task Status', 
+    'Resource Usage Ratio'
 ]
 
-@app.route('/predict-duration', methods=['POST'])
-def predict_duration():
+@app.route('/predict-budget', methods=['POST'])
+def predict_budget():
     try:
         data = request.get_json()
 
@@ -46,11 +43,14 @@ def predict_duration():
         # Réorganiser les colonnes
         df = df[expected_columns]
 
+        # Appliquer le scaler sur les données d'entrée
+        df_scaled = scaler.transform(df)
+
         # Prédiction
-        pred = model.predict(df)[0]
+        predicted_budget = model.predict(df_scaled)[0]
 
         return jsonify({
-            'estimated_duration': round(pred, 2)
+            'predicted_budget': round(predicted_budget, 2)
         })
 
     except Exception as e:
