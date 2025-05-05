@@ -11,10 +11,6 @@ CORS(app)
 model = joblib.load("random_forest_duration.pkl")
 label_encoders = joblib.load("duration_label_encoders.pkl")
 
-model = joblib.load("linear_regression_model.pkl")
-scaler = joblib.load("scaler.pkl")
-label_encoders = joblib.load("label_encoders.pkl")
-
 # Colonnes attendues dans l'ordre
 expected_columns = [
     'Budget', 'Actual Cost', 'Progress', 'Delay',

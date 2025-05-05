@@ -5,8 +5,13 @@ import joblib
 
 app = Flask(__name__)
 
-CORS(app)
-
+# Configure CORS to allow requests from http://localhost:3000 with credentials
+CORS(app, resources={
+    r"/predict-budget": {
+        "origins": "http://localhost:3000",
+        "supports_credentials": True
+    }
+})
 # Charger le modèle et les encodeurs pour le budget
 model = joblib.load("linear_regression_model.pkl")
 scaler = joblib.load("scaler.pkl")
