@@ -168,6 +168,8 @@ const Resources = () => {
         setDocuments(
           response.data.data.map((doc) => ({
             id: doc._id,
+            uniqueId: doc.uniqueId,
+            displayId: doc.displayId,
             name: doc.name,
             type: doc.fileType,
             size: formatFileSize(doc.fileSize),
@@ -178,6 +180,7 @@ const Resources = () => {
             permissions: getPermissionLevel(doc),
             filePath: doc.filePath,
             versions: doc.versions || [],
+            originalData: doc, // Conserver les données originales pour référence
           })),
         )
       } else {
@@ -298,7 +301,11 @@ const Resources = () => {
 
   // Filter documents based on search term, selected project, and filter type
   const filteredDocuments = documents.filter((doc) => {
-    const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase())
+    // Recherche dans le nom et l'identifiant d'affichage
+    const matchesSearch =
+      doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (doc.displayId && doc.displayId.toLowerCase().includes(searchTerm.toLowerCase()))
+
     const matchesProject = selectedProject ? doc.project === selectedProject : true
     const matchesType = filterType ? doc.type === filterType : true
     return matchesSearch && matchesProject && matchesType
@@ -333,7 +340,8 @@ const Resources = () => {
 
     try {
       // Utiliser axios pour télécharger le fichier avec l'authentification
-      const docId = doc.id || doc._id // Gérer les deux formats possibles d'ID
+      // Priorité: 1. uniqueId, 2. displayId, 3. id MongoDB, 4. _id MongoDB
+      const docId = doc.uniqueId || doc.displayId || doc.id || doc._id
 
       if (!docId) {
         console.error('Erreur: ID du document non trouvé', doc)
@@ -345,6 +353,9 @@ const Resources = () => {
       console.log('Téléchargement du document ID:', docId)
       console.log('Nom du document:', doc.name)
       console.log('Type du document:', doc.type)
+      console.log('uniqueId:', doc.uniqueId)
+      console.log('displayId:', doc.displayId)
+      console.log('ID MongoDB:', doc.id || doc._id)
       console.log('Détails complets du document:', doc)
 
       // Afficher un toast pour indiquer que le téléchargement a commencé
@@ -443,15 +454,44 @@ const Resources = () => {
     }
 
     try {
-      const response = await axios.delete(`/api/documents/${docId}`)
+      // Utiliser l'ID MongoDB pour la compatibilité avec l'API existante
+      const mongoId = typeof docId === 'object' ? (docId.id || docId._id) : docId;
+
+      if (!mongoId) {
+        console.error('Erreur: ID MongoDB non trouvé pour la suppression', docId)
+        toast.error('Erreur: ID du document non trouvé')
+        return
+      }
+
+      console.log('Suppression du document avec ID MongoDB:', mongoId)
+      console.log('Document à supprimer:', docId)
+
+      const response = await axios.delete(`/api/documents/${mongoId}`)
+
       if (response.data.success) {
-        // Remove the document from the state
-        setDocuments(documents.filter((doc) => doc.id !== docId))
+        // Identifier le document à supprimer par son ID unique ou MongoDB
+        setDocuments(documents.filter((doc) => {
+          // Si docId est un objet (document complet)
+          if (typeof docId === 'object') {
+            const uniqueIdToRemove = docId.uniqueId || docId.displayId || docId.id || docId._id;
+            const docUniqueId = doc.uniqueId || doc.displayId || doc.id || doc._id;
+            return docUniqueId !== uniqueIdToRemove;
+          }
+          // Si docId est une chaîne (juste l'ID)
+          return doc.id !== docId && doc._id !== docId && doc.uniqueId !== docId && doc.displayId !== docId;
+        }))
 
         // If the deleted document was selected, clear the selection
-        if (selectedDocument && selectedDocument.id === docId) {
-          setSelectedDocument(null)
-          setActiveTab(1)
+        if (selectedDocument) {
+          const selectedId = selectedDocument.uniqueId || selectedDocument.displayId || selectedDocument.id || selectedDocument._id;
+          const deletedId = typeof docId === 'object'
+            ? (docId.uniqueId || docId.displayId || docId.id || docId._id)
+            : docId;
+
+          if (selectedId === deletedId) {
+            setSelectedDocument(null)
+            setActiveTab(1) // Switch back to list view
+          }
         }
 
         toast.success('Document supprimé avec succès')
@@ -467,16 +507,47 @@ const Resources = () => {
   // Function to toggle pin status
   const handleTogglePin = async (docId, currentPinned) => {
     try {
-      const response = await axios.put(`/api/documents/${docId}/pin`)
+      // Utiliser l'ID MongoDB pour la compatibilité avec l'API existante
+      const mongoId = typeof docId === 'object' ? (docId.id || docId._id) : docId;
+
+      if (!mongoId) {
+        console.error("Erreur: ID MongoDB non trouvé pour l'épinglage", docId)
+        toast.error("Erreur: ID du document non trouvé")
+        return
+      }
+
+      console.log('Modification du statut d\'épinglage pour le document avec ID MongoDB:', mongoId)
+      console.log('Document à modifier:', docId)
+
+      const response = await axios.put(`/api/documents/${mongoId}/pin`)
+
       if (response.data.success) {
-        // Update the document in the state
+        // Update the document in the state using unique identifiers
         setDocuments(
-          documents.map((doc) => (doc.id === docId ? { ...doc, pinned: !currentPinned } : doc)),
+          documents.map((doc) => {
+            // Si docId est un objet (document complet)
+            if (typeof docId === 'object') {
+              const uniqueIdToUpdate = docId.uniqueId || docId.displayId || docId.id || docId._id;
+              const docUniqueId = doc.uniqueId || doc.displayId || doc.id || doc._id;
+              return docUniqueId === uniqueIdToUpdate ? { ...doc, pinned: !currentPinned } : doc;
+            }
+            // Si docId est une chaîne (juste l'ID)
+            return (doc.id === docId || doc._id === docId || doc.uniqueId === docId || doc.displayId === docId)
+              ? { ...doc, pinned: !currentPinned }
+              : doc;
+          }),
         )
 
         // If the document was selected, update the selection
-        if (selectedDocument && selectedDocument.id === docId) {
-          setSelectedDocument({ ...selectedDocument, pinned: !currentPinned })
+        if (selectedDocument) {
+          const selectedId = selectedDocument.uniqueId || selectedDocument.displayId || selectedDocument.id || selectedDocument._id;
+          const updatedId = typeof docId === 'object'
+            ? (docId.uniqueId || docId.displayId || docId.id || docId._id)
+            : docId;
+
+          if (selectedId === updatedId) {
+            setSelectedDocument({ ...selectedDocument, pinned: !currentPinned })
+          }
         }
 
         toast.success(currentPinned ? 'Document désépinglé' : 'Document épinglé')
@@ -597,25 +668,36 @@ const Resources = () => {
                         <CCol xs={2}>Ajouté par</CCol>
                         <CCol xs={2}>Date</CCol>
                       </CRow>
-                      {filteredDocuments.map((doc) => (
-                        <CRow
-                          key={doc.id}
-                          className="document-item p-2 mb-2 align-items-center"
-                          onClick={() => handleDocumentSelect(doc)}
-                        >
-                          <CCol xs={6} className="d-flex align-items-center">
-                            <div className="document-icon me-2">
-                              <CIcon
-                                icon={getFileIcon(doc.type)}
-                                size="lg"
-                                className={`file-icon file-icon-${doc.type}`}
-                              />
-                            </div>
-                            <div className="document-name">
-                              <div className="d-flex align-items-center">
-                                {doc.name}
-                                {doc.pinned && (
-                                  <CTooltip content="Document épinglé">
+                      {filteredDocuments.map((doc) => {
+                        // Utiliser uniqueId ou displayId s'ils existent, sinon utiliser id ou _id
+                        const documentId = doc.uniqueId || doc.displayId || doc.id || doc._id;
+
+                        return (
+                          <CRow
+                            key={documentId}
+                            className="document-item p-2 mb-2 align-items-center"
+                            onClick={() => handleDocumentSelect(doc)}
+                          >
+                            <CCol xs={6} className="d-flex align-items-center">
+                              <div className="document-icon me-2">
+                                <CIcon
+                                  icon={getFileIcon(doc.type)}
+                                  size="lg"
+                                  className={`file-icon file-icon-${doc.type}`}
+                                />
+                              </div>
+                              <div className="document-name">
+                                <div className="d-flex align-items-center">
+                                  {doc.name}
+                                  {doc.displayId && (
+                                    <small className="ms-2 text-muted">({doc.displayId})</small>
+                                  )}
+                                  {/* Afficher un badge pour les documents dupliqués */}
+                                  {doc.name && doc.name.includes(' (') && doc.name.includes(')') && (
+                                    <span className="ms-2 badge bg-info">Duplicata</span>
+                                  )}
+                                  {doc.pinned && (
+                                    <CTooltip content="Document épinglé">
                                     <CIcon
                                       icon={cilStar}
                                       className="ms-2 text-warning"
@@ -722,13 +804,13 @@ const Resources = () => {
                                       <CIcon icon={cilPencil} className="me-2" />
                                       Modifier
                                     </CDropdownItem>
-                                    <CDropdownItem onClick={() => handleDelete(doc.id)}>
+                                    <CDropdownItem onClick={() => handleDelete(doc)}>
                                       <CIcon icon={cilTrash} className="me-2" />
                                       Supprimer
                                     </CDropdownItem>
                                   </>
                                 )}
-                                <CDropdownItem onClick={() => handleTogglePin(doc.id, doc.pinned)}>
+                                <CDropdownItem onClick={() => handleTogglePin(doc, doc.pinned)}>
                                   <CIcon
                                     icon={cilStar}
                                     className={`me-2 ${doc.pinned ? 'text-warning' : ''}`}
@@ -739,7 +821,8 @@ const Resources = () => {
                             </CDropdown>
                           </CCol>
                         </CRow>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </>
@@ -753,6 +836,13 @@ const Resources = () => {
                       <h3 className="mb-0">
                         <CIcon icon={getFileIcon(selectedDocument.type)} className="me-2" />
                         {selectedDocument.name}
+                        {selectedDocument.displayId && (
+                          <small className="ms-2 text-muted" style={{ fontSize: '0.7em' }}>({selectedDocument.displayId})</small>
+                        )}
+                        {/* Afficher un badge pour les documents dupliqués */}
+                        {selectedDocument.name && selectedDocument.name.includes(' (') && selectedDocument.name.includes(')') && (
+                          <span className="ms-2 badge bg-info">Duplicata</span>
+                        )}
                       </h3>
                       <div>
                         <CButton
@@ -844,7 +934,7 @@ const Resources = () => {
                                 e.stopPropagation() // Empêcher la propagation de l'événement
 
                                 console.log('Suppression du document:', selectedDocument.name)
-                                handleDelete(selectedDocument.id)
+                                handleDelete(selectedDocument)
                               }}
                             >
                               <CIcon icon={cilTrash} className="me-2" />
@@ -864,6 +954,9 @@ const Resources = () => {
                       <CCard className="mb-4">
                         <CCardHeader>Informations</CCardHeader>
                         <CCardBody>
+                          <div className="mb-2">
+                            <strong>ID:</strong> {selectedDocument.displayId || selectedDocument.uniqueId || 'Non défini'}
+                          </div>
                           <div className="mb-2">
                             <strong>Type:</strong> {selectedDocument.type.toUpperCase()}
                           </div>
@@ -972,11 +1065,15 @@ const Resources = () => {
 
               // Mettre à jour la liste des documents
               setDocuments(
-                documents.map((doc) =>
-                  doc.id === selectedDocument.id
+                documents.map((doc) => {
+                  // Utiliser les identifiants uniques pour comparer les documents
+                  const docId = doc.uniqueId || doc.displayId || doc.id || doc._id;
+                  const selectedId = selectedDocument.uniqueId || selectedDocument.displayId || selectedDocument.id || selectedDocument._id;
+
+                  return docId === selectedId
                     ? { ...doc, permissions: updatedPermissions }
-                    : doc,
-                ),
+                    : doc;
+                }),
               )
             }}
           />
@@ -1003,7 +1100,13 @@ const Resources = () => {
 
             // Mettre à jour la liste des documents
             setDocuments(
-              documents.map((doc) => (doc.id === selectedDocument.id ? updatedDoc : doc)),
+              documents.map((doc) => {
+                // Utiliser les identifiants uniques pour comparer les documents
+                const docId = doc.uniqueId || doc.displayId || doc.id || doc._id;
+                const selectedId = selectedDocument.uniqueId || selectedDocument.displayId || selectedDocument.id || selectedDocument._id;
+
+                return docId === selectedId ? updatedDoc : doc;
+              }),
             )
 
             // Rafraîchir la liste des documents

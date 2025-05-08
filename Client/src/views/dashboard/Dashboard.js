@@ -49,7 +49,17 @@ const Dashboard = () => {
   const fetchDashboardProjects = async () => {
     try {
       setLoading(true)
-      const projects = await getProjectsForDashboard(3) // Récupérer 3 projets
+      // Récupérer 3 projets aléatoirement (la sélection aléatoire est faite dans le service)
+      const projects = await getProjectsForDashboard(3)
+      console.log('Dashboard projects received randomly:', projects)
+
+      // Log task counts for each project
+      projects.forEach((project) => {
+        console.log(
+          `Dashboard - Project ${project.title}: ${project.completedTasks}/${project.tasks} tasks`,
+        )
+      })
+
       setDashboardProjects(projects)
     } catch (error) {
       console.error('Erreur lors de la récupération des projets pour le tableau de bord:', error)
@@ -235,42 +245,74 @@ const Dashboard = () => {
 
       {/* Section Projets */}
       <section style={{ padding: '2rem 0' }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '1.5rem',
-          paddingBottom: '0.75rem',
-          borderBottom: '2px solid #ebedef'
-        }}>
-          <h2 style={{
-            fontSize: '1.75rem',
-            fontWeight: '600',
-            color: '#3c4b64',
-            margin: 0
-          }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1.5rem',
+            paddingBottom: '0.75rem',
+            borderBottom: '2px solid #ebedef',
+          }}
+        >
+          <h2
+            style={{
+              fontSize: '1.75rem',
+              fontWeight: '600',
+              color: '#3c4b64',
+              margin: 0,
+            }}
+          >
             <CIcon icon={cilFolder} style={{ marginRight: '10px', color: '#321fdb' }} />
             Vos projets en cours
           </h2>
-          <div>
-            <Link to="/projects" style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              padding: '6px 12px',
-              backgroundColor: '#ebedef',
-              color: '#3c4b64',
-              borderRadius: '4px',
-              textDecoration: 'none',
-              fontWeight: '500',
-              fontSize: '0.875rem',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#d8dbe0';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#ebedef';
-            }}>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={fetchDashboardProjects}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '6px 12px',
+                backgroundColor: '#321fdb',
+                color: 'white',
+                borderRadius: '4px',
+                border: 'none',
+                textDecoration: 'none',
+                fontWeight: '500',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#2a1ab9'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#321fdb'
+              }}
+            >
+              Actualiser aléatoirement
+            </button>
+            <Link
+              to="/projects"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '6px 12px',
+                backgroundColor: '#ebedef',
+                color: '#3c4b64',
+                borderRadius: '4px',
+                textDecoration: 'none',
+                fontWeight: '500',
+                fontSize: '0.875rem',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#d8dbe0'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#ebedef'
+              }}
+            >
               Tous les projets
               <CIcon icon={cilArrowRight} style={{ marginLeft: '6px' }} size="sm" />
             </Link>
@@ -279,214 +321,289 @@ const Dashboard = () => {
         <CRow className="mb-4">
           <CCol md={12}>
             <CCard className="dashboard-card">
-            <CCardHeader className="dashboard-card-header d-flex justify-content-between align-items-center">
-              <h4 className="mb-0">
-                <CIcon icon={cilTask} className="me-2 text-primary" />
-                Aperçu des projets
-              </h4>
-              <Link to="/projects" className="btn btn-sm btn-outline-primary">
-                Tous les projets <CIcon icon={cilArrowRight} size="sm" />
-              </Link>
-            </CCardHeader>
-            <CCardBody>
-              <CRow>
-                {loading ? (
-                  <CCol xs={12} className="text-center py-5">
-                    <div className="spinner-grow text-primary mb-3" style={{ width: '3rem', height: '3rem' }} role="status">
-                      <span className="visually-hidden">Chargement...</span>
-                    </div>
-                    <p className="text-muted">Chargement des projets en cours...</p>
-                  </CCol>
-                ) : dashboardProjects.length === 0 ? (
-                  <CCol xs={12} className="text-center py-5">
-                    <div className="empty-state mb-3">
-                      <CIcon icon={cilFolder} style={{ width: '4rem', height: '4rem', opacity: '0.5' }} />
-                    </div>
-                    <h5 className="text-muted mb-3">Aucun projet à afficher</h5>
-                    <p className="text-muted mb-4">Commencez par créer votre premier projet pour le voir apparaître ici.</p>
-                    <Link to="/projects/create" className="btn btn-primary">
-                      <CIcon icon={cilTask} className="me-2" />
-                      Créer un nouveau projet
-                    </Link>
-                  </CCol>
-                ) : (
-                  dashboardProjects.map((project, index) => (
-                  <CCol xs={12} sm={6} lg={4} key={index} className="mb-4"
-                    onMouseEnter={(e) => {
-                      e.currentTarget.querySelector('div').style.transform = 'translateY(-5px)';
-                      e.currentTarget.querySelector('div').style.boxShadow = '0 10px 20px rgba(0, 0, 0, 0.15)';
-                      e.currentTarget.querySelector('div').style.borderColor = '#1b8eb7';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.querySelector('div').style.transform = 'translateY(0)';
-                      e.currentTarget.querySelector('div').style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-                      e.currentTarget.querySelector('div').style.borderColor = '#dee2e6';
-                    }}>
-                    <div style={{
-                      padding: '1.5rem',
-                      borderRadius: '8px',
-                      height: '100%',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                      transition: 'all 0.3s ease',
-                      border: '1px solid #dee2e6',
-                      backgroundColor: 'white'
-                    }}>
-                      <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h5 className="mb-0 text-truncate" title={project.title} style={{ maxWidth: '70%' }}>
-                          <CIcon icon={cilFolder} className="text-primary me-2" />
-                          {project.title}
-                        </h5>
-                        <CBadge color={project.statusColor} shape="rounded-pill" style={{
-                          padding: '0.5rem 1rem',
-                          fontSize: '0.8rem',
-                          fontWeight: '500',
-                          letterSpacing: '0.3px',
-                          boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)'
-                        }}>
-                          {project.status}
-                        </CBadge>
+              <CCardHeader className="dashboard-card-header d-flex justify-content-between align-items-center">
+                <h4 className="mb-0">
+                  <CIcon icon={cilTask} className="me-2 text-primary" />
+                  Aperçu des projets
+                </h4>
+                <Link to="/projects" className="btn btn-sm btn-outline-primary">
+                  Tous les projets <CIcon icon={cilArrowRight} size="sm" />
+                </Link>
+              </CCardHeader>
+              <CCardBody>
+                <CRow>
+                  {loading ? (
+                    <CCol xs={12} className="text-center py-5">
+                      <div
+                        className="spinner-grow text-primary mb-3"
+                        style={{ width: '3rem', height: '3rem' }}
+                        role="status"
+                      >
+                        <span className="visually-hidden">Chargement...</span>
                       </div>
-                      <div className="mb-4">
-                        <div className="d-flex justify-content-between mb-1 align-items-center">
-                          <span style={{ fontWeight: '600', fontSize: '0.95rem', color: '#3c4b64' }}>Progression</span>
-                        </div>
-                        <div style={{ position: 'relative', marginTop: '10px', marginBottom: '15px' }}>
-                          <CProgress
-                            value={project.progress}
-                            color={
-                              project.progress > 75
-                                ? 'success'
-                                : project.progress > 40
-                                  ? 'primary'
-                                  : 'warning'
-                            }
-                            height={12}
-                            style={{
-                              borderRadius: '6px',
-                              boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)'
-                            }}
-                          />
-                          <div style={{
-                            position: 'absolute',
-                            top: '-10px',
-                            right: '0',
-                            backgroundColor: project.progress > 75 ? '#2eb85c' : project.progress > 40 ? '#321fdb' : '#f9b115',
-                            color: 'white',
-                            padding: '2px 8px',
-                            borderRadius: '10px',
-                            fontSize: '0.75rem',
-                            fontWeight: 'bold',
-                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-                          }}>
-                            {project.progress}%
-                          </div>
-                        </div>
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          marginTop: '20px',
-                          padding: '10px',
-                          backgroundColor: '#f8f9fa',
-                          borderRadius: '6px',
-                          border: '1px solid #ebedef'
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <div style={{
-                              backgroundColor: '#e6f7ff',
-                              borderRadius: '50%',
-                              width: '32px',
-                              height: '32px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              marginRight: '8px'
-                            }}>
-                              <CIcon icon={cilTask} style={{ color: '#1890ff' }} size="sm" />
-                            </div>
-                            <div>
-                              <div style={{ fontSize: '0.75rem', color: '#8a93a2' }}>Tâches</div>
-                              <div style={{ fontWeight: 'bold', color: '#3c4b64' }}>{project.completedTasks}/{project.tasks}</div>
-                            </div>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <div style={{
-                              backgroundColor: '#fff7e6',
-                              borderRadius: '50%',
-                              width: '32px',
-                              height: '32px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              marginRight: '8px'
-                            }}>
-                              <CIcon icon={cilCalendar} style={{ color: '#fa8c16' }} size="sm" />
-                            </div>
-                            <div>
-                              <div style={{ fontSize: '0.75rem', color: '#8a93a2' }}>Échéance</div>
-                              <div style={{ fontWeight: 'bold', color: '#3c4b64' }}>{project.dueDate}</div>
-                            </div>
-                          </div>
-                        </div>
+                      <p className="text-muted">Chargement des projets en cours...</p>
+                    </CCol>
+                  ) : dashboardProjects.length === 0 ? (
+                    <CCol xs={12} className="text-center py-5">
+                      <div className="empty-state mb-3">
+                        <CIcon
+                          icon={cilFolder}
+                          style={{ width: '4rem', height: '4rem', opacity: '0.5' }}
+                        />
                       </div>
-                      <div style={{
-                        textAlign: 'center',
-                        marginTop: '20px',
-                        borderTop: '1px solid #ebedef',
-                        paddingTop: '15px'
-                      }}>
-                        <Link
-                          to={`/projects/${project.id}`}
+                      <h5 className="text-muted mb-3">Aucun projet à afficher</h5>
+                      <p className="text-muted mb-4">
+                        Commencez par créer votre premier projet pour le voir apparaître ici.
+                      </p>
+                      <Link to="/projects/create" className="btn btn-primary">
+                        <CIcon icon={cilTask} className="me-2" />
+                        Créer un nouveau projet
+                      </Link>
+                    </CCol>
+                  ) : (
+                    dashboardProjects.map((project, index) => (
+                      <CCol
+                        xs={12}
+                        sm={6}
+                        lg={4}
+                        key={index}
+                        className="mb-4"
+                        onMouseEnter={(e) => {
+                          e.currentTarget.querySelector('div').style.transform = 'translateY(-5px)'
+                          e.currentTarget.querySelector('div').style.boxShadow =
+                            '0 10px 20px rgba(0, 0, 0, 0.15)'
+                          e.currentTarget.querySelector('div').style.borderColor = '#1b8eb7'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.querySelector('div').style.transform = 'translateY(0)'
+                          e.currentTarget.querySelector('div').style.boxShadow =
+                            '0 4px 12px rgba(0, 0, 0, 0.1)'
+                          e.currentTarget.querySelector('div').style.borderColor = '#dee2e6'
+                        }}
+                      >
+                        <div
                           style={{
-                            display: 'inline-block',
-                            padding: '8px 16px',
-                            backgroundColor: '#321fdb',
-                            color: 'white',
-                            borderRadius: '4px',
-                            textDecoration: 'none',
-                            fontWeight: '500',
-                            boxShadow: '0 2px 6px rgba(50, 31, 219, 0.3)',
-                            transition: 'all 0.2s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#2a1ab9';
-                            e.currentTarget.style.boxShadow = '0 4px 8px rgba(50, 31, 219, 0.4)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = '#321fdb';
-                            e.currentTarget.style.boxShadow = '0 2px 6px rgba(50, 31, 219, 0.3)';
+                            padding: '1.5rem',
+                            borderRadius: '8px',
+                            height: '100%',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                            transition: 'all 0.3s ease',
+                            border: '1px solid #dee2e6',
+                            backgroundColor: 'white',
                           }}
                         >
-                          <CIcon icon={cilArrowRight} style={{ marginRight: '6px' }} size="sm" />
-                          Voir détails du projet
-                        </Link>
-                      </div>
-                    </div>
-                  </CCol>
-                ))
-                )}
-              </CRow>
-            </CCardBody>
-          </CCard>
-        </CCol>
-      </CRow>
+                          <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h5
+                              className="mb-0 text-truncate"
+                              title={project.title}
+                              style={{ maxWidth: '70%' }}
+                            >
+                              <CIcon icon={cilFolder} className="text-primary me-2" />
+                              {project.title}
+                            </h5>
+                            <CBadge
+                              color={project.statusColor}
+                              shape="rounded-pill"
+                              style={{
+                                padding: '0.5rem 1rem',
+                                fontSize: '0.8rem',
+                                fontWeight: '500',
+                                letterSpacing: '0.3px',
+                                boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
+                              }}
+                            >
+                              {project.status}
+                            </CBadge>
+                          </div>
+                          <div className="mb-4">
+                            <div className="d-flex justify-content-between mb-1 align-items-center">
+                              <span
+                                style={{ fontWeight: '600', fontSize: '0.95rem', color: '#3c4b64' }}
+                              >
+                                Progression
+                              </span>
+                            </div>
+                            <div
+                              style={{
+                                position: 'relative',
+                                marginTop: '10px',
+                                marginBottom: '15px',
+                              }}
+                            >
+                              <CProgress
+                                value={project.progress}
+                                color={
+                                  project.progress > 75
+                                    ? 'success'
+                                    : project.progress > 40
+                                      ? 'primary'
+                                      : 'warning'
+                                }
+                                height={12}
+                                style={{
+                                  borderRadius: '6px',
+                                  boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)',
+                                }}
+                              />
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  top: '-10px',
+                                  right: '0',
+                                  backgroundColor:
+                                    project.progress > 75
+                                      ? '#2eb85c'
+                                      : project.progress > 40
+                                        ? '#321fdb'
+                                        : '#f9b115',
+                                  color: 'white',
+                                  padding: '2px 8px',
+                                  borderRadius: '10px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 'bold',
+                                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                                }}
+                              >
+                                {project.progress}%
+                              </div>
+                            </div>
+                            <div
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                marginTop: '20px',
+                                padding: '10px',
+                                backgroundColor: '#f8f9fa',
+                                borderRadius: '6px',
+                                border: '1px solid #ebedef',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <div
+                                  style={{
+                                    backgroundColor: '#e6f7ff',
+                                    borderRadius: '50%',
+                                    width: '32px',
+                                    height: '32px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    marginRight: '8px',
+                                  }}
+                                >
+                                  <CIcon icon={cilTask} style={{ color: '#1890ff' }} size="sm" />
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '0.75rem', color: '#8a93a2' }}>
+                                    Tâches
+                                  </div>
+                                  <div style={{ fontWeight: 'bold', color: '#3c4b64' }}>
+                                    {project.completedTasks !== undefined
+                                      ? project.completedTasks
+                                      : 0}
+                                    /{project.tasks !== undefined ? project.tasks : 0}
+                                  </div>
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <div
+                                  style={{
+                                    backgroundColor: '#fff7e6',
+                                    borderRadius: '50%',
+                                    width: '32px',
+                                    height: '32px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    marginRight: '8px',
+                                  }}
+                                >
+                                  <CIcon
+                                    icon={cilCalendar}
+                                    style={{ color: '#fa8c16' }}
+                                    size="sm"
+                                  />
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '0.75rem', color: '#8a93a2' }}>
+                                    Échéance
+                                  </div>
+                                  <div style={{ fontWeight: 'bold', color: '#3c4b64' }}>
+                                    {project.dueDate}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div
+                            style={{
+                              textAlign: 'center',
+                              marginTop: '20px',
+                              borderTop: '1px solid #ebedef',
+                              paddingTop: '15px',
+                            }}
+                          >
+                            <Link
+                              to={`/projects/${project.id}`}
+                              style={{
+                                display: 'inline-block',
+                                padding: '8px 16px',
+                                backgroundColor: '#321fdb',
+                                color: 'white',
+                                borderRadius: '4px',
+                                textDecoration: 'none',
+                                fontWeight: '500',
+                                boxShadow: '0 2px 6px rgba(50, 31, 219, 0.3)',
+                                transition: 'all 0.2s ease',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = '#2a1ab9'
+                                e.currentTarget.style.boxShadow = '0 4px 8px rgba(50, 31, 219, 0.4)'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = '#321fdb'
+                                e.currentTarget.style.boxShadow = '0 2px 6px rgba(50, 31, 219, 0.3)'
+                              }}
+                            >
+                              <CIcon
+                                icon={cilArrowRight}
+                                style={{ marginRight: '6px' }}
+                                size="sm"
+                              />
+                              Voir détails du projet
+                            </Link>
+                          </div>
+                        </div>
+                      </CCol>
+                    ))
+                  )}
+                </CRow>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        </CRow>
       </section>
 
       {/* Section Activités, Événements et Équipe */}
       <section style={{ padding: '1rem 0' }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '1.5rem',
-          paddingBottom: '0.75rem',
-          borderBottom: '2px solid #ebedef'
-        }}>
-          <h2 style={{
-            fontSize: '1.75rem',
-            fontWeight: '600',
-            color: '#3c4b64',
-            margin: 0
-          }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1.5rem',
+            paddingBottom: '0.75rem',
+            borderBottom: '2px solid #ebedef',
+          }}
+        >
+          <h2
+            style={{
+              fontSize: '1.75rem',
+              fontWeight: '600',
+              color: '#3c4b64',
+              margin: 0,
+            }}
+          >
             <CIcon icon={cilPeople} style={{ marginRight: '10px', color: '#321fdb' }} />
             Activités, Événements et Équipe
           </h2>
@@ -511,10 +628,10 @@ const Dashboard = () => {
                     {
                       user: 'Sophie Martin',
                       action: 'a terminé la tâche',
-                      target: 'Conception de la page d\'accueil',
+                      target: "Conception de la page d'accueil",
                       time: 'Il y a 2 heures',
                       icon: cilTask,
-                      color: 'success'
+                      color: 'success',
                     },
                     {
                       user: 'Thomas Dubois',
@@ -522,7 +639,7 @@ const Dashboard = () => {
                       target: 'Intégration API',
                       time: 'Il y a 4 heures',
                       icon: cilNotes,
-                      color: 'info'
+                      color: 'info',
                     },
                     {
                       user: 'Emma Petit',
@@ -530,7 +647,7 @@ const Dashboard = () => {
                       target: 'Refonte application mobile',
                       time: 'Hier à 14:30',
                       icon: cilFolder,
-                      color: 'primary'
+                      color: 'primary',
                     },
                     {
                       user: 'Lucas Bernard',
@@ -538,7 +655,7 @@ const Dashboard = () => {
                       target: 'Analyse des données marketing',
                       time: 'Hier à 10:15',
                       icon: cilPencil,
-                      color: 'warning'
+                      color: 'warning',
                     },
                   ].map((activity, index) => (
                     <div
@@ -546,10 +663,10 @@ const Dashboard = () => {
                       className={`activity-item d-flex p-3 ${index < 3 ? 'border-bottom' : ''}`}
                       style={{ transition: 'all 0.2s ease' }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#f8f9fa';
+                        e.currentTarget.style.backgroundColor = '#f8f9fa'
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.backgroundColor = 'transparent'
                       }}
                     >
                       <div
@@ -558,7 +675,7 @@ const Dashboard = () => {
                           width: '36px',
                           height: '36px',
                           backgroundColor: `var(--cui-${activity.color})`,
-                          flexShrink: 0
+                          flexShrink: 0,
                         }}
                       >
                         <CIcon icon={activity.icon} className="text-white" size="sm" />
@@ -607,27 +724,51 @@ const Dashboard = () => {
                 <div className="team-members">
                   <CRow className="g-3">
                     {[
-                      { name: 'Sophie Martin', role: 'Chef de projet', tasks: 8, status: 'En ligne', statusColor: 'success' },
-                      { name: 'Thomas Dubois', role: 'Développeur', tasks: 12, status: 'En ligne', statusColor: 'success' },
-                      { name: 'Emma Petit', role: 'Designer', tasks: 6, status: 'Absent', statusColor: 'danger' },
-                      { name: 'Lucas Bernard', role: 'Marketing', tasks: 5, status: 'Occupé', statusColor: 'warning' },
+                      {
+                        name: 'Sophie Martin',
+                        role: 'Chef de projet',
+                        tasks: 8,
+                        status: 'En ligne',
+                        statusColor: 'success',
+                      },
+                      {
+                        name: 'Thomas Dubois',
+                        role: 'Développeur',
+                        tasks: 12,
+                        status: 'En ligne',
+                        statusColor: 'success',
+                      },
+                      {
+                        name: 'Emma Petit',
+                        role: 'Designer',
+                        tasks: 6,
+                        status: 'Absent',
+                        statusColor: 'danger',
+                      },
+                      {
+                        name: 'Lucas Bernard',
+                        role: 'Marketing',
+                        tasks: 5,
+                        status: 'Occupé',
+                        statusColor: 'warning',
+                      },
                     ].map((member, index) => (
                       <CCol md={12} lg={6} key={index}>
                         <div
                           className="team-member-card p-3 border rounded h-100"
                           style={{
                             transition: 'all 0.3s ease',
-                            boxShadow: '0 2px 5px rgba(0, 0, 0, 0.05)'
+                            boxShadow: '0 2px 5px rgba(0, 0, 0, 0.05)',
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'translateY(-3px)';
-                            e.currentTarget.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.1)';
-                            e.currentTarget.style.borderColor = '#d8dbe0';
+                            e.currentTarget.style.transform = 'translateY(-3px)'
+                            e.currentTarget.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.1)'
+                            e.currentTarget.style.borderColor = '#d8dbe0'
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'translateY(0)';
-                            e.currentTarget.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.05)';
-                            e.currentTarget.style.borderColor = '#d8dbe0';
+                            e.currentTarget.style.transform = 'translateY(0)'
+                            e.currentTarget.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.05)'
+                            e.currentTarget.style.borderColor = '#d8dbe0'
                           }}
                         >
                           <div className="d-flex align-items-center">
@@ -637,7 +778,7 @@ const Dashboard = () => {
                                 width: '48px',
                                 height: '48px',
                                 background: 'linear-gradient(135deg, #321fdb 0%, #1f67db 100%)',
-                                boxShadow: '0 3px 6px rgba(50, 31, 219, 0.2)'
+                                boxShadow: '0 3px 6px rgba(50, 31, 219, 0.2)',
                               }}
                             >
                               {member.name

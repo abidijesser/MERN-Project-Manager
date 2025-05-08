@@ -152,7 +152,7 @@ const ProjectManagement = ({ dashboardView = false }) => {
       }
 
       // Fallback to regular projects endpoint
-      const response = await api.get('/projects');
+      const response = await api.get('/api/projects');
       if (response.data.success) {
         setProjects(response.data.projects);
       } else if (response.data) {

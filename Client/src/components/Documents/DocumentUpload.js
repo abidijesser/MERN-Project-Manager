@@ -109,7 +109,7 @@ const DocumentUpload = ({ visible, onClose, onUploadSuccess }) => {
       }
       formData.append('isPublic', isPublic)
 
-      const response = await axios.post('/documents', formData, {
+      const response = await axios.post('/api/documents', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

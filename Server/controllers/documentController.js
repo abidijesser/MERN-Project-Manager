@@ -5,6 +5,7 @@ const Comment = require("../models/Comment");
 const notificationService = require("../services/notificationService");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 // Get all documents (with optional filtering)
 const getAllDocuments = async (req, res) => {
@@ -118,9 +119,36 @@ const createDocument = async (req, res) => {
 
     const { name, description, project, isPublic } = req.body;
 
+    // Générer un identifiant unique pour ce document
+    const uniqueId = crypto.randomUUID();
+
+    // Générer un ID d'affichage court et lisible avec un timestamp pour garantir l'unicité
+    const timestamp = new Date().getTime().toString(36).toUpperCase();
+    const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const displayId = `DOC-${timestamp}-${randomPart}`;
+
+    console.log(`Création d'un nouveau document avec uniqueId: ${uniqueId} et displayId: ${displayId}`);
+
+    // Ajouter un suffixe au nom du document pour indiquer qu'il s'agit d'un duplicata si nécessaire
+    let documentName = name || req.file.originalname;
+
+    // Vérifier si un document avec le même nom existe déjà
+    const existingDocuments = await Document.find({
+      name: new RegExp(`^${documentName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}( \\(\\d+\\))?$`),
+      uploadedBy: req.user.id
+    });
+
+    if (existingDocuments.length > 0) {
+      // Ajouter un suffixe numérique au nom du document
+      documentName = `${documentName} (${existingDocuments.length})`;
+      console.log(`Document avec le même nom trouvé, renommé en: ${documentName}`);
+    }
+
     // Create document record
     const document = await Document.create({
-      name: name || req.file.originalname,
+      uniqueId,
+      displayId,
+      name: documentName, // Utiliser le nom modifié qui inclut un suffixe pour les duplicatas
       description,
       filePath: req.file.path,
       fileType: path.extname(req.file.originalname).substring(1),
@@ -434,8 +462,12 @@ const uploadNewVersion = async (req, res) => {
       });
     }
 
+    // Générer un identifiant unique pour cette version
+    const versionUniqueId = crypto.randomUUID();
+
     // Add current version to versions array
     document.versions.push({
+      uniqueId: versionUniqueId,
       filePath: document.filePath,
       fileSize: document.fileSize,
       fileType: document.fileType,

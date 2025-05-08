@@ -145,18 +145,16 @@ const WidgetsDropdown = (props) => {
               </div>
             }
             action={
-              <Link to="/projects" className="text-decoration-none">
-                <CDropdown alignment="end">
-                  <CDropdownToggle color="transparent" caret={false} className="text-white p-0">
-                    <CIcon icon={cilOptions} />
-                  </CDropdownToggle>
-                  <CDropdownMenu>
-                    <CDropdownItem href="/projects">Voir tous les projets</CDropdownItem>
-                    <CDropdownItem href="/projects/create">Créer un projet</CDropdownItem>
-                    <CDropdownItem href="/performances">Voir les performances</CDropdownItem>
-                  </CDropdownMenu>
-                </CDropdown>
-              </Link>
+              <CDropdown alignment="end">
+                <CDropdownToggle color="transparent" caret={false} className="text-white p-0">
+                  <CIcon icon={cilOptions} />
+                </CDropdownToggle>
+                <CDropdownMenu>
+                  <CDropdownItem to="/projects" component={Link}>Voir tous les projets</CDropdownItem>
+                  <CDropdownItem to="/projects/create" component={Link}>Créer un projet</CDropdownItem>
+                  <CDropdownItem to="/performances" component={Link}>Voir les performances</CDropdownItem>
+                </CDropdownMenu>
+              </CDropdown>
             }
             chart={
               <CChartDoughnut
@@ -221,17 +219,15 @@ const WidgetsDropdown = (props) => {
               </div>
             }
             action={
-              <Link to="/tasks" className="text-decoration-none">
-                <CDropdown alignment="end">
-                  <CDropdownToggle color="transparent" caret={false} className="text-white p-0">
-                    <CIcon icon={cilOptions} />
-                  </CDropdownToggle>
-                  <CDropdownMenu>
-                    <CDropdownItem href="/tasks">Voir toutes les tâches</CDropdownItem>
-                    <CDropdownItem href="/tasks/create">Créer une tâche</CDropdownItem>
-                  </CDropdownMenu>
-                </CDropdown>
-              </Link>
+              <CDropdown alignment="end">
+                <CDropdownToggle color="transparent" caret={false} className="text-white p-0">
+                  <CIcon icon={cilOptions} />
+                </CDropdownToggle>
+                <CDropdownMenu>
+                  <CDropdownItem to="/tasks" component={Link}>Voir toutes les tâches</CDropdownItem>
+                  <CDropdownItem to="/tasks/create" component={Link}>Créer une tâche</CDropdownItem>
+                </CDropdownMenu>
+              </CDropdown>
             }
             chart={
               <CChartDoughnut
@@ -301,8 +297,8 @@ const WidgetsDropdown = (props) => {
                   <CIcon icon={cilOptions} />
                 </CDropdownToggle>
                 <CDropdownMenu>
-                  <CDropdownItem href="#">Voir l'équipe</CDropdownItem>
-                  <CDropdownItem href="#">Inviter un membre</CDropdownItem>
+                  <CDropdownItem to="/team" component={Link}>Voir l'équipe</CDropdownItem>
+                  <CDropdownItem to="/team/invite" component={Link}>Inviter un membre</CDropdownItem>
                 </CDropdownMenu>
               </CDropdown>
             }
@@ -353,8 +349,8 @@ const WidgetsDropdown = (props) => {
                   <CIcon icon={cilOptions} />
                 </CDropdownToggle>
                 <CDropdownMenu>
-                  <CDropdownItem href="/calendar">Voir le calendrier</CDropdownItem>
-                  <CDropdownItem href="#">Planifier une réunion</CDropdownItem>
+                  <CDropdownItem to="/calendar" component={Link}>Voir le calendrier</CDropdownItem>
+                  <CDropdownItem to="/meetings/create" component={Link}>Planifier une réunion</CDropdownItem>
                 </CDropdownMenu>
               </CDropdown>
             }

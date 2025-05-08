@@ -87,7 +87,7 @@ const ProjectDocuments = ({ projectId }) => {
     }
 
     try {
-      const response = await axios.delete(`/documents/${docId}`)
+      const response = await axios.delete(`/api/documents/${docId}`)
       if (response.data.success) {
         // Remove the document from the state
         setDocuments(documents.filter(doc => doc._id !== docId))
@@ -104,7 +104,7 @@ const ProjectDocuments = ({ projectId }) => {
   // Function to toggle pin status
   const handleTogglePin = async (docId, currentPinned) => {
     try {
-      const response = await axios.put(`/documents/${docId}/pin`)
+      const response = await axios.put(`/api/documents/${docId}/pin`)
       if (response.data.success) {
         // Update the document in the state
         setDocuments(documents.map(doc =>
@@ -215,14 +215,19 @@ const ProjectDocuments = ({ projectId }) => {
             <CTableBody>
               {documents.map((doc) => {
                 const permissionLevel = getPermissionLevel(doc)
+                // Utiliser uniqueId ou displayId s'ils existent, sinon utiliser _id
+                const documentId = doc.uniqueId || doc.displayId || doc._id
                 return (
-                  <CTableRow key={doc._id}>
+                  <CTableRow key={documentId}>
                     <CTableDataCell className="d-flex align-items-center">
                       <div className="document-icon me-2">
                         <CIcon icon={getFileIcon(doc.fileType)} size="lg" />
                       </div>
                       <div>
                         {doc.name}
+                        {doc.displayId && (
+                          <small className="ms-2 text-muted">({doc.displayId})</small>
+                        )}
                         {doc.pinned && (
                           <CTooltip content="Document épinglé">
                             <CIcon

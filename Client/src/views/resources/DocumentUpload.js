@@ -116,7 +116,7 @@ const DocumentUpload = ({ visible, onClose, onUploadSuccess }) => {
         }, 100)
 
         // Upload file
-        const response = await axios.post('/documents', formData, {
+        const response = await axios.post('/api/documents', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
