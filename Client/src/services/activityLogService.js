@@ -45,3 +45,14 @@ export const getRecentActivityLogs = async (limit = 10) => {
     throw error
   }
 }
+
+// Get recent comment activities only
+export const getRecentComments = async (limit = 5) => {
+  try {
+    const response = await axios.get(`${API_URL}/comments?limit=${limit}`)
+    return response.data
+  } catch (error) {
+    console.error('Error getting recent comments:', error)
+    throw error
+  }
+}

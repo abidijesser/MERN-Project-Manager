@@ -1,6 +1,7 @@
 const Project = require("../models/Project");
 const User = require("../models/User");
 const Task = require("../models/Task");
+const ActivityLog = require("../models/ActivityLog");
 
 // GET all projects
 const getAllProjects = async (_req, res) => {
@@ -177,6 +178,24 @@ const createProject = async (req, res) => {
     });
 
     await project.save();
+
+    // Create activity log for project creation
+    const activityLog = new ActivityLog({
+      user: req.user.id,
+      action: "CREATE",
+      entityType: "PROJECT",
+      entityId: project._id,
+      project: project._id,
+      details: {
+        projectName: project.projectName,
+        description: project.description
+          ? project.description.substring(0, 100)
+          : "",
+      },
+    });
+    await activityLog.save();
+    console.log("Activity log created for project creation");
+
     res.status(201).json({
       success: true,
       message: "Projet créé avec succès",
@@ -266,6 +285,24 @@ const updateProject = async (req, res) => {
       }
     );
 
+    // Create activity log for project update
+    const activityLog = new ActivityLog({
+      user: req.user.id,
+      action: "UPDATE",
+      entityType: "PROJECT",
+      entityId: updatedProject._id,
+      project: updatedProject._id,
+      details: {
+        projectName: updatedProject.projectName,
+        description: updatedProject.description
+          ? updatedProject.description.substring(0, 100)
+          : "",
+        changes: Object.keys(req.body).join(", "),
+      },
+    });
+    await activityLog.save();
+    console.log("Activity log created for project update");
+
     res.status(200).json({
       success: true,
       project: updatedProject,
@@ -300,6 +337,22 @@ const deleteProject = async (req, res) => {
           "Vous n'êtes pas autorisé à supprimer ce projet. Seul le propriétaire peut le supprimer.",
       });
     }
+
+    // Create activity log for project deletion before deleting the project
+    const activityLog = new ActivityLog({
+      user: req.user.id,
+      action: "DELETE",
+      entityType: "PROJECT",
+      entityId: existingProject._id,
+      details: {
+        projectName: existingProject.projectName,
+        description: existingProject.description
+          ? existingProject.description.substring(0, 100)
+          : "",
+      },
+    });
+    await activityLog.save();
+    console.log("Activity log created for project deletion");
 
     // Delete the project
     await Project.findByIdAndDelete(req.params.id);

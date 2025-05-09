@@ -36,6 +36,7 @@ import projectManagementImage from 'src/assets/images/gestion_projet.png'
 import WidgetsDropdown from '../widgets/WidgetsDropdown'
 import MainChart from './MainChart'
 import RecentActivityWidget from '../../components/ActivityLog/RecentActivityWidget'
+import RecentActivityListWidget from '../../components/ActivityLog/RecentActivityListWidget'
 import UpcomingEvents from '../../components/UpcomingEvents/UpcomingEvents'
 import socketService from '../../services/socketService'
 import { getProjectsForDashboard } from '../../services/dashboardService'
@@ -44,22 +45,53 @@ import './Dashboard.css'
 const Dashboard = () => {
   const [dashboardProjects, setDashboardProjects] = useState([])
   const [loading, setLoading] = useState(true)
+  const [allProjects, setAllProjects] = useState([])
+
+  // Fonction pour sélectionner des projets aléatoires à afficher
+  const selectRandomProjects = () => {
+    if (allProjects.length === 0) return
+
+    // Sélectionner 3 projets aléatoires pour l'affichage
+    let randomProjects = [...allProjects]
+
+    // Mélanger les projets et prendre les 3 premiers
+    randomProjects = randomProjects.sort(() => 0.5 - Math.random())
+
+    // Limiter à 3 projets si nécessaire
+    if (randomProjects.length > 3) {
+      randomProjects = randomProjects.slice(0, 3)
+    }
+
+    // Mettre à jour l'affichage avec les projets aléatoires
+    setDashboardProjects(randomProjects)
+  }
 
   // Fonction pour récupérer les projets pour le tableau de bord
   const fetchDashboardProjects = async () => {
     try {
       setLoading(true)
-      const projects = await getProjectsForDashboard(3) // Récupérer 3 projets
-      console.log('Dashboard projects received:', projects)
+
+      // Récupérer tous les projets pour la fonction aléatoire
+      const allProjectsData = await getProjectsForDashboard(0) // 0 = tous les projets
+      setAllProjects(allProjectsData)
+
+      // Sélectionner 3 projets aléatoires pour l'affichage
+      let displayProjects = allProjectsData
+      if (allProjectsData.length > 3) {
+        // Mélanger les projets et prendre les 3 premiers
+        displayProjects = [...allProjectsData].sort(() => 0.5 - Math.random()).slice(0, 3)
+      }
+
+      console.log('Dashboard projects received:', displayProjects)
 
       // Log task counts for each project
-      projects.forEach((project) => {
+      displayProjects.forEach((project) => {
         console.log(
           `Dashboard - Project ${project.title}: ${project.completedTasks}/${project.tasks} tasks`,
         )
       })
 
-      setDashboardProjects(projects)
+      setDashboardProjects(displayProjects)
     } catch (error) {
       console.error('Erreur lors de la récupération des projets pour le tableau de bord:', error)
     } finally {
@@ -224,7 +256,7 @@ const Dashboard = () => {
       <WidgetsDropdown className="mb-4" />
 
       <CRow className="mb-4">
-        <CCol md={8}>
+        <CCol md={12}>
           <CCard className="mb-4 dashboard-card">
             <CCardHeader className="dashboard-card-header">
               <h4 className="mb-0">
@@ -236,9 +268,6 @@ const Dashboard = () => {
               <MainChart />
             </CCardBody>
           </CCard>
-        </CCol>
-        <CCol md={4}>
-          <RecentActivityWidget limit={8} />
         </CCol>
       </CRow>
 
@@ -265,7 +294,33 @@ const Dashboard = () => {
             <CIcon icon={cilFolder} style={{ marginRight: '10px', color: '#321fdb' }} />
             Vos projets en cours
           </h2>
-          <div>
+          <div className="d-flex gap-2">
+            <button
+              onClick={selectRandomProjects}
+              disabled={allProjects.length === 0}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '6px 12px',
+                backgroundColor: '#2eb85c',
+                color: 'white',
+                borderRadius: '4px',
+                border: 'none',
+                fontWeight: '500',
+                fontSize: '0.875rem',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#27a04a'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#2eb85c'
+              }}
+              title="Sélectionner un projet aléatoire"
+            >
+              Aléatoire
+            </button>
             <Link
               to="/projects"
               style={{
@@ -300,9 +355,20 @@ const Dashboard = () => {
                   <CIcon icon={cilTask} className="me-2 text-primary" />
                   Aperçu des projets
                 </h4>
-                <Link to="/projects" className="btn btn-sm btn-outline-primary">
-                  Tous les projets <CIcon icon={cilArrowRight} size="sm" />
-                </Link>
+                <div className="d-flex gap-2">
+                  <CButton
+                    color="success"
+                    size="sm"
+                    onClick={selectRandomProjects}
+                    disabled={allProjects.length === 0}
+                    title="Sélectionner un projet aléatoire"
+                  >
+                    Aléatoire
+                  </CButton>
+                  <Link to="/projects" className="btn btn-sm btn-outline-primary">
+                    Tous les projets <CIcon icon={cilArrowRight} size="sm" />
+                  </Link>
+                </div>
               </CCardHeader>
               <CCardBody>
                 <CRow>
@@ -586,94 +652,7 @@ const Dashboard = () => {
         <CRow className="mb-4">
           {/* Activités récentes */}
           <CCol md={4}>
-            <CCard className="dashboard-card h-100 shadow-sm">
-              <CCardHeader className="dashboard-card-header d-flex justify-content-between align-items-center">
-                <h4 className="mb-0 fs-5">
-                  <CIcon icon={cilNotes} className="me-2 text-primary" />
-                  Activités récentes
-                </h4>
-                <CTooltip content="Dernières activités sur vos projets et tâches">
-                  <CIcon icon={cilInfo} className="text-muted" size="sm" />
-                </CTooltip>
-              </CCardHeader>
-              <CCardBody className="p-0">
-                <div className="activity-timeline">
-                  {[
-                    {
-                      user: 'Sophie Martin',
-                      action: 'a terminé la tâche',
-                      target: "Conception de la page d'accueil",
-                      time: 'Il y a 2 heures',
-                      icon: cilTask,
-                      color: 'success',
-                    },
-                    {
-                      user: 'Thomas Dubois',
-                      action: 'a commenté sur',
-                      target: 'Intégration API',
-                      time: 'Il y a 4 heures',
-                      icon: cilNotes,
-                      color: 'info',
-                    },
-                    {
-                      user: 'Emma Petit',
-                      action: 'a créé un nouveau projet',
-                      target: 'Refonte application mobile',
-                      time: 'Hier à 14:30',
-                      icon: cilFolder,
-                      color: 'primary',
-                    },
-                    {
-                      user: 'Lucas Bernard',
-                      action: 'a modifié la tâche',
-                      target: 'Analyse des données marketing',
-                      time: 'Hier à 10:15',
-                      icon: cilPencil,
-                      color: 'warning',
-                    },
-                  ].map((activity, index) => (
-                    <div
-                      key={index}
-                      className={`activity-item d-flex p-3 ${index < 3 ? 'border-bottom' : ''}`}
-                      style={{ transition: 'all 0.2s ease' }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#f8f9fa'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent'
-                      }}
-                    >
-                      <div
-                        className="activity-icon me-3 rounded-circle d-flex align-items-center justify-content-center"
-                        style={{
-                          width: '36px',
-                          height: '36px',
-                          backgroundColor: `var(--cui-${activity.color})`,
-                          flexShrink: 0,
-                        }}
-                      >
-                        <CIcon icon={activity.icon} className="text-white" size="sm" />
-                      </div>
-                      <div className="activity-content flex-grow-1">
-                        <div className="d-flex justify-content-between align-items-center mb-1">
-                          <div className="fw-bold">{activity.user}</div>
-                          <div className="text-muted small">{activity.time}</div>
-                        </div>
-                        <div>
-                          <span className="text-muted">{activity.action} </span>
-                          <span className="fw-medium">{activity.target}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="text-center p-3 border-top">
-                  <Link to="#" className="btn btn-sm btn-outline-primary">
-                    Voir toutes les activités
-                  </Link>
-                </div>
-              </CCardBody>
-            </CCard>
+            <RecentActivityListWidget limit={5} />
           </CCol>
 
           {/* Événements à venir */}

@@ -143,6 +143,11 @@ const getRecentActivityLogs = async (req, res) => {
       .sort({ timestamp: -1 })
       .limit(parseInt(limit));
 
+    console.log(`Returning ${activityLogs.length} activity logs`);
+    console.log(
+      `Activity types: ${activityLogs.map((log) => log.action).join(", ")}`
+    );
+
     res.status(200).json({
       success: true,
       activityLogs,
@@ -152,6 +157,32 @@ const getRecentActivityLogs = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Erreur lors de la récupération des journaux d'activité récents",
+    });
+  }
+};
+
+// Get recent comment activities only
+const getRecentComments = async (req, res) => {
+  try {
+    const { limit = 5 } = req.query;
+
+    // Get recent comment activities only
+    const activityLogs = await ActivityLog.find({ action: "COMMENT" })
+      .populate("user", "name email")
+      .populate("task", "title")
+      .populate("project", "projectName")
+      .sort({ timestamp: -1 })
+      .limit(parseInt(limit));
+
+    res.status(200).json({
+      success: true,
+      activityLogs,
+    });
+  } catch (error) {
+    console.error("Error getting recent comments:", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur lors de la récupération des commentaires récents",
     });
   }
 };
@@ -173,5 +204,6 @@ module.exports = {
   getTaskActivityLogs,
   getUserActivityLogs,
   getRecentActivityLogs,
+  getRecentComments,
   createActivityLog,
 };

@@ -306,8 +306,24 @@ const Resources = () => {
       doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (doc.displayId && doc.displayId.toLowerCase().includes(searchTerm.toLowerCase()))
 
+    // Filtre par projet
     const matchesProject = selectedProject ? doc.project === selectedProject : true
-    const matchesType = filterType ? doc.type === filterType : true
+
+    // Filtre par type de fichier (plus flexible)
+    let matchesType = true
+    if (filterType) {
+      // Normaliser le type de fichier du document
+      const docType = (doc.type || '').toLowerCase()
+
+      // Vérifier si le type de fichier correspond au filtre
+      matchesType = docType === filterType.toLowerCase()
+
+      // Logs pour le débogage
+      console.log(
+        `Filtering document: ${doc.name}, type: ${docType}, filter: ${filterType}, matches: ${matchesType}`,
+      )
+    }
+
     return matchesSearch && matchesProject && matchesType
   })
 
@@ -592,18 +608,31 @@ const Resources = () => {
 
       <CRow className="mb-4">
         <CCol md={4}>
-          <CFormSelect
-            value={selectedProject}
-            onChange={(e) => setSelectedProject(e.target.value)}
-            aria-label="Sélectionner un projet"
-          >
-            <option value="">Tous les projets</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.name}
-              </option>
-            ))}
-          </CFormSelect>
+          <div className="position-relative">
+            <CFormSelect
+              value={selectedProject}
+              onChange={(e) => setSelectedProject(e.target.value)}
+              aria-label="Sélectionner un projet"
+              className={selectedProject ? 'filter-active' : ''}
+            >
+              <option value="">Tous les projets</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </CFormSelect>
+            {selectedProject && (
+              <button
+                className="position-absolute end-0 top-0 btn btn-sm btn-link text-danger"
+                style={{ padding: '0.375rem 0.75rem' }}
+                onClick={() => setSelectedProject('')}
+                title="Effacer la sélection"
+              >
+                ×
+              </button>
+            )}
+          </div>
         </CCol>
         <CCol md={6}>
           <CInputGroup>
@@ -611,23 +640,112 @@ const Resources = () => {
               placeholder="Rechercher un document..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className={searchTerm ? 'filter-active' : ''}
             />
-            <CButton type="button" color="primary" variant="outline">
+            {searchTerm ? (
+              <CButton
+                type="button"
+                color="danger"
+                variant="outline"
+                onClick={() => setSearchTerm('')}
+                title="Effacer la recherche"
+              >
+                ×
+              </CButton>
+            ) : null}
+            <CButton type="button" color={searchTerm ? 'success' : 'primary'} variant="outline">
               <CIcon icon={cilSearch} />
             </CButton>
             <CDropdown variant="btn-group">
-              <CDropdownToggle color="primary" variant="outline">
+              <CDropdownToggle
+                color={filterType ? 'success' : 'primary'}
+                variant="outline"
+                title={filterType ? `Filtré par: ${filterType.toUpperCase()}` : 'Filtrer par type'}
+              >
                 <CIcon icon={cilFilter} />
+                {filterType && (
+                  <span className="ms-1 badge bg-success">{filterType.toUpperCase()}</span>
+                )}
               </CDropdownToggle>
               <CDropdownMenu>
-                <CDropdownItem onClick={() => setFilterType('')}>Tous les types</CDropdownItem>
-                <CDropdownItem onClick={() => setFilterType('pdf')}>PDF</CDropdownItem>
-                <CDropdownItem onClick={() => setFilterType('excel')}>Excel</CDropdownItem>
-                <CDropdownItem onClick={() => setFilterType('powerpoint')}>
-                  PowerPoint
+                {filterType && (
+                  <CDropdownItem onClick={() => setFilterType('')} className="text-danger fw-bold">
+                    <CIcon icon={cilFilter} className="me-2" />
+                    Effacer le filtre
+                  </CDropdownItem>
+                )}
+                <CDropdownItem
+                  onClick={() => setFilterType('')}
+                  className={!filterType ? 'fw-bold' : ''}
+                >
+                  Tous les types
                 </CDropdownItem>
-                <CDropdownItem onClick={() => setFilterType('image')}>Images</CDropdownItem>
-                <CDropdownItem onClick={() => setFilterType('video')}>Vidéos</CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('pdf')}
+                  className={filterType === 'pdf' ? 'fw-bold bg-light' : ''}
+                >
+                  PDF
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('doc')}
+                  className={filterType === 'doc' ? 'fw-bold bg-light' : ''}
+                >
+                  Word (.doc)
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('docx')}
+                  className={filterType === 'docx' ? 'fw-bold bg-light' : ''}
+                >
+                  Word (.docx)
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('xls')}
+                  className={filterType === 'xls' ? 'fw-bold bg-light' : ''}
+                >
+                  Excel (.xls)
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('xlsx')}
+                  className={filterType === 'xlsx' ? 'fw-bold bg-light' : ''}
+                >
+                  Excel (.xlsx)
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('ppt')}
+                  className={filterType === 'ppt' ? 'fw-bold bg-light' : ''}
+                >
+                  PowerPoint (.ppt)
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('pptx')}
+                  className={filterType === 'pptx' ? 'fw-bold bg-light' : ''}
+                >
+                  PowerPoint (.pptx)
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('jpg')}
+                  className={filterType === 'jpg' ? 'fw-bold bg-light' : ''}
+                >
+                  Images JPG
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('png')}
+                  className={filterType === 'png' ? 'fw-bold bg-light' : ''}
+                >
+                  Images PNG
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('mp4')}
+                  className={filterType === 'mp4' ? 'fw-bold bg-light' : ''}
+                >
+                  Vidéos MP4
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('txt')}
+                  className={filterType === 'txt' ? 'fw-bold bg-light' : ''}
+                >
+                  Texte
+                </CDropdownItem>
               </CDropdownMenu>
             </CDropdown>
           </CInputGroup>
@@ -679,9 +797,76 @@ const Resources = () => {
                   {filteredDocuments.length === 0 ? (
                     <div className="text-center my-5">
                       <p>Aucun document trouvé.</p>
+                      {(searchTerm || selectedProject || filterType) && (
+                        <div>
+                          <p className="text-muted">
+                            Essayez de modifier vos critères de recherche :
+                          </p>
+                          <div className="d-flex justify-content-center gap-2">
+                            {searchTerm && (
+                              <CButton
+                                color="danger"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSearchTerm('')}
+                              >
+                                Effacer la recherche
+                              </CButton>
+                            )}
+                            {selectedProject && (
+                              <CButton
+                                color="danger"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedProject('')}
+                              >
+                                Effacer le filtre de projet
+                              </CButton>
+                            )}
+                            {filterType && (
+                              <CButton
+                                color="danger"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setFilterType('')}
+                              >
+                                Effacer le filtre de type
+                              </CButton>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="documents-list">
+                      <div className="filter-count">
+                        <div>
+                          <span>
+                            Affichage de <strong>{filteredDocuments.length}</strong> document
+                            {filteredDocuments.length > 1 ? 's' : ''}
+                            {documents.length !== filteredDocuments.length &&
+                              ` sur ${documents.length}`}
+                          </span>
+                          {(searchTerm || selectedProject || filterType) && (
+                            <span className="filter-badge bg-info">Filtré</span>
+                          )}
+                        </div>
+                        {(searchTerm || selectedProject || filterType) && (
+                          <CButton
+                            color="link"
+                            size="sm"
+                            className="filter-clear-button"
+                            onClick={() => {
+                              setSearchTerm('')
+                              setSelectedProject('')
+                              setFilterType('')
+                            }}
+                          >
+                            <CIcon icon={cilFilter} className="me-1" />
+                            Effacer tous les filtres
+                          </CButton>
+                        )}
+                      </div>
                       <CRow className="documents-header mb-2 p-2 bg-light">
                         <CCol xs={6}>Nom</CCol>
                         <CCol xs={2}>Taille</CCol>

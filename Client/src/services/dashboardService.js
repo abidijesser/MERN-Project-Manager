@@ -2,13 +2,23 @@ import axios from '../utils/axios'
 
 /**
  * Récupère les projets avec leurs tâches pour l'affichage dans le tableau de bord
- * @param {number} limit - Nombre de projets à récupérer (optionnel)
+ * @param {number} limit - Nombre de projets à récupérer (optionnel). Si 0, récupère tous les projets.
  * @returns {Promise<Array>} Liste des projets avec leurs statistiques
  */
 export const getProjectsForDashboard = async (limit = 3) => {
   try {
     // Récupérer tous les projets
-    const response = await axios.get('/projects')
+    const token = localStorage.getItem('token')
+    if (!token) {
+      throw new Error('No authentication token found')
+    }
+
+    const response = await axios.get('http://localhost:3001/api/projects', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
     console.log('API Response:', response.data)
 
     if (!response.data || !response.data.success) {
@@ -31,6 +41,7 @@ export const getProjectsForDashboard = async (limit = 3) => {
     projects.sort((a, b) => new Date(a.endDate) - new Date(b.endDate))
 
     // Limiter le nombre de projets si nécessaire
+    // Si limit est 0, on retourne tous les projets
     if (limit > 0) {
       projects = projects.slice(0, limit)
     }
