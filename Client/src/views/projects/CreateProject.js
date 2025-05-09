@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   CCard,
   CCardBody,
@@ -10,6 +10,10 @@ import {
   CFormTextarea,
   CFormSelect,
   CButton,
+  CFormLabel,
+  CListGroup,
+  CListGroupItem,
+  CFormCheck,
 } from '@coreui/react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -25,45 +29,106 @@ const CreateProject = () => {
     tasks: [],
     members: [],
   })
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [selectedMembers, setSelectedMembers] = useState([])
   const navigate = useNavigate()
 
+  // Fetch client users for member selection
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true)
+        const token = localStorage.getItem('token')
+        if (!token) {
+          toast.error('No authentication token found')
+          return
+        }
+
+        const response = await axios.get('/auth/users', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (response.data.success) {
+          // Filter only client users
+          const clientUsers = response.data.users.filter((user) => user.role === 'Client')
+          setUsers(clientUsers)
+        } else {
+          toast.error('Failed to fetch users')
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error)
+        toast.error(error.response?.data?.error || 'Error fetching users')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUsers()
+  }, [])
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setProject(prev => ({
+    const { name, value } = e.target
+    setProject((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }))
+  }
+
+  // Handle member selection
+  const handleMemberToggle = (userId) => {
+    setSelectedMembers((prevSelected) => {
+      if (prevSelected.includes(userId)) {
+        return prevSelected.filter((id) => id !== userId)
+      } else {
+        return [...prevSelected, userId]
+      }
+    })
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     // Validation des dates
-    const startDate = new Date(project.startDate);
-    const endDate = new Date(project.endDate);
-    
+    const startDate = new Date(project.startDate)
+    const endDate = new Date(project.endDate)
+
     if (startDate > endDate) {
-      toast.error('La date de début doit être antérieure à la date de fin');
-      return;
+      toast.error('La date de début doit être antérieure à la date de fin')
+      return
+    }
+
+    // Validate that at least 5 members are selected
+    if (selectedMembers.length < 5) {
+      toast.error('Vous devez sélectionner au moins 5 membres pour le projet')
+      return
     }
 
     try {
-      console.log("Données envoyées :", project)
-      const response = await axios.post('/api/projects', project)
-      
+      // Create a copy of the project with the selected members
+      const projectData = {
+        ...project,
+        members: selectedMembers,
+      }
+
+      console.log('Données envoyées :', projectData)
+      const response = await axios.post('/projects', projectData)
+
       if (response.data.message) {
         toast.success(response.data.message)
       } else {
         toast.success('Projet créé avec succès !')
       }
-      
+
       navigate('/projects')
     } catch (error) {
       console.error('Erreur lors de la création du projet :', error)
       if (error.response?.data?.details) {
         // Afficher les détails de l'erreur de validation
         if (Array.isArray(error.response.data.details)) {
-          error.response.data.details.forEach(detail => {
+          error.response.data.details.forEach((detail) => {
             toast.error(detail)
           })
         } else {
@@ -144,6 +209,41 @@ const CreateProject = () => {
                     onChange={handleChange}
                     required
                   />
+                </CCol>
+              </CRow>
+              <CRow className="mb-3">
+                <CCol>
+                  <CFormLabel>Membres du projet (sélectionnez au moins 5 membres)</CFormLabel>
+                  <div
+                    className="border rounded p-3"
+                    style={{ maxHeight: '200px', overflowY: 'auto' }}
+                  >
+                    {loading ? (
+                      <div className="text-center">Chargement des utilisateurs...</div>
+                    ) : users.length === 0 ? (
+                      <div className="text-center">Aucun utilisateur disponible</div>
+                    ) : (
+                      <CListGroup>
+                        {users.map((user) => (
+                          <CListGroupItem
+                            key={user._id}
+                            className="d-flex justify-content-between align-items-center"
+                          >
+                            <CFormCheck
+                              id={`member-${user._id}`}
+                              label={`${user.name} (${user.email})`}
+                              checked={selectedMembers.includes(user._id)}
+                              onChange={() => handleMemberToggle(user._id)}
+                            />
+                          </CListGroupItem>
+                        ))}
+                      </CListGroup>
+                    )}
+                  </div>
+                  <div className="text-muted mt-1">
+                    {selectedMembers.length} membre(s) sélectionné(s){' '}
+                    {selectedMembers.length < 5 && '(minimum 5 requis)'}
+                  </div>
                 </CCol>
               </CRow>
               <CRow>

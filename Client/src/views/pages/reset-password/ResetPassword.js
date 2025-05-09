@@ -45,14 +45,15 @@ const ResetPassword = () => {
       console.log('Réponse reçue:', response.data)
 
       if (response.data.success) {
+        setSuccess(
+          'Mot de passe réinitialisé avec succès. Redirection vers la page de connexion...',
+        )
         setError('')
-        setSuccess('Votre mot de passe a été réinitialisé avec succès')
         setTimeout(() => {
           navigate('/login')
         }, 3000)
       } else {
-        setError(response.data.error || 'Une erreur est survenue')
-        setSuccess('')
+        setError(response.data.error || 'Erreur lors de la réinitialisation du mot de passe')
       }
     } catch (err) {
       console.error('Erreur détaillée:', err.response?.data)

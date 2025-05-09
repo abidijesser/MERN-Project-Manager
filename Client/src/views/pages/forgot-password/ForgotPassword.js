@@ -24,17 +24,14 @@ const ForgotPassword = () => {
       const response = await axios.post('http://localhost:3001/api/auth/forgot-password', { email })
 
       if (response.data.success) {
+        // Always show a generic success message for security reasons
+        setResetLink('Le lien de réinitialisation a été envoyé à votre adresse email.')
         setError('')
-        setResetLink(
-          response.data.message ||
-            'Un email de réinitialisation a été envoyé à votre adresse email.',
-        )
       } else {
         setError(response.data.error || 'Une erreur est survenue')
-        setResetLink('')
       }
     } catch (err) {
-      setError(err.response?.data?.error || "Une erreur est survenue lors de l'envoi de l'email")
+      setError(err.response?.data?.error || 'Une erreur est survenue')
       setResetLink('')
     }
   }
@@ -55,18 +52,23 @@ const ForgotPassword = () => {
 
                     {error && <CAlert color="danger">{error}</CAlert>}
 
-                    {resetLink && <CAlert color="success">{resetLink}</CAlert>}
+                    {resetLink && (
+                      <CAlert color="success">
+                        <p>{resetLink}</p>
+                        <p>
+                          Veuillez vérifier votre boîte de réception et suivre les instructions dans
+                          l'email.
+                        </p>
+                      </CAlert>
+                    )}
 
                     <div className="mb-3">
                       <CFormInput
                         type="email"
-                        id="forgotPasswordEmail"
-                        name="email"
                         placeholder="Email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        autoComplete="email"
                       />
                     </div>
 

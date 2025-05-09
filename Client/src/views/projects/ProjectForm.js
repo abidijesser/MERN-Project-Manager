@@ -67,14 +67,29 @@ const ProjectForm = () => {
     setError('')
     setLoading(true)
     try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setError('No authentication token found')
+        setLoading(false)
+        return
+      }
+
       if (isEditMode) {
-        await axios.put(`/api/projects/${id}`, project)
+        await axios.put(`http://localhost:3001/api/projects/${id}`, project, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
         toast.success('Projet mis à jour avec succès')
       } else {
-        await axios.post('/api/projects', project)
+        await axios.post('http://localhost:3001/api/projects', project, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
         toast.success('Projet créé avec succès')
       }
-      navigate('/projects') // Naviguer vers la liste après succès
+      navigate('/projects')
     } catch (err) {
       console.error('Error saving project:', err)
       const errorMessage = err.response?.data?.error || 'Erreur lors de la sauvegarde du projet.'

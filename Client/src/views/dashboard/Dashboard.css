@@ -1,0 +1,148 @@
+/* Styles pour le tableau de bord */
+
+/* Style général pour le tableau de bord */
+.dashboard-page {
+  padding: 1.5rem 0;
+}
+
+/* Style pour les cartes du tableau de bord */
+.dashboard-card {
+  border-radius: 8px !important;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-card:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-card-header {
+  background-color: #fff;
+  border-bottom: 1px solid #ebedef;
+  padding: 1rem 1.25rem;
+}
+
+/* Style pour les activités récentes */
+.activity-timeline {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.activity-timeline::-webkit-scrollbar {
+  width: 6px;
+}
+
+.activity-timeline::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.activity-timeline::-webkit-scrollbar-thumb {
+  background: #d8dbe0;
+  border-radius: 3px;
+}
+
+.activity-timeline::-webkit-scrollbar-thumb:hover {
+  background: #a9aeb6;
+}
+
+.activity-item {
+  position: relative;
+}
+
+.activity-icon {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Style pour les membres de l'équipe */
+.team-members {
+  margin-top: 0.5rem;
+}
+
+.team-member-card {
+  background-color: #fff;
+  border-radius: 8px !important;
+}
+
+.member-avatar {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+/* Style pour les titres de section */
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #3c4b64;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #ebedef;
+}
+
+/* Style pour les sections du tableau de bord */
+.dashboard-section {
+  margin-bottom: 2rem;
+}
+
+/* Animation pour les barres de progression */
+.progress-animate {
+  transition: width 1s ease-in-out;
+}
+
+/* Effet de survol pour les cartes de projet */
+.hover-shadow {
+  transition: all 0.3s ease;
+}
+
+.hover-shadow:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+  border-color: #1b8eb7 !important;
+}
+
+/* Transition pour tous les éléments */
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+/* Style pour les badges arrondis */
+.badge.rounded-pill {
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+/* Style pour l'état vide */
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #8a93a2;
+}
+
+/* Animation pour le spinner */
+.spinner-grow {
+  animation-duration: 1.2s;
+}
+
+/* Style pour les cartes de projet */
+.project-card {
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  transition: all 0.3s ease;
+}
+
+/* Style pour les titres de projet tronqués */
+.text-truncate {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Responsive design pour les petits écrans */
+@media (max-width: 768px) {
+  .project-card {
+    margin-bottom: 1rem;
+  }
+}

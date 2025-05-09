@@ -29,14 +29,73 @@ const TaskForm = () => {
   const [error, setError] = useState('')
   const [projects, setProjects] = useState([])
   const [users, setUsers] = useState([])
+  const [projectMembers, setProjectMembers] = useState([])
+  const [selectedProject, setSelectedProject] = useState(null)
 
   const { id } = useParams()
   const navigate = useNavigate()
   const isEditMode = Boolean(id)
 
+  // Fetch project members when a project is selected
+  const fetchProjectMembers = async (projectId) => {
+    if (!projectId) {
+      setProjectMembers([])
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setError('No authentication token found')
+        return
+      }
+
+      console.log('Fetching members for project ID:', projectId)
+
+      // First, get the project details to set selectedProject
+      const projectResponse = await axios.get(`http://localhost:3001/api/projects/${projectId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (projectResponse.data.success && projectResponse.data.project) {
+        setSelectedProject(projectResponse.data.project)
+      }
+
+      // Now directly fetch the project members using the dedicated endpoint
+      const membersResponse = await axios.get(
+        `http://localhost:3001/api/projects/${projectId}/members`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+
+      if (membersResponse.data.success && membersResponse.data.members) {
+        console.log('Project members fetched successfully:', membersResponse.data.members)
+        setProjectMembers(membersResponse.data.members)
+      } else {
+        console.log('No members found for project or invalid response')
+        setProjectMembers([])
+      }
+    } catch (error) {
+      console.error('Error fetching project members:', error)
+      toast.error('Erreur lors de la récupération des membres du projet')
+      setProjectMembers([])
+    }
+  }
+
   useEffect(() => {
+    console.log('TaskForm component mounted or id changed, fetching data...')
     fetchData()
   }, [id])
+
+  // Add a useEffect to log when projectMembers changes
+  useEffect(() => {
+    console.log('Project members updated:', projectMembers)
+  }, [projectMembers])
 
   const fetchData = async () => {
     try {
@@ -48,19 +107,45 @@ const TaskForm = () => {
         return
       }
 
-      // Récupérer les projets et utilisateurs
-      const [projectsRes, usersRes] = await Promise.all([
-        axios.get('http://localhost:3001/api/projects', {
+      // Vérifier le rôle de l'utilisateur
+      const userRole = localStorage.getItem('userRole')
+      console.log('TaskForm - User role:', userRole)
+
+      // Récupérer les projets
+      const projectsRes = await axios.get('http://localhost:3001/api/projects', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      // Récupérer tous les utilisateurs pour les assigner aux tâches
+      let usersRes = { data: { success: true, users: [] } }
+
+      try {
+        // Récupérer tous les utilisateurs
+        usersRes = await axios.get('http://localhost:3001/api/auth/users', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }),
-        axios.get('http://localhost:3001/api/auth/users', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }),
-      ])
+        })
+      } catch (error) {
+        console.error('Error fetching users:', error)
+        // Si on ne peut pas récupérer tous les utilisateurs, utiliser uniquement l'utilisateur actuel
+        try {
+          console.log('Falling back to current user only')
+          const profileRes = await axios.get('http://localhost:3001/api/auth/profile', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+
+          if (profileRes.data && profileRes.data.user) {
+            usersRes.data = { success: true, users: [profileRes.data.user] }
+          }
+        } catch (profileError) {
+          console.error('Error fetching profile:', profileError)
+        }
+      }
 
       if (projectsRes.data.success) {
         setProjects(projectsRes.data.projects)
@@ -83,12 +168,31 @@ const TaskForm = () => {
         })
         if (taskRes.data.success) {
           const taskData = taskRes.data.task
+          console.log('Task data fetched:', taskData)
+
+          // Extract project ID correctly, handling both object and string formats
+          let projectId = ''
+          if (taskData.project) {
+            projectId =
+              typeof taskData.project === 'object' ? taskData.project._id : taskData.project
+          }
+          console.log('Project ID extracted:', projectId)
+
+          // Set task data
           setTask({
             ...taskData,
             dueDate: taskData.dueDate ? new Date(taskData.dueDate).toISOString().split('T')[0] : '',
             assignedTo: taskData.assignedTo?._id || '',
-            project: taskData.project?._id || '',
+            project: projectId,
           })
+
+          // Fetch project members if a project is assigned
+          if (projectId) {
+            console.log('Fetching project members for project:', projectId)
+            await fetchProjectMembers(projectId)
+          } else {
+            console.log('No project ID found for this task')
+          }
         } else {
           throw new Error('Failed to fetch task')
         }
@@ -148,10 +252,32 @@ const TaskForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setTask((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
+
+    // If project field changed, fetch project members
+    if (name === 'project') {
+      console.log('Project changed to:', value)
+
+      // Reset assignedTo when project changes
+      setTask((prev) => ({
+        ...prev,
+        [name]: value,
+        assignedTo: '',
+      }))
+
+      // Fetch project members if a project is selected
+      if (value) {
+        console.log('Fetching members for newly selected project:', value)
+        fetchProjectMembers(value)
+      } else {
+        console.log('No project selected, clearing members')
+        setProjectMembers([])
+      }
+    } else {
+      setTask((prev) => ({
+        ...prev,
+        [name]: value,
+      }))
+    }
   }
 
   if (loading) {
@@ -226,21 +352,6 @@ const TaskForm = () => {
               </div>
               <div className="mb-3">
                 <CFormSelect
-                  label="Assigné à"
-                  name="assignedTo"
-                  value={task.assignedTo}
-                  onChange={handleChange}
-                  options={[
-                    { label: 'Sélectionner un utilisateur', value: '' },
-                    ...users.map((user) => ({
-                      label: user.name,
-                      value: user._id,
-                    })),
-                  ]}
-                />
-              </div>
-              <div className="mb-3">
-                <CFormSelect
                   label="Projet"
                   name="project"
                   value={task.project}
@@ -253,6 +364,34 @@ const TaskForm = () => {
                     })),
                   ]}
                 />
+              </div>
+              <div className="mb-3">
+                <CFormSelect
+                  label="Assigné à"
+                  name="assignedTo"
+                  value={task.assignedTo}
+                  onChange={handleChange}
+                  disabled={!task.project || projectMembers.length === 0} // Disable if no project selected or no members
+                  options={[
+                    {
+                      label: !task.project
+                        ? "Sélectionnez d'abord un projet"
+                        : projectMembers.length === 0
+                          ? 'Aucun membre disponible pour ce projet'
+                          : 'Sélectionner un utilisateur',
+                      value: '',
+                    },
+                    ...projectMembers.map((user) => ({
+                      label: user.name,
+                      value: user._id,
+                    })),
+                  ]}
+                />
+                {task.project && projectMembers.length === 0 && (
+                  <div className="text-danger mt-1 small">
+                    Aucun membre disponible pour ce projet. Veuillez ajouter des membres au projet.
+                  </div>
+                )}
               </div>
               <div className="d-flex justify-content-end">
                 <CButton color="secondary" className="me-2" onClick={() => navigate('/tasks')}>

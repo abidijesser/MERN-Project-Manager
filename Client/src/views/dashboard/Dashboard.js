@@ -1,11 +1,8 @@
 // filepath: c:\Users\Lenovo\Desktop\pi1\MERN-Project-Manager\Client\src\views\dashboard\Dashboard.js
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Link } from 'react-router-dom';
-import classNames from 'classnames';
+import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import {
-  CAvatar,
   CButton,
   CButtonGroup,
   CCard,
@@ -15,76 +12,94 @@ import {
   CCol,
   CProgress,
   CRow,
-  CTable,
-  CTableBody,
-  CTableDataCell,
-  CTableHead,
-  CTableHeaderCell,
-  CTableRow,
-} from '@coreui/react';
-import CIcon from '@coreui/icons-react';
+  CBadge,
+  CTooltip,
+} from '@coreui/react'
+import CIcon from '@coreui/icons-react'
 import {
-  cibCcAmex,
-  cibCcApplePay,
-  cibCcMastercard,
-  cibCcPaypal,
-  cibCcStripe,
-  cibCcVisa,
-  cibGoogle,
-  cibFacebook,
-  cibLinkedin,
-  cifBr,
-  cifEs,
-  cifFr,
-  cifIn,
-  cifPl,
-  cifUs,
-  cibTwitter,
   cilCloudDownload,
   cilPeople,
-  cilUser,
-  cilUserFemale,
-} from '@coreui/icons';
+  cilChart,
+  cilSpeedometer,
+  cilNotes,
+  cilTask,
+  cilCalendar,
+  cilFolder,
+  cilArrowRight,
+  cilPencil,
+  cilUserFollow,
+  cilInfo,
+} from '@coreui/icons'
 
-import avatar1 from 'src/assets/images/avatars/1.jpg';
-import avatar2 from 'src/assets/images/avatars/2.jpg';
-import avatar3 from 'src/assets/images/avatars/3.jpg';
-import avatar4 from 'src/assets/images/avatars/4.jpg';
-import avatar5 from 'src/assets/images/avatars/5.jpg';
-import avatar6 from 'src/assets/images/avatars/6.jpg';
+import projectManagementImage from 'src/assets/images/gestion_projet.png'
 
-import projectManagementImage from 'src/assets/images/gestion_projet.png';
-
-import WidgetsBrand from '../widgets/WidgetsBrand';
-import WidgetsDropdown from '../widgets/WidgetsDropdown';
-import MainChart from './MainChart';
+import WidgetsDropdown from '../widgets/WidgetsDropdown'
+import MainChart from './MainChart'
+import RecentActivityWidget from '../../components/ActivityLog/RecentActivityWidget'
+import UpcomingEvents from '../../components/UpcomingEvents/UpcomingEvents'
+import socketService from '../../services/socketService'
+import { getProjectsForDashboard } from '../../services/dashboardService'
+import './Dashboard.css'
 
 const Dashboard = () => {
-  const [users, setUsers] = useState([]);
+  const [dashboardProjects, setDashboardProjects] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  // Fonction pour récupérer les projets pour le tableau de bord
+  const fetchDashboardProjects = async () => {
+    try {
+      setLoading(true)
+      // Récupérer 3 projets aléatoirement (la sélection aléatoire est faite dans le service)
+      const projects = await getProjectsForDashboard(3)
+      console.log('Dashboard projects received randomly:', projects)
+
+      // Log task counts for each project
+      projects.forEach((project) => {
+        console.log(
+          `Dashboard - Project ${project.title}: ${project.completedTasks}/${project.tasks} tasks`,
+        )
+      })
+
+      setDashboardProjects(projects)
+    } catch (error) {
+      console.error('Erreur lors de la récupération des projets pour le tableau de bord:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    axios.get('http://localhost:3001/admin/users')
-      .then(response => {
-        setUsers(response.data);
-      })
-      .catch(error => {
-        console.error('There was an error fetching the users!', error);
-      });
-  }, []);
+    // Connect to socket for real-time updates
+    socketService.connect()
+
+    // Récupérer les projets pour le tableau de bord
+    fetchDashboardProjects()
+
+    return () => {
+      // Clean up socket connection when component unmounts
+      socketService.disconnect()
+    }
+  }, [])
 
   return (
     <>
       {/* Section Héro */}
       <section className="hero-section text-center py-5 bg-primary text-white">
         <div className="container">
-          <h1 className="display-4 fw-bold">Optimisez vos projets, anticipez les risques, réussissez en toute sérénité !</h1>
+          <h1 className="display-4 fw-bold">
+            Optimisez vos projets, anticipez les risques, réussissez en toute sérénité !
+          </h1>
           <p className="lead mt-3">
-            Notre plateforme utilise l’IA pour vous aider à gérer vos projets de manière efficace, 
+            Notre plateforme utilise l’IA pour vous aider à gérer vos projets de manière efficace,
             en identifiant les risques et en optimisant vos ressources.
           </p>
           <div className="d-flex justify-content-center gap-3 mt-4">
-            <CButton color="light" size="lg" href="/signup" className="fw-bold">Commencer gratuitement</CButton>
-            <CButton color="secondary" size="lg" href="/demo" className="fw-bold">Voir une démo</CButton>
+            <CButton color="light" size="lg" href="/signup" className="fw-bold">
+              Commencer gratuitement
+            </CButton>
+            <CButton color="secondary" size="lg" href="/demo" className="fw-bold">
+              Voir une démo
+            </CButton>
           </div>
           <img
             src={projectManagementImage}
@@ -101,17 +116,27 @@ const Dashboard = () => {
           <h2 className="text-center mb-5 fw-bold">Fonctionnalités Clés</h2>
           <CRow className="text-center">
             {[
-              { icon: '📌', title: 'Planification intelligente', description: 'Gantt, Kanban, Sprints' },
+              {
+                icon: '📌',
+                title: 'Planification intelligente',
+                description: 'Gantt, Kanban, Sprints',
+              },
               { icon: '📌', title: 'Suivi des tâches et jalons', description: '' },
               { icon: '📌', title: 'Prédiction des délais grâce à l’IA', description: '' },
               { icon: '📌', title: 'Optimisation des ressources', description: '' },
-              { icon: '📌', title: 'Collaboration en équipe', description: 'Messagerie, documents partagés' },
+              {
+                icon: '📌',
+                title: 'Collaboration en équipe',
+                description: 'Messagerie, documents partagés',
+              },
             ].map((feature, index) => (
               <CCol key={index} md={4} className="mb-4">
                 <div className="feature-icon display-4 text-primary">{feature.icon}</div>
                 <h5 className="mt-3 fw-bold">{feature.title}</h5>
                 <p className="text-muted">{feature.description}</p>
-                <CButton color="link" href="/features" className="text-primary fw-bold">En savoir plus</CButton>
+                <CButton color="link" href="/features" className="text-primary fw-bold">
+                  En savoir plus
+                </CButton>
               </CCol>
             ))}
           </CRow>
@@ -124,8 +149,16 @@ const Dashboard = () => {
           <h2 className="text-center mb-5 fw-bold">Témoignages & Avis Clients</h2>
           <CRow>
             {[
-              { name: 'Alice Dupont', company: 'Entreprise A', feedback: 'Une plateforme révolutionnaire !' },
-              { name: 'Jean Martin', company: 'Entreprise B', feedback: 'Gestion simplifiée et efficace.' },
+              {
+                name: 'Alice Dupont',
+                company: 'Entreprise A',
+                feedback: 'Une plateforme révolutionnaire !',
+              },
+              {
+                name: 'Jean Martin',
+                company: 'Entreprise B',
+                feedback: 'Gestion simplifiée et efficace.',
+              },
             ].map((testimonial, index) => (
               <CCol key={index} md={6} className="mb-4">
                 <blockquote className="blockquote p-4 bg-light rounded shadow">
@@ -178,7 +211,9 @@ const Dashboard = () => {
                       <li key={i}>{feature}</li>
                     ))}
                   </ul>
-                  <CButton color="primary" href="/pricing" className="fw-bold">Choisir</CButton>
+                  <CButton color="primary" href="/pricing" className="fw-bold">
+                    Choisir
+                  </CButton>
                 </div>
               </CCol>
             ))}
@@ -186,116 +221,608 @@ const Dashboard = () => {
         </div>
       </section>
 
-      {/* Section existante */}
+      {/* Dashboard Widgets */}
       <WidgetsDropdown className="mb-4" />
-      <CCard className="mb-4">
-        <CCardBody>
-          <CRow>
-            <CCol sm={5}>
-              <h4 id="traffic" className="card-title mb-0">
-                Traffic
+
+      <CRow className="mb-4">
+        <CCol md={8}>
+          <CCard className="mb-4 dashboard-card">
+            <CCardHeader className="dashboard-card-header">
+              <h4 className="mb-0">
+                <CIcon icon={cilChart} className="me-2" />
+                Activité du projet
               </h4>
-              <div className="small text-body-secondary">January - July 2023</div>
-            </CCol>
-            <CCol sm={7} className="d-none d-md-block">
-              <CButton color="primary" className="float-end">
-                <CIcon icon={cilCloudDownload} />
-              </CButton>
-              <CButtonGroup className="float-end me-3">
-                {['Day', 'Month', 'Year'].map((value) => (
-                  <CButton
-                    color="outline-secondary"
-                    key={value}
-                    className="mx-0"
-                    active={value === 'Month'}
-                  >
-                    {value}
-                  </CButton>
-                ))}
-              </CButtonGroup>
-            </CCol>
-          </CRow>
-          <MainChart />
-        </CCardBody>
-        <CCardFooter>
-          <CRow
-            xs={{ cols: 1, gutter: 4 }}
-            sm={{ cols: 2 }}
-            lg={{ cols: 4 }}
-            xl={{ cols: 5 }}
-            className="mb-2 text-center"
-          >
-            {/* Your existing progressExample code */}
-          </CRow>
-        </CCardFooter>
-      </CCard>
-      <WidgetsBrand className="mb-4" withCharts />
-      <CRow>
-        <CCol xs>
-          <CCard className="mb-4">
-            <CCardHeader>Users</CCardHeader>
+            </CCardHeader>
             <CCardBody>
-              <CTable align="middle" className="mb-0 border" hover responsive>
-                <CTableHead className="text-nowrap">
-                  <CTableRow>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                      <CIcon icon={cilPeople} />
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">User</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                      Country
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">Usage</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                      Payment Method
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">Activity</CTableHeaderCell>
-                  </CTableRow>
-                </CTableHead>
-                <CTableBody>
-                  {users.map((user, index) => (
-                    <CTableRow key={index}>
-                      <CTableDataCell className="text-center">
-                        <CAvatar size="md" src={avatar1} status="success" />
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div>{user.name}</div>
-                        <div className="small text-body-secondary text-nowrap">
-                          <span>{user.new ? 'New' : 'Recurring'}</span> | Registered: {user.registered}
-                        </div>
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <CIcon size="xl" icon={cifUs} title="USA" />
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="d-flex justify-content-between text-nowrap">
-                          <div className="fw-semibold">50%</div>
-                          <div className="ms-3">
-                            <small className="text-body-secondary">Jun 11, 2023 - Jul 10, 2023</small>
-                          </div>
-                        </div>
-                        <CProgress thin color="success" value={50} />
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <CIcon size="xl" icon={cibCcMastercard} />
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="small text-body-secondary text-nowrap">Last login</div>
-                        <div className="fw-semibold text-nowrap">10 sec ago</div>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <Link to={`/user-details/${user._id}`}>View Details</Link>
-                      </CTableDataCell>
-                    </CTableRow>
-                  ))}
-                </CTableBody>
-              </CTable>
+              <MainChart />
             </CCardBody>
           </CCard>
         </CCol>
+        <CCol md={4}>
+          <RecentActivityWidget limit={8} />
+        </CCol>
       </CRow>
-    </>
-  );
-};
 
-export default Dashboard;
+      {/* Section Projets */}
+      <section style={{ padding: '2rem 0' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1.5rem',
+            paddingBottom: '0.75rem',
+            borderBottom: '2px solid #ebedef',
+          }}
+        >
+          <h2
+            style={{
+              fontSize: '1.75rem',
+              fontWeight: '600',
+              color: '#3c4b64',
+              margin: 0,
+            }}
+          >
+            <CIcon icon={cilFolder} style={{ marginRight: '10px', color: '#321fdb' }} />
+            Vos projets en cours
+          </h2>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={fetchDashboardProjects}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '6px 12px',
+                backgroundColor: '#321fdb',
+                color: 'white',
+                borderRadius: '4px',
+                border: 'none',
+                textDecoration: 'none',
+                fontWeight: '500',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#2a1ab9'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#321fdb'
+              }}
+            >
+              Actualiser aléatoirement
+            </button>
+            <Link
+              to="/projects"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '6px 12px',
+                backgroundColor: '#ebedef',
+                color: '#3c4b64',
+                borderRadius: '4px',
+                textDecoration: 'none',
+                fontWeight: '500',
+                fontSize: '0.875rem',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#d8dbe0'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#ebedef'
+              }}
+            >
+              Tous les projets
+              <CIcon icon={cilArrowRight} style={{ marginLeft: '6px' }} size="sm" />
+            </Link>
+          </div>
+        </div>
+        <CRow className="mb-4">
+          <CCol md={12}>
+            <CCard className="dashboard-card">
+              <CCardHeader className="dashboard-card-header d-flex justify-content-between align-items-center">
+                <h4 className="mb-0">
+                  <CIcon icon={cilTask} className="me-2 text-primary" />
+                  Aperçu des projets
+                </h4>
+                <Link to="/projects" className="btn btn-sm btn-outline-primary">
+                  Tous les projets <CIcon icon={cilArrowRight} size="sm" />
+                </Link>
+              </CCardHeader>
+              <CCardBody>
+                <CRow>
+                  {loading ? (
+                    <CCol xs={12} className="text-center py-5">
+                      <div
+                        className="spinner-grow text-primary mb-3"
+                        style={{ width: '3rem', height: '3rem' }}
+                        role="status"
+                      >
+                        <span className="visually-hidden">Chargement...</span>
+                      </div>
+                      <p className="text-muted">Chargement des projets en cours...</p>
+                    </CCol>
+                  ) : dashboardProjects.length === 0 ? (
+                    <CCol xs={12} className="text-center py-5">
+                      <div className="empty-state mb-3">
+                        <CIcon
+                          icon={cilFolder}
+                          style={{ width: '4rem', height: '4rem', opacity: '0.5' }}
+                        />
+                      </div>
+                      <h5 className="text-muted mb-3">Aucun projet à afficher</h5>
+                      <p className="text-muted mb-4">
+                        Commencez par créer votre premier projet pour le voir apparaître ici.
+                      </p>
+                      <Link to="/projects/create" className="btn btn-primary">
+                        <CIcon icon={cilTask} className="me-2" />
+                        Créer un nouveau projet
+                      </Link>
+                    </CCol>
+                  ) : (
+                    dashboardProjects.map((project, index) => (
+                      <CCol
+                        xs={12}
+                        sm={6}
+                        lg={4}
+                        key={index}
+                        className="mb-4"
+                        onMouseEnter={(e) => {
+                          e.currentTarget.querySelector('div').style.transform = 'translateY(-5px)'
+                          e.currentTarget.querySelector('div').style.boxShadow =
+                            '0 10px 20px rgba(0, 0, 0, 0.15)'
+                          e.currentTarget.querySelector('div').style.borderColor = '#1b8eb7'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.querySelector('div').style.transform = 'translateY(0)'
+                          e.currentTarget.querySelector('div').style.boxShadow =
+                            '0 4px 12px rgba(0, 0, 0, 0.1)'
+                          e.currentTarget.querySelector('div').style.borderColor = '#dee2e6'
+                        }}
+                      >
+                        <div
+                          style={{
+                            padding: '1.5rem',
+                            borderRadius: '8px',
+                            height: '100%',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                            transition: 'all 0.3s ease',
+                            border: '1px solid #dee2e6',
+                            backgroundColor: 'white',
+                          }}
+                        >
+                          <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h5
+                              className="mb-0 text-truncate"
+                              title={project.title}
+                              style={{ maxWidth: '70%' }}
+                            >
+                              <CIcon icon={cilFolder} className="text-primary me-2" />
+                              {project.title}
+                            </h5>
+                            <CBadge
+                              color={project.statusColor}
+                              shape="rounded-pill"
+                              style={{
+                                padding: '0.5rem 1rem',
+                                fontSize: '0.8rem',
+                                fontWeight: '500',
+                                letterSpacing: '0.3px',
+                                boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
+                              }}
+                            >
+                              {project.status}
+                            </CBadge>
+                          </div>
+                          <div className="mb-4">
+                            <div className="d-flex justify-content-between mb-1 align-items-center">
+                              <span
+                                style={{ fontWeight: '600', fontSize: '0.95rem', color: '#3c4b64' }}
+                              >
+                                Progression
+                              </span>
+                            </div>
+                            <div
+                              style={{
+                                position: 'relative',
+                                marginTop: '10px',
+                                marginBottom: '15px',
+                              }}
+                            >
+                              <CProgress
+                                value={project.progress}
+                                color={
+                                  project.progress > 75
+                                    ? 'success'
+                                    : project.progress > 40
+                                      ? 'primary'
+                                      : 'warning'
+                                }
+                                height={12}
+                                style={{
+                                  borderRadius: '6px',
+                                  boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)',
+                                }}
+                              />
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  top: '-10px',
+                                  right: '0',
+                                  backgroundColor:
+                                    project.progress > 75
+                                      ? '#2eb85c'
+                                      : project.progress > 40
+                                        ? '#321fdb'
+                                        : '#f9b115',
+                                  color: 'white',
+                                  padding: '2px 8px',
+                                  borderRadius: '10px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 'bold',
+                                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                                }}
+                              >
+                                {project.progress}%
+                              </div>
+                            </div>
+                            <div
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                marginTop: '20px',
+                                padding: '10px',
+                                backgroundColor: '#f8f9fa',
+                                borderRadius: '6px',
+                                border: '1px solid #ebedef',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <div
+                                  style={{
+                                    backgroundColor: '#e6f7ff',
+                                    borderRadius: '50%',
+                                    width: '32px',
+                                    height: '32px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    marginRight: '8px',
+                                  }}
+                                >
+                                  <CIcon icon={cilTask} style={{ color: '#1890ff' }} size="sm" />
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '0.75rem', color: '#8a93a2' }}>
+                                    Tâches
+                                  </div>
+                                  <div style={{ fontWeight: 'bold', color: '#3c4b64' }}>
+                                    {project.completedTasks !== undefined
+                                      ? project.completedTasks
+                                      : 0}
+                                    /{project.tasks !== undefined ? project.tasks : 0}
+                                  </div>
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <div
+                                  style={{
+                                    backgroundColor: '#fff7e6',
+                                    borderRadius: '50%',
+                                    width: '32px',
+                                    height: '32px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    marginRight: '8px',
+                                  }}
+                                >
+                                  <CIcon
+                                    icon={cilCalendar}
+                                    style={{ color: '#fa8c16' }}
+                                    size="sm"
+                                  />
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '0.75rem', color: '#8a93a2' }}>
+                                    Échéance
+                                  </div>
+                                  <div style={{ fontWeight: 'bold', color: '#3c4b64' }}>
+                                    {project.dueDate}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div
+                            style={{
+                              textAlign: 'center',
+                              marginTop: '20px',
+                              borderTop: '1px solid #ebedef',
+                              paddingTop: '15px',
+                            }}
+                          >
+                            <Link
+                              to={`/projects/${project.id}`}
+                              style={{
+                                display: 'inline-block',
+                                padding: '8px 16px',
+                                backgroundColor: '#321fdb',
+                                color: 'white',
+                                borderRadius: '4px',
+                                textDecoration: 'none',
+                                fontWeight: '500',
+                                boxShadow: '0 2px 6px rgba(50, 31, 219, 0.3)',
+                                transition: 'all 0.2s ease',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = '#2a1ab9'
+                                e.currentTarget.style.boxShadow = '0 4px 8px rgba(50, 31, 219, 0.4)'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = '#321fdb'
+                                e.currentTarget.style.boxShadow = '0 2px 6px rgba(50, 31, 219, 0.3)'
+                              }}
+                            >
+                              <CIcon
+                                icon={cilArrowRight}
+                                style={{ marginRight: '6px' }}
+                                size="sm"
+                              />
+                              Voir détails du projet
+                            </Link>
+                          </div>
+                        </div>
+                      </CCol>
+                    ))
+                  )}
+                </CRow>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        </CRow>
+      </section>
+
+      {/* Section Activités, Événements et Équipe */}
+      <section style={{ padding: '1rem 0' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1.5rem',
+            paddingBottom: '0.75rem',
+            borderBottom: '2px solid #ebedef',
+          }}
+        >
+          <h2
+            style={{
+              fontSize: '1.75rem',
+              fontWeight: '600',
+              color: '#3c4b64',
+              margin: 0,
+            }}
+          >
+            <CIcon icon={cilPeople} style={{ marginRight: '10px', color: '#321fdb' }} />
+            Activités, Événements et Équipe
+          </h2>
+        </div>
+
+        <CRow className="mb-4">
+          {/* Activités récentes */}
+          <CCol md={4}>
+            <CCard className="dashboard-card h-100 shadow-sm">
+              <CCardHeader className="dashboard-card-header d-flex justify-content-between align-items-center">
+                <h4 className="mb-0 fs-5">
+                  <CIcon icon={cilNotes} className="me-2 text-primary" />
+                  Activités récentes
+                </h4>
+                <CTooltip content="Dernières activités sur vos projets et tâches">
+                  <CIcon icon={cilInfo} className="text-muted" size="sm" />
+                </CTooltip>
+              </CCardHeader>
+              <CCardBody className="p-0">
+                <div className="activity-timeline">
+                  {[
+                    {
+                      user: 'Sophie Martin',
+                      action: 'a terminé la tâche',
+                      target: "Conception de la page d'accueil",
+                      time: 'Il y a 2 heures',
+                      icon: cilTask,
+                      color: 'success',
+                    },
+                    {
+                      user: 'Thomas Dubois',
+                      action: 'a commenté sur',
+                      target: 'Intégration API',
+                      time: 'Il y a 4 heures',
+                      icon: cilNotes,
+                      color: 'info',
+                    },
+                    {
+                      user: 'Emma Petit',
+                      action: 'a créé un nouveau projet',
+                      target: 'Refonte application mobile',
+                      time: 'Hier à 14:30',
+                      icon: cilFolder,
+                      color: 'primary',
+                    },
+                    {
+                      user: 'Lucas Bernard',
+                      action: 'a modifié la tâche',
+                      target: 'Analyse des données marketing',
+                      time: 'Hier à 10:15',
+                      icon: cilPencil,
+                      color: 'warning',
+                    },
+                  ].map((activity, index) => (
+                    <div
+                      key={index}
+                      className={`activity-item d-flex p-3 ${index < 3 ? 'border-bottom' : ''}`}
+                      style={{ transition: 'all 0.2s ease' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f8f9fa'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                      }}
+                    >
+                      <div
+                        className="activity-icon me-3 rounded-circle d-flex align-items-center justify-content-center"
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          backgroundColor: `var(--cui-${activity.color})`,
+                          flexShrink: 0,
+                        }}
+                      >
+                        <CIcon icon={activity.icon} className="text-white" size="sm" />
+                      </div>
+                      <div className="activity-content flex-grow-1">
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <div className="fw-bold">{activity.user}</div>
+                          <div className="text-muted small">{activity.time}</div>
+                        </div>
+                        <div>
+                          <span className="text-muted">{activity.action} </span>
+                          <span className="fw-medium">{activity.target}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-center p-3 border-top">
+                  <Link to="#" className="btn btn-sm btn-outline-primary">
+                    Voir toutes les activités
+                  </Link>
+                </div>
+              </CCardBody>
+            </CCard>
+          </CCol>
+
+          {/* Événements à venir */}
+          <CCol md={4}>
+            <UpcomingEvents />
+          </CCol>
+
+          {/* Membres de l'équipe */}
+          <CCol md={4}>
+            <CCard className="dashboard-card h-100 shadow-sm">
+              <CCardHeader className="dashboard-card-header d-flex justify-content-between align-items-center">
+                <h4 className="mb-0 fs-5">
+                  <CIcon icon={cilPeople} className="me-2 text-primary" />
+                  Membres de l'équipe
+                </h4>
+                <Link to="#" className="btn btn-sm btn-outline-primary">
+                  <CIcon icon={cilUserFollow} className="me-1" size="sm" />
+                  Inviter
+                </Link>
+              </CCardHeader>
+              <CCardBody>
+                <div className="team-members">
+                  <CRow className="g-3">
+                    {[
+                      {
+                        name: 'Sophie Martin',
+                        role: 'Chef de projet',
+                        tasks: 8,
+                        status: 'En ligne',
+                        statusColor: 'success',
+                      },
+                      {
+                        name: 'Thomas Dubois',
+                        role: 'Développeur',
+                        tasks: 12,
+                        status: 'En ligne',
+                        statusColor: 'success',
+                      },
+                      {
+                        name: 'Emma Petit',
+                        role: 'Designer',
+                        tasks: 6,
+                        status: 'Absent',
+                        statusColor: 'danger',
+                      },
+                      {
+                        name: 'Lucas Bernard',
+                        role: 'Marketing',
+                        tasks: 5,
+                        status: 'Occupé',
+                        statusColor: 'warning',
+                      },
+                    ].map((member, index) => (
+                      <CCol md={12} lg={6} key={index}>
+                        <div
+                          className="team-member-card p-3 border rounded h-100"
+                          style={{
+                            transition: 'all 0.3s ease',
+                            boxShadow: '0 2px 5px rgba(0, 0, 0, 0.05)',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-3px)'
+                            e.currentTarget.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.1)'
+                            e.currentTarget.style.borderColor = '#d8dbe0'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)'
+                            e.currentTarget.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.05)'
+                            e.currentTarget.style.borderColor = '#d8dbe0'
+                          }}
+                        >
+                          <div className="d-flex align-items-center">
+                            <div
+                              className="member-avatar me-3 text-white rounded-circle d-flex align-items-center justify-content-center"
+                              style={{
+                                width: '48px',
+                                height: '48px',
+                                background: 'linear-gradient(135deg, #321fdb 0%, #1f67db 100%)',
+                                boxShadow: '0 3px 6px rgba(50, 31, 219, 0.2)',
+                              }}
+                            >
+                              {member.name
+                                .split(' ')
+                                .map((n) => n[0])
+                                .join('')}
+                            </div>
+                            <div>
+                              <h6 className="mb-0 d-flex align-items-center">
+                                {member.name}
+                                <span
+                                  className="ms-2 rounded-circle"
+                                  style={{
+                                    width: '8px',
+                                    height: '8px',
+                                    backgroundColor: `var(--cui-${member.statusColor})`,
+                                    display: 'inline-block',
+                                  }}
+                                  title={member.status}
+                                ></span>
+                              </h6>
+                              <p className="text-muted small mb-0">{member.role}</p>
+                            </div>
+                          </div>
+                          <div className="d-flex justify-content-between align-items-center mt-3">
+                            <span className="badge bg-light text-dark">
+                              <CIcon icon={cilTask} size="sm" className="me-1" />
+                              {member.tasks} tâches
+                            </span>
+                            <Link to="#" className="btn btn-sm btn-ghost-primary">
+                              Profil
+                            </Link>
+                          </div>
+                        </div>
+                      </CCol>
+                    ))}
+                  </CRow>
+                </div>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        </CRow>
+      </section>
+    </>
+  )
+}
+export default Dashboard
