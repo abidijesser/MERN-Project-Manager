@@ -27,22 +27,12 @@ export const getProjectsForDashboard = async (limit = 3) => {
       }
     })
 
-    // Mélanger les projets de façon aléatoire
-    projects = shuffleArray(projects)
+    // Trier les projets par date de fin (les plus proches d'abord)
+    projects.sort((a, b) => new Date(a.endDate) - new Date(b.endDate))
 
     // Limiter le nombre de projets si nécessaire
     if (limit > 0) {
       projects = projects.slice(0, limit)
-    }
-
-    // Fonction pour mélanger un tableau de façon aléatoire (algorithme de Fisher-Yates)
-    function shuffleArray(array) {
-      const newArray = [...array] // Créer une copie pour ne pas modifier l'original
-      for (let i = newArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1))
-        ;[newArray[i], newArray[j]] = [newArray[j], newArray[i]] // Échange d'éléments
-      }
-      return newArray
     }
 
     // Calculer les statistiques pour chaque projet

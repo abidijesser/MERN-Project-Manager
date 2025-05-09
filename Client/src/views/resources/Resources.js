@@ -455,7 +455,7 @@ const Resources = () => {
 
     try {
       // Utiliser l'ID MongoDB pour la compatibilité avec l'API existante
-      const mongoId = typeof docId === 'object' ? (docId.id || docId._id) : docId;
+      const mongoId = typeof docId === 'object' ? docId.id || docId._id : docId
 
       if (!mongoId) {
         console.error('Erreur: ID MongoDB non trouvé pour la suppression', docId)
@@ -470,23 +470,35 @@ const Resources = () => {
 
       if (response.data.success) {
         // Identifier le document à supprimer par son ID unique ou MongoDB
-        setDocuments(documents.filter((doc) => {
-          // Si docId est un objet (document complet)
-          if (typeof docId === 'object') {
-            const uniqueIdToRemove = docId.uniqueId || docId.displayId || docId.id || docId._id;
-            const docUniqueId = doc.uniqueId || doc.displayId || doc.id || doc._id;
-            return docUniqueId !== uniqueIdToRemove;
-          }
-          // Si docId est une chaîne (juste l'ID)
-          return doc.id !== docId && doc._id !== docId && doc.uniqueId !== docId && doc.displayId !== docId;
-        }))
+        setDocuments(
+          documents.filter((doc) => {
+            // Si docId est un objet (document complet)
+            if (typeof docId === 'object') {
+              const uniqueIdToRemove = docId.uniqueId || docId.displayId || docId.id || docId._id
+              const docUniqueId = doc.uniqueId || doc.displayId || doc.id || doc._id
+              return docUniqueId !== uniqueIdToRemove
+            }
+            // Si docId est une chaîne (juste l'ID)
+            return (
+              doc.id !== docId &&
+              doc._id !== docId &&
+              doc.uniqueId !== docId &&
+              doc.displayId !== docId
+            )
+          }),
+        )
 
         // If the deleted document was selected, clear the selection
         if (selectedDocument) {
-          const selectedId = selectedDocument.uniqueId || selectedDocument.displayId || selectedDocument.id || selectedDocument._id;
-          const deletedId = typeof docId === 'object'
-            ? (docId.uniqueId || docId.displayId || docId.id || docId._id)
-            : docId;
+          const selectedId =
+            selectedDocument.uniqueId ||
+            selectedDocument.displayId ||
+            selectedDocument.id ||
+            selectedDocument._id
+          const deletedId =
+            typeof docId === 'object'
+              ? docId.uniqueId || docId.displayId || docId.id || docId._id
+              : docId
 
           if (selectedId === deletedId) {
             setSelectedDocument(null)
@@ -508,15 +520,15 @@ const Resources = () => {
   const handleTogglePin = async (docId, currentPinned) => {
     try {
       // Utiliser l'ID MongoDB pour la compatibilité avec l'API existante
-      const mongoId = typeof docId === 'object' ? (docId.id || docId._id) : docId;
+      const mongoId = typeof docId === 'object' ? docId.id || docId._id : docId
 
       if (!mongoId) {
         console.error("Erreur: ID MongoDB non trouvé pour l'épinglage", docId)
-        toast.error("Erreur: ID du document non trouvé")
+        toast.error('Erreur: ID du document non trouvé')
         return
       }
 
-      console.log('Modification du statut d\'épinglage pour le document avec ID MongoDB:', mongoId)
+      console.log("Modification du statut d'épinglage pour le document avec ID MongoDB:", mongoId)
       console.log('Document à modifier:', docId)
 
       const response = await axios.put(`/api/documents/${mongoId}/pin`)
@@ -527,23 +539,31 @@ const Resources = () => {
           documents.map((doc) => {
             // Si docId est un objet (document complet)
             if (typeof docId === 'object') {
-              const uniqueIdToUpdate = docId.uniqueId || docId.displayId || docId.id || docId._id;
-              const docUniqueId = doc.uniqueId || doc.displayId || doc.id || doc._id;
-              return docUniqueId === uniqueIdToUpdate ? { ...doc, pinned: !currentPinned } : doc;
+              const uniqueIdToUpdate = docId.uniqueId || docId.displayId || docId.id || docId._id
+              const docUniqueId = doc.uniqueId || doc.displayId || doc.id || doc._id
+              return docUniqueId === uniqueIdToUpdate ? { ...doc, pinned: !currentPinned } : doc
             }
             // Si docId est une chaîne (juste l'ID)
-            return (doc.id === docId || doc._id === docId || doc.uniqueId === docId || doc.displayId === docId)
+            return doc.id === docId ||
+              doc._id === docId ||
+              doc.uniqueId === docId ||
+              doc.displayId === docId
               ? { ...doc, pinned: !currentPinned }
-              : doc;
+              : doc
           }),
         )
 
         // If the document was selected, update the selection
         if (selectedDocument) {
-          const selectedId = selectedDocument.uniqueId || selectedDocument.displayId || selectedDocument.id || selectedDocument._id;
-          const updatedId = typeof docId === 'object'
-            ? (docId.uniqueId || docId.displayId || docId.id || docId._id)
-            : docId;
+          const selectedId =
+            selectedDocument.uniqueId ||
+            selectedDocument.displayId ||
+            selectedDocument.id ||
+            selectedDocument._id
+          const updatedId =
+            typeof docId === 'object'
+              ? docId.uniqueId || docId.displayId || docId.id || docId._id
+              : docId
 
           if (selectedId === updatedId) {
             setSelectedDocument({ ...selectedDocument, pinned: !currentPinned })
@@ -670,7 +690,7 @@ const Resources = () => {
                       </CRow>
                       {filteredDocuments.map((doc) => {
                         // Utiliser uniqueId ou displayId s'ils existent, sinon utiliser id ou _id
-                        const documentId = doc.uniqueId || doc.displayId || doc.id || doc._id;
+                        const documentId = doc.uniqueId || doc.displayId || doc.id || doc._id
 
                         return (
                           <CRow
@@ -693,135 +713,137 @@ const Resources = () => {
                                     <small className="ms-2 text-muted">({doc.displayId})</small>
                                   )}
                                   {/* Afficher un badge pour les documents dupliqués */}
-                                  {doc.name && doc.name.includes(' (') && doc.name.includes(')') && (
-                                    <span className="ms-2 badge bg-info">Duplicata</span>
-                                  )}
+                                  {doc.name &&
+                                    doc.name.includes(' (') &&
+                                    doc.name.includes(')') && (
+                                      <span className="ms-2 badge bg-info">Duplicata</span>
+                                    )}
                                   {doc.pinned && (
                                     <CTooltip content="Document épinglé">
-                                    <CIcon
-                                      icon={cilStar}
-                                      className="ms-2 text-warning"
-                                      style={{ width: '14px', height: '14px' }}
-                                    />
-                                  </CTooltip>
-                                )}
-                              </div>
-                              <div className="document-meta">
-                                <CBadge
-                                  color={getFileTypeBadgeColor(doc.type)}
-                                  shape="rounded-pill"
-                                  size="sm"
-                                  className="me-2"
-                                >
-                                  {doc.type.toUpperCase()}
-                                </CBadge>
-                                {doc.isPublic && (
+                                      <CIcon
+                                        icon={cilStar}
+                                        className="ms-2 text-warning"
+                                        style={{ width: '14px', height: '14px' }}
+                                      />
+                                    </CTooltip>
+                                  )}
+                                </div>
+                                <div className="document-meta">
                                   <CBadge
-                                    color="info"
+                                    color={getFileTypeBadgeColor(doc.type)}
                                     shape="rounded-pill"
                                     size="sm"
                                     className="me-2"
                                   >
-                                    Public
+                                    {doc.type.toUpperCase()}
                                   </CBadge>
-                                )}
-                                {doc.permissions === 'edit' ? (
-                                  <CBadge color="success" shape="rounded-pill" size="sm">
-                                    Éditable
-                                  </CBadge>
-                                ) : (
-                                  <CBadge color="secondary" shape="rounded-pill" size="sm">
-                                    Lecture seule
-                                  </CBadge>
-                                )}
+                                  {doc.isPublic && (
+                                    <CBadge
+                                      color="info"
+                                      shape="rounded-pill"
+                                      size="sm"
+                                      className="me-2"
+                                    >
+                                      Public
+                                    </CBadge>
+                                  )}
+                                  {doc.permissions === 'edit' ? (
+                                    <CBadge color="success" shape="rounded-pill" size="sm">
+                                      Éditable
+                                    </CBadge>
+                                  ) : (
+                                    <CBadge color="secondary" shape="rounded-pill" size="sm">
+                                      Lecture seule
+                                    </CBadge>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          </CCol>
-                          <CCol xs={2}>{doc.size}</CCol>
-                          <CCol xs={2}>{doc.uploadedBy}</CCol>
-                          <CCol
-                            xs={2}
-                            className="d-flex justify-content-between align-items-center"
-                          >
-                            {new Date(doc.uploadedDate).toLocaleDateString()}
-                            <CDropdown alignment="end">
-                              <CDropdownToggle color="transparent" caret={false}>
-                                <CIcon icon={cilOptions} />
-                              </CDropdownToggle>
-                              <CDropdownMenu>
-                                <CDropdownItem onClick={() => handleDocumentSelect(doc)}>
-                                  <CIcon icon={cilMagnifyingGlass} className="me-2" />
-                                  Aperçu
-                                </CDropdownItem>
-                                <CDropdownItem
-                                  onClick={(e) => {
-                                    e.preventDefault() // Empêcher le comportement par défaut
-                                    e.stopPropagation() // Empêcher la propagation de l'événement
+                            </CCol>
+                            <CCol xs={2}>{doc.size}</CCol>
+                            <CCol xs={2}>{doc.uploadedBy}</CCol>
+                            <CCol
+                              xs={2}
+                              className="d-flex justify-content-between align-items-center"
+                            >
+                              {new Date(doc.uploadedDate).toLocaleDateString()}
+                              <CDropdown alignment="end">
+                                <CDropdownToggle color="transparent" caret={false}>
+                                  <CIcon icon={cilOptions} />
+                                </CDropdownToggle>
+                                <CDropdownMenu>
+                                  <CDropdownItem onClick={() => handleDocumentSelect(doc)}>
+                                    <CIcon icon={cilMagnifyingGlass} className="me-2" />
+                                    Aperçu
+                                  </CDropdownItem>
+                                  <CDropdownItem
+                                    onClick={(e) => {
+                                      e.preventDefault() // Empêcher le comportement par défaut
+                                      e.stopPropagation() // Empêcher la propagation de l'événement
 
-                                    // Logs détaillés pour le débogage
-                                    console.log(
-                                      'Clic sur le bouton de téléchargement pour le document:',
-                                      doc,
-                                    )
-                                    console.log('ID du document:', doc.id || doc._id)
-                                    console.log('Nom du document:', doc.name)
+                                      // Logs détaillés pour le débogage
+                                      console.log(
+                                        'Clic sur le bouton de téléchargement pour le document:',
+                                        doc,
+                                      )
+                                      console.log('ID du document:', doc.id || doc._id)
+                                      console.log('Nom du document:', doc.name)
 
-                                    // Appeler la fonction de téléchargement avec un délai pour éviter les conflits d'événements
-                                    setTimeout(() => {
-                                      handleDownload(doc)
-                                    }, 100)
-                                  }}
-                                >
-                                  <CIcon icon={cilCloudDownload} className="me-2" />
-                                  Télécharger
-                                </CDropdownItem>
-                                <CDropdownItem
-                                  onClick={() => {
-                                    setSelectedDocument(doc)
-                                    setShareModalVisible(true)
-                                  }}
-                                >
-                                  <CIcon icon={cilShareBoxed} className="me-2" />
-                                  Partager
-                                </CDropdownItem>
-                                {doc.permissions === 'edit' && (
-                                  <>
-                                    <CDropdownItem
-                                      onClick={() => {
-                                        setSelectedDocument(doc)
-                                        setPermissionsModalVisible(true)
-                                      }}
-                                    >
-                                      <CIcon icon={cilLockLocked} className="me-2" />
-                                      Permissions
-                                    </CDropdownItem>
-                                    <CDropdownItem
-                                      onClick={() => {
-                                        setSelectedDocument(doc)
-                                        setEditModalVisible(true)
-                                      }}
-                                    >
-                                      <CIcon icon={cilPencil} className="me-2" />
-                                      Modifier
-                                    </CDropdownItem>
-                                    <CDropdownItem onClick={() => handleDelete(doc)}>
-                                      <CIcon icon={cilTrash} className="me-2" />
-                                      Supprimer
-                                    </CDropdownItem>
-                                  </>
-                                )}
-                                <CDropdownItem onClick={() => handleTogglePin(doc, doc.pinned)}>
-                                  <CIcon
-                                    icon={cilStar}
-                                    className={`me-2 ${doc.pinned ? 'text-warning' : ''}`}
-                                  />
-                                  {doc.pinned ? 'Désépingler' : 'Épingler'}
-                                </CDropdownItem>
-                              </CDropdownMenu>
-                            </CDropdown>
-                          </CCol>
-                        </CRow>
-                        );
+                                      // Appeler la fonction de téléchargement avec un délai pour éviter les conflits d'événements
+                                      setTimeout(() => {
+                                        handleDownload(doc)
+                                      }, 100)
+                                    }}
+                                  >
+                                    <CIcon icon={cilCloudDownload} className="me-2" />
+                                    Télécharger
+                                  </CDropdownItem>
+                                  <CDropdownItem
+                                    onClick={() => {
+                                      setSelectedDocument(doc)
+                                      setShareModalVisible(true)
+                                    }}
+                                  >
+                                    <CIcon icon={cilShareBoxed} className="me-2" />
+                                    Partager
+                                  </CDropdownItem>
+                                  {doc.permissions === 'edit' && (
+                                    <>
+                                      <CDropdownItem
+                                        onClick={() => {
+                                          setSelectedDocument(doc)
+                                          setPermissionsModalVisible(true)
+                                        }}
+                                      >
+                                        <CIcon icon={cilLockLocked} className="me-2" />
+                                        Permissions
+                                      </CDropdownItem>
+                                      <CDropdownItem
+                                        onClick={() => {
+                                          setSelectedDocument(doc)
+                                          setEditModalVisible(true)
+                                        }}
+                                      >
+                                        <CIcon icon={cilPencil} className="me-2" />
+                                        Modifier
+                                      </CDropdownItem>
+                                      <CDropdownItem onClick={() => handleDelete(doc)}>
+                                        <CIcon icon={cilTrash} className="me-2" />
+                                        Supprimer
+                                      </CDropdownItem>
+                                    </>
+                                  )}
+                                  <CDropdownItem onClick={() => handleTogglePin(doc, doc.pinned)}>
+                                    <CIcon
+                                      icon={cilStar}
+                                      className={`me-2 ${doc.pinned ? 'text-warning' : ''}`}
+                                    />
+                                    {doc.pinned ? 'Désépingler' : 'Épingler'}
+                                  </CDropdownItem>
+                                </CDropdownMenu>
+                              </CDropdown>
+                            </CCol>
+                          </CRow>
+                        )
                       })}
                     </div>
                   )}
@@ -837,12 +859,16 @@ const Resources = () => {
                         <CIcon icon={getFileIcon(selectedDocument.type)} className="me-2" />
                         {selectedDocument.name}
                         {selectedDocument.displayId && (
-                          <small className="ms-2 text-muted" style={{ fontSize: '0.7em' }}>({selectedDocument.displayId})</small>
+                          <small className="ms-2 text-muted" style={{ fontSize: '0.7em' }}>
+                            ({selectedDocument.displayId})
+                          </small>
                         )}
                         {/* Afficher un badge pour les documents dupliqués */}
-                        {selectedDocument.name && selectedDocument.name.includes(' (') && selectedDocument.name.includes(')') && (
-                          <span className="ms-2 badge bg-info">Duplicata</span>
-                        )}
+                        {selectedDocument.name &&
+                          selectedDocument.name.includes(' (') &&
+                          selectedDocument.name.includes(')') && (
+                            <span className="ms-2 badge bg-info">Duplicata</span>
+                          )}
                       </h3>
                       <div>
                         <CButton
@@ -955,7 +981,10 @@ const Resources = () => {
                         <CCardHeader>Informations</CCardHeader>
                         <CCardBody>
                           <div className="mb-2">
-                            <strong>ID:</strong> {selectedDocument.displayId || selectedDocument.uniqueId || 'Non défini'}
+                            <strong>ID:</strong>{' '}
+                            {selectedDocument.displayId ||
+                              selectedDocument.uniqueId ||
+                              'Non défini'}
                           </div>
                           <div className="mb-2">
                             <strong>Type:</strong> {selectedDocument.type.toUpperCase()}
@@ -1067,12 +1096,14 @@ const Resources = () => {
               setDocuments(
                 documents.map((doc) => {
                   // Utiliser les identifiants uniques pour comparer les documents
-                  const docId = doc.uniqueId || doc.displayId || doc.id || doc._id;
-                  const selectedId = selectedDocument.uniqueId || selectedDocument.displayId || selectedDocument.id || selectedDocument._id;
+                  const docId = doc.uniqueId || doc.displayId || doc.id || doc._id
+                  const selectedId =
+                    selectedDocument.uniqueId ||
+                    selectedDocument.displayId ||
+                    selectedDocument.id ||
+                    selectedDocument._id
 
-                  return docId === selectedId
-                    ? { ...doc, permissions: updatedPermissions }
-                    : doc;
+                  return docId === selectedId ? { ...doc, permissions: updatedPermissions } : doc
                 }),
               )
             }}
@@ -1102,10 +1133,14 @@ const Resources = () => {
             setDocuments(
               documents.map((doc) => {
                 // Utiliser les identifiants uniques pour comparer les documents
-                const docId = doc.uniqueId || doc.displayId || doc.id || doc._id;
-                const selectedId = selectedDocument.uniqueId || selectedDocument.displayId || selectedDocument.id || selectedDocument._id;
+                const docId = doc.uniqueId || doc.displayId || doc.id || doc._id
+                const selectedId =
+                  selectedDocument.uniqueId ||
+                  selectedDocument.displayId ||
+                  selectedDocument.id ||
+                  selectedDocument._id
 
-                return docId === selectedId ? updatedDoc : doc;
+                return docId === selectedId ? updatedDoc : doc
               }),
             )
 

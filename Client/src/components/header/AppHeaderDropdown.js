@@ -79,7 +79,7 @@ const AppHeaderDropdown = () => {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await axios.get('/api/auth/profile')
+      const response = await axios.get('/auth/profile')
       if (response.data.success) {
         const userData = response.data.user
 

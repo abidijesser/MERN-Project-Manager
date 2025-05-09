@@ -177,7 +177,7 @@ const EditTask = () => {
                     onChange={handleChange}
                   >
                     <option value="">Sélectionner un utilisateur</option>
-                    {users.map(user => (
+                    {users.map((user) => (
                       <option key={user._id} value={user._id}>
                         {user.name} ({user.email})
                       </option>
@@ -194,7 +194,7 @@ const EditTask = () => {
                     onChange={handleChange}
                   >
                     <option value="">Sélectionner un projet</option>
-                    {projects.map(project => (
+                    {projects.map((project) => (
                       <option key={project._id} value={project._id}>
                         {project.projectName}
                       </option>

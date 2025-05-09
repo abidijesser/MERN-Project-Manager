@@ -28,7 +28,7 @@ import {
   cilArrowRight,
   cilPencil,
   cilUserFollow,
-  cilInfo
+  cilInfo,
 } from '@coreui/icons'
 
 import projectManagementImage from 'src/assets/images/gestion_projet.png'
@@ -49,9 +49,8 @@ const Dashboard = () => {
   const fetchDashboardProjects = async () => {
     try {
       setLoading(true)
-      // Récupérer 3 projets aléatoirement (la sélection aléatoire est faite dans le service)
-      const projects = await getProjectsForDashboard(3)
-      console.log('Dashboard projects received randomly:', projects)
+      const projects = await getProjectsForDashboard(3) // Récupérer 3 projets
+      console.log('Dashboard projects received:', projects)
 
       // Log task counts for each project
       projects.forEach((project) => {
@@ -266,32 +265,7 @@ const Dashboard = () => {
             <CIcon icon={cilFolder} style={{ marginRight: '10px', color: '#321fdb' }} />
             Vos projets en cours
           </h2>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button
-              onClick={fetchDashboardProjects}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '6px 12px',
-                backgroundColor: '#321fdb',
-                color: 'white',
-                borderRadius: '4px',
-                border: 'none',
-                textDecoration: 'none',
-                fontWeight: '500',
-                fontSize: '0.875rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#2a1ab9'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#321fdb'
-              }}
-            >
-              Actualiser aléatoirement
-            </button>
+          <div>
             <Link
               to="/projects"
               style={{
@@ -795,7 +769,7 @@ const Dashboard = () => {
                                     width: '8px',
                                     height: '8px',
                                     backgroundColor: `var(--cui-${member.statusColor})`,
-                                    display: 'inline-block'
+                                    display: 'inline-block',
                                   }}
                                   title={member.status}
                                 ></span>

@@ -90,7 +90,7 @@ const ProjectDocuments = ({ projectId }) => {
       const response = await axios.delete(`/api/documents/${docId}`)
       if (response.data.success) {
         // Remove the document from the state
-        setDocuments(documents.filter(doc => doc._id !== docId))
+        setDocuments(documents.filter((doc) => doc._id !== docId))
         toast.success('Document supprimé avec succès')
       } else {
         toast.error('Erreur lors de la suppression du document')
@@ -107,16 +107,18 @@ const ProjectDocuments = ({ projectId }) => {
       const response = await axios.put(`/api/documents/${docId}/pin`)
       if (response.data.success) {
         // Update the document in the state
-        setDocuments(documents.map(doc =>
-          doc._id === docId ? { ...doc, pinned: !currentPinned } : doc
-        ))
+        setDocuments(
+          documents.map((doc) => (doc._id === docId ? { ...doc, pinned: !currentPinned } : doc)),
+        )
         toast.success(currentPinned ? 'Document désépinglé' : 'Document épinglé')
       } else {
-        toast.error('Erreur lors de la modification du statut d\'épinglage')
+        toast.error("Erreur lors de la modification du statut d'épinglage")
       }
     } catch (error) {
-      console.error('Erreur lors de la modification du statut d\'épinglage:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la modification du statut d\'épinglage')
+      console.error("Erreur lors de la modification du statut d'épinglage:", error)
+      toast.error(
+        error.response?.data?.error || "Erreur lors de la modification du statut d'épinglage",
+      )
     }
   }
 
@@ -165,7 +167,7 @@ const ProjectDocuments = ({ projectId }) => {
 
     // Check explicit permissions
     if (doc.permissions && doc.permissions.length > 0) {
-      const userPermission = doc.permissions.find(p => p.user === localStorage.getItem('userId'))
+      const userPermission = doc.permissions.find((p) => p.user === localStorage.getItem('userId'))
       if (userPermission) {
         return userPermission.access === 'admin' ? 'edit' : userPermission.access
       }
@@ -244,7 +246,9 @@ const ProjectDocuments = ({ projectId }) => {
                     </CTableDataCell>
                     <CTableDataCell>{formatFileSize(doc.fileSize)}</CTableDataCell>
                     <CTableDataCell>{doc.uploadedBy?.name || 'Utilisateur inconnu'}</CTableDataCell>
-                    <CTableDataCell>{new Date(doc.uploadedDate).toLocaleDateString()}</CTableDataCell>
+                    <CTableDataCell>
+                      {new Date(doc.uploadedDate).toLocaleDateString()}
+                    </CTableDataCell>
                     <CTableDataCell>
                       <CDropdown alignment="end">
                         <CDropdownToggle color="transparent" caret={false}>
