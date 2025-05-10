@@ -193,7 +193,7 @@ const RecentActivityListWidget = ({ limit = 5 }) => {
   }
 
   return (
-    <CCard className="dashboard-card h-100 shadow-sm">
+    <CCard className="dashboard-card h-100 shadow-sm d-flex flex-column">
       <CCardHeader className="dashboard-card-header d-flex justify-content-between align-items-center">
         <h4 className="mb-0 fs-5">
           <CIcon icon={cilNotes} className="me-2 text-primary" />
@@ -203,7 +203,10 @@ const RecentActivityListWidget = ({ limit = 5 }) => {
           Voir Toutes <CIcon icon={cilArrowRight} size="sm" />
         </Link>
       </CCardHeader>
-      <CCardBody className="p-0">
+      <CCardBody
+        className="p-0"
+        style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}
+      >
         {error && <CAlert color="danger">{error}</CAlert>}
 
         {loading ? (
@@ -213,61 +216,102 @@ const RecentActivityListWidget = ({ limit = 5 }) => {
         ) : activities.length === 0 ? (
           <div className="text-center text-muted my-3">Aucune activité récente</div>
         ) : (
-          <div className="activity-timeline">
-            {activities.map((activity, index) => {
-              const activityInfo = getActivityDescription(activity)
-              const badge = getActivityBadge(activity.action)
-              return (
-                <div
-                  key={activity._id}
-                  className={`activity-item d-flex p-3 ${index < activities.length - 1 ? 'border-bottom' : ''}`}
-                  style={{ transition: 'all 0.2s ease' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f8f9fa'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }}
-                >
+          <>
+            <div style={{ flex: '1 1 auto', overflowY: 'auto', maxHeight: 'calc(100% - 50px)' }}>
+              {activities.map((activity, index) => {
+                const activityInfo = getActivityDescription(activity)
+                const badge = getActivityBadge(activity.action)
+                return (
                   <div
-                    className="activity-icon me-3 rounded-circle d-flex align-items-center justify-content-center"
+                    key={activity._id}
+                    className={`activity-item py-3 px-2 ${index < activities.length - 1 ? 'border-bottom' : ''}`}
                     style={{
-                      width: '36px',
-                      height: '36px',
-                      backgroundColor: `var(--cui-${badge.color})`,
-                      flexShrink: 0,
+                      transition: 'all 0.2s ease',
+                      borderLeft: `3px solid var(--cui-${badge.color})`,
+                      paddingLeft: '12px',
+                      width: '100%',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f8f9fa'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent'
                     }}
                   >
-                    <CIcon
-                      icon={getActivityIcon(activity.action)}
-                      className="text-white"
-                      size="sm"
-                    />
-                  </div>
-                  <div className="activity-content flex-grow-1">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <div className="fw-bold">{activityInfo.user}</div>
-                      <div className="text-muted small">{formatDate(activity.timestamp)}</div>
+                    <div className="d-flex">
+                      {/* Left side - Icon */}
+                      <div
+                        className="activity-icon me-3 rounded-circle d-flex align-items-center justify-content-center"
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          backgroundColor: `var(--cui-${badge.color})`,
+                          flexShrink: 0,
+                          marginTop: '2px',
+                        }}
+                      >
+                        <CIcon
+                          icon={getActivityIcon(activity.action)}
+                          className="text-white"
+                          size="sm"
+                        />
+                      </div>
+
+                      {/* Right side - Content */}
+                      <div className="d-flex flex-column flex-grow-1">
+                        {/* Top row - User and timestamp */}
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <div className="fw-bold" style={{ fontSize: '0.9rem', color: '#333' }}>
+                            {activityInfo.user}
+                          </div>
+                          <div
+                            className="text-muted small"
+                            style={{
+                              fontSize: '0.75rem',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {formatDate(activity.timestamp)}
+                          </div>
+                        </div>
+
+                        {/* Bottom row - Badge and activity text */}
+                        <div>
+                          <CBadge
+                            color={badge.color}
+                            className="me-2"
+                            style={{
+                              fontWeight: '500',
+                              padding: '3px 6px',
+                              fontSize: '0.75rem',
+                            }}
+                          >
+                            {badge.text}
+                          </CBadge>
+                          <span style={{ fontSize: '0.85rem' }}>{activityInfo.text}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <CBadge color={badge.color} className="me-2">
-                        {badge.text}
-                      </CBadge>
-                      <span>{activityInfo.text}</span>
-                    </div>
-                    {activity.action === 'COMMENT' && activityInfo.details && (
-                      <div className="mt-1 text-muted fst-italic">"{activityInfo.details}..."</div>
-                    )}
                   </div>
-                </div>
-              )
-            })}
-            <div className="text-center p-3 border-top">
-              <Link to="/activity" className="btn btn-sm btn-outline-primary">
+                )
+              })}
+            </div>
+            <div className="text-center py-2 border-top" style={{ flex: '0 0 auto', marginTop: 0 }}>
+              <Link
+                to="/activity"
+                className="btn btn-sm btn-outline-primary"
+                style={{
+                  fontWeight: '500',
+                  padding: '4px 12px',
+                  borderRadius: '20px',
+                  fontSize: '0.8rem',
+                  margin: '0',
+                }}
+              >
                 Voir toutes les activités
               </Link>
             </div>
-          </div>
+          </>
         )}
       </CCardBody>
     </CCard>

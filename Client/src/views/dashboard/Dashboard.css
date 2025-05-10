@@ -25,24 +25,26 @@
 
 /* Style pour les activités récentes */
 .activity-timeline {
-  max-height: 400px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-.activity-timeline::-webkit-scrollbar {
+/* Scrollbar styling */
+::-webkit-scrollbar {
   width: 6px;
 }
 
-.activity-timeline::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: #f1f1f1;
 }
 
-.activity-timeline::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background: #d8dbe0;
   border-radius: 3px;
 }
 
-.activity-timeline::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
   background: #a9aeb6;
 }
 
@@ -67,6 +69,45 @@
 .member-avatar {
   font-weight: 600;
   font-size: 1rem;
+}
+
+/* Style pour le sélecteur de projet dans le widget des membres */
+.project-selector {
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.project-selector select {
+  border-radius: 6px;
+  border: 1px solid #d8dbe0;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.project-selector select:focus {
+  border-color: #321fdb;
+  box-shadow: 0 0 0 0.2rem rgba(50, 31, 219, 0.25);
+}
+
+/* Animation pour le chargement des membres */
+.members-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+  color: #8a93a2;
+}
+
+/* Style pour l'état vide des membres */
+.no-members {
+  text-align: center;
+  padding: 2rem 0;
+  color: #8a93a2;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 1rem;
 }
 
 /* Style pour les titres de section */

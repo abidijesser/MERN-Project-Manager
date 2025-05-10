@@ -4,40 +4,25 @@ import { Link } from 'react-router-dom'
 
 import {
   CButton,
-  CButtonGroup,
   CCard,
   CCardBody,
-  CCardFooter,
   CCardHeader,
   CCol,
   CProgress,
   CRow,
   CBadge,
-  CTooltip,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import {
-  cilCloudDownload,
-  cilPeople,
-  cilChart,
-  cilSpeedometer,
-  cilNotes,
-  cilTask,
-  cilCalendar,
-  cilFolder,
-  cilArrowRight,
-  cilPencil,
-  cilUserFollow,
-  cilInfo,
-} from '@coreui/icons'
+import { cilPeople, cilChart, cilTask, cilCalendar, cilFolder, cilArrowRight } from '@coreui/icons'
 
 import projectManagementImage from 'src/assets/images/gestion_projet.png'
 
 import WidgetsDropdown from '../widgets/WidgetsDropdown'
 import MainChart from './MainChart'
-import RecentActivityWidget from '../../components/ActivityLog/RecentActivityWidget'
+
 import RecentActivityListWidget from '../../components/ActivityLog/RecentActivityListWidget'
 import UpcomingEvents from '../../components/UpcomingEvents/UpcomingEvents'
+import TeamMembersWidget from '../../components/dashboard/TeamMembersWidget'
 import socketService from '../../services/socketService'
 import { getProjectsForDashboard } from '../../services/dashboardService'
 import './Dashboard.css'
@@ -662,116 +647,7 @@ const Dashboard = () => {
 
           {/* Membres de l'équipe */}
           <CCol md={4}>
-            <CCard className="dashboard-card h-100 shadow-sm">
-              <CCardHeader className="dashboard-card-header d-flex justify-content-between align-items-center">
-                <h4 className="mb-0 fs-5">
-                  <CIcon icon={cilPeople} className="me-2 text-primary" />
-                  Membres de l'équipe
-                </h4>
-                <Link to="#" className="btn btn-sm btn-outline-primary">
-                  <CIcon icon={cilUserFollow} className="me-1" size="sm" />
-                  Inviter
-                </Link>
-              </CCardHeader>
-              <CCardBody>
-                <div className="team-members">
-                  <CRow className="g-3">
-                    {[
-                      {
-                        name: 'Sophie Martin',
-                        role: 'Chef de projet',
-                        tasks: 8,
-                        status: 'En ligne',
-                        statusColor: 'success',
-                      },
-                      {
-                        name: 'Thomas Dubois',
-                        role: 'Développeur',
-                        tasks: 12,
-                        status: 'En ligne',
-                        statusColor: 'success',
-                      },
-                      {
-                        name: 'Emma Petit',
-                        role: 'Designer',
-                        tasks: 6,
-                        status: 'Absent',
-                        statusColor: 'danger',
-                      },
-                      {
-                        name: 'Lucas Bernard',
-                        role: 'Marketing',
-                        tasks: 5,
-                        status: 'Occupé',
-                        statusColor: 'warning',
-                      },
-                    ].map((member, index) => (
-                      <CCol md={12} lg={6} key={index}>
-                        <div
-                          className="team-member-card p-3 border rounded h-100"
-                          style={{
-                            transition: 'all 0.3s ease',
-                            boxShadow: '0 2px 5px rgba(0, 0, 0, 0.05)',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'translateY(-3px)'
-                            e.currentTarget.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.1)'
-                            e.currentTarget.style.borderColor = '#d8dbe0'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'translateY(0)'
-                            e.currentTarget.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.05)'
-                            e.currentTarget.style.borderColor = '#d8dbe0'
-                          }}
-                        >
-                          <div className="d-flex align-items-center">
-                            <div
-                              className="member-avatar me-3 text-white rounded-circle d-flex align-items-center justify-content-center"
-                              style={{
-                                width: '48px',
-                                height: '48px',
-                                background: 'linear-gradient(135deg, #321fdb 0%, #1f67db 100%)',
-                                boxShadow: '0 3px 6px rgba(50, 31, 219, 0.2)',
-                              }}
-                            >
-                              {member.name
-                                .split(' ')
-                                .map((n) => n[0])
-                                .join('')}
-                            </div>
-                            <div>
-                              <h6 className="mb-0 d-flex align-items-center">
-                                {member.name}
-                                <span
-                                  className="ms-2 rounded-circle"
-                                  style={{
-                                    width: '8px',
-                                    height: '8px',
-                                    backgroundColor: `var(--cui-${member.statusColor})`,
-                                    display: 'inline-block',
-                                  }}
-                                  title={member.status}
-                                ></span>
-                              </h6>
-                              <p className="text-muted small mb-0">{member.role}</p>
-                            </div>
-                          </div>
-                          <div className="d-flex justify-content-between align-items-center mt-3">
-                            <span className="badge bg-light text-dark">
-                              <CIcon icon={cilTask} size="sm" className="me-1" />
-                              {member.tasks} tâches
-                            </span>
-                            <Link to="#" className="btn btn-sm btn-ghost-primary">
-                              Profil
-                            </Link>
-                          </div>
-                        </div>
-                      </CCol>
-                    ))}
-                  </CRow>
-                </div>
-              </CCardBody>
-            </CCard>
+            <TeamMembersWidget />
           </CCol>
         </CRow>
       </section>

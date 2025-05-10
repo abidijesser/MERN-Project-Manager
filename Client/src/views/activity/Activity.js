@@ -28,6 +28,7 @@ import {
   cilFolder,
 } from '@coreui/icons'
 import { Link } from 'react-router-dom'
+import './Activity.css'
 
 const Activity = () => {
   const [activities, setActivities] = useState([])
@@ -60,8 +61,8 @@ const Activity = () => {
       setLoading(true)
       setError(null)
 
-      // In a real implementation, you would add filter parameter to the API call
-      const response = await getRecentActivityLogs(pagination.limit)
+      // Fetch all activity logs
+      const response = await getRecentActivityLogs(100) // Increased limit to ensure we get enough data
 
       console.log('Activity logs response:', response)
       console.log('Activity logs data:', response.activityLogs)
@@ -75,11 +76,14 @@ const Activity = () => {
           )
         }
 
-        console.log('Filtered activities:', filteredActivities)
-        console.log(
-          'Activity types:',
-          filteredActivities.map((a) => a.action),
-        )
+        // Log the activity types to help with debugging
+        const activityTypes = [...new Set(response.activityLogs.map((a) => a.action))]
+        console.log('All activity types in data:', activityTypes)
+        console.log('Current filter:', filter)
+        console.log('Filtered activities count:', filteredActivities.length)
+        console.log('Filtered activity types:', [
+          ...new Set(filteredActivities.map((a) => a.action)),
+        ])
 
         setActivities(filteredActivities)
         setPagination({
@@ -223,27 +227,22 @@ const Activity = () => {
   }
 
   return (
-    <div className="animated fadeIn">
+    <div className="animated fadeIn activity-page">
       <CRow>
         <CCol lg={12}>
-          <CCard className="mb-4 dashboard-card shadow-sm">
-            <CCardHeader className="dashboard-card-header">
+          <CCard className="mb-4 activity-card">
+            <CCardHeader className="activity-card-header d-flex justify-content-between align-items-center">
               <h4 className="mb-0">Historique des Activités</h4>
+              <CFormSelect className="activity-filter" value={filter} onChange={handleFilterChange}>
+                <option value="all">Toutes les activités</option>
+                <option value="CREATE">Créations</option>
+                <option value="UPDATE">Mises à jour</option>
+                <option value="DELETE">Suppressions</option>
+                <option value="COMMENT">Commentaires</option>
+                <option value="STATUS_CHANGE">Changements de statut</option>
+              </CFormSelect>
             </CCardHeader>
-            <CCardBody>
-              <div className="mb-4 d-flex justify-content-end">
-                <CFormSelect className="w-auto" value={filter} onChange={handleFilterChange}>
-                  <option value="all">Toutes les activités</option>
-                  <option value="CREATE">Créations</option>
-                  <option value="UPDATE">Mises à jour</option>
-                  <option value="DELETE">Suppressions</option>
-                  <option value="COMMENT">Commentaires</option>
-                  <option value="STATUS_CHANGE">Changements de statut</option>
-                  <option value="ASSIGN">Assignations</option>
-                  <option value="COMPLETE">Complétions</option>
-                </CFormSelect>
-              </div>
-
+            <CCardBody className="p-3 p-md-4">
               {error && <CAlert color="danger">{error}</CAlert>}
 
               {loading ? (
@@ -259,24 +258,11 @@ const Activity = () => {
                       const activityInfo = getActivityDescription(activity)
                       const badge = getActivityBadge(activity.action)
                       return (
-                        <div
-                          key={activity._id}
-                          className={`activity-item d-flex p-3 ${index < activities.length - 1 ? 'border-bottom' : ''}`}
-                          style={{ transition: 'all 0.2s ease' }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f8f9fa'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent'
-                          }}
-                        >
+                        <div key={activity._id} className="activity-item d-flex">
                           <div
-                            className="activity-icon me-3 rounded-circle d-flex align-items-center justify-content-center"
+                            className="activity-icon d-flex align-items-center justify-content-center"
                             style={{
-                              width: '36px',
-                              height: '36px',
                               backgroundColor: `var(--cui-${badge.color})`,
-                              flexShrink: 0,
                             }}
                           >
                             <CIcon
@@ -286,24 +272,20 @@ const Activity = () => {
                             />
                           </div>
                           <div className="activity-content flex-grow-1">
-                            <div className="d-flex justify-content-between align-items-center mb-1">
-                              <div className="fw-bold">{activityInfo.user}</div>
-                              <div className="text-muted small">
-                                {formatDate(activity.timestamp)}
-                              </div>
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                              <div className="activity-user">{activityInfo.user}</div>
+                              <div className="activity-time">{formatDate(activity.timestamp)}</div>
                             </div>
-                            <div>
-                              <CBadge color={badge.color} className="me-2">
+                            <div className="activity-text">
+                              <CBadge color={badge.color} className="activity-badge">
                                 {badge.text}
                               </CBadge>
                               <span>{activityInfo.text}</span>
                             </div>
                             {activity.action === 'COMMENT' && activityInfo.details && (
-                              <div className="mt-1 text-muted fst-italic">
-                                "{activityInfo.details}..."
-                              </div>
+                              <div className="activity-details">"{activityInfo.details}..."</div>
                             )}
-                            <div className="mt-2">
+                            <div className="activity-action">
                               <Link
                                 to={activityInfo.link}
                                 className="btn btn-sm btn-outline-primary"
@@ -318,7 +300,7 @@ const Activity = () => {
                   </div>
 
                   {pagination.total > pagination.limit && (
-                    <CPagination className="mt-4 justify-content-center">
+                    <CPagination className="activity-pagination">
                       {Array.from(
                         { length: Math.ceil(pagination.total / pagination.limit) },
                         (_, i) => (
