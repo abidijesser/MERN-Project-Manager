@@ -486,6 +486,84 @@
   text-overflow: ellipsis;
 }
 
+/* Styles pour la section tarification */
+.pricing-card {
+  height: 100%;
+  transition: all var(--transition-speed) ease;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  background-color: white;
+  border: 1px solid var(--border-color);
+}
+
+.pricing-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--card-shadow-hover);
+}
+
+.pricing-card.popular {
+  transform: scale(1.05);
+  border: 2px solid var(--primary-color);
+  z-index: 1;
+}
+
+.pricing-header {
+  padding: var(--spacing-sm);
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.pricing-content {
+  padding: var(--spacing-md);
+  text-align: center;
+}
+
+.pricing-price {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--dark-color);
+}
+
+.pricing-period {
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.pricing-features {
+  margin: var(--spacing-md) 0;
+  text-align: left;
+}
+
+.pricing-feature {
+  padding: var(--spacing-xs) 0;
+  display: flex;
+  align-items: center;
+}
+
+.pricing-feature-icon {
+  margin-right: var(--spacing-xs);
+  color: var(--primary-color);
+}
+
+.pricing-footer {
+  padding: var(--spacing-sm);
+  text-align: center;
+  border-top: 1px solid var(--border-color);
+}
+
+.pricing-badge {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem 1rem;
+  border-radius: 30px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
 /* Responsive design pour les petits écrans */
 @media (max-width: 768px) {
   .project-card {
@@ -502,5 +580,9 @@
     width: 100%;
     display: flex;
     justify-content: space-between;
+  }
+
+  .pricing-card.popular {
+    transform: scale(1);
   }
 }

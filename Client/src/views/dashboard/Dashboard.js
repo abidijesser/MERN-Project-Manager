@@ -366,132 +366,7 @@ const Dashboard = () => {
         </div>
       </section>
 
-      {/* Section Tarification */}
-      <section className="pricing-section py-5 bg-light">
-        <div className="container">
-          <div className="text-center mb-5">
-            <h2 className="display-5 fw-bold">Tarification</h2>
-            <p className="lead text-muted">Choisissez le plan qui correspond à vos besoins</p>
-          </div>
-          <CRow className="justify-content-center">
-            {[
-              {
-                plan: 'Gratuit',
-                price: '0Dt',
-                period: 'pour toujours',
-                popular: false,
-                color: 'info',
-                features: [
-                  "Jusqu'à 3 projets",
-                  "Jusqu'à 5 utilisateurs",
-                  'Fonctionnalités de base',
-                  'Support communautaire',
-                  'Mises à jour gratuites'
-                ],
-                buttonText: 'Commencer gratuitement'
-              },
-              {
-                plan: 'Standard',
-                price: '10Dt',
-                period: 'par mois',
-                popular: true,
-                color: 'primary',
-                features: [
-                  'Projets illimités',
-                  "Jusqu'à 20 utilisateurs",
-                  'Fonctionnalités avancées',
-                  'Support par email',
-                  'Analyses de performance',
-                  "Intégration avec d'autres outils"
-                ],
-                buttonText: 'Essai gratuit de 14 jours'
-              },
-              {
-                plan: 'Premium',
-                price: '20Dt',
-                period: 'par mois',
-                popular: false,
-                color: 'dark',
-                features: [
-                  'Projets illimités',
-                  'Utilisateurs illimités',
-                  'Toutes les fonctionnalités',
-                  'Support prioritaire 24/7',
-                  'Analyses avancées avec IA',
-                  'API complète',
-                  'Personnalisation avancée'
-                ],
-                buttonText: 'Contacter les ventes'
-              },
-            ].map((pricing, index) => (
-              <CCol key={index} md={4} className="mb-4">
-                <div
-                  className={`pricing-card h-100 p-0 rounded-4 overflow-hidden shadow-sm hover-shadow transition-all ${pricing.popular ? 'border border-2 border-primary transform-scale' : ''}`}
-                  style={{
-                    backgroundColor: 'white',
-                    transform: pricing.popular ? 'scale(1.05)' : 'scale(1)',
-                    zIndex: pricing.popular ? 1 : 0,
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  {pricing.popular && (
-                    <div className="position-relative">
-                      <CBadge
-                        color="primary"
-                        shape="rounded-pill"
-                        className="position-absolute top-0 start-50 translate-middle px-3 py-2 fw-bold"
-                        style={{ fontSize: '0.8rem', boxShadow: '0 3px 6px rgba(0, 0, 0, 0.1)' }}
-                      >
-                        RECOMMANDÉ
-                      </CBadge>
-                    </div>
-                  )}
 
-                  <div className={`p-4 text-center bg-${pricing.color} bg-opacity-10 border-bottom border-${pricing.color}`}>
-                    <h4 className="fw-bold mb-0">{pricing.plan}</h4>
-                  </div>
-
-                  <div className="p-4 text-center">
-                    <div className="mb-4">
-                      <span className="display-4 fw-bold text-dark">{pricing.price}</span>
-                      <span className="text-muted fs-5">{pricing.period}</span>
-                    </div>
-
-                    <ul className="list-unstyled mb-4 pricing-features">
-                      {pricing.features.map((feature, i) => (
-                        <li key={i} className="py-2 d-flex align-items-center justify-content-center">
-                          <CIcon
-                            icon={cilCheck}
-                            className={`me-2 text-${pricing.color}`}
-                            style={{ width: '1rem', height: '1rem' }}
-                          />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-
-                    <CButton
-                      color={pricing.popular ? 'primary' : pricing.color}
-                      size="lg"
-                      href="/pricing"
-                      className={`fw-bold w-100 ${pricing.popular ? 'btn-lg shadow-sm' : ''}`}
-                    >
-                      {pricing.buttonText}
-                    </CButton>
-                  </div>
-                </div>
-              </CCol>
-            ))}
-          </CRow>
-
-          <div className="text-center mt-5">
-            <p className="text-muted mb-0">Besoin d'une solution personnalisée pour votre entreprise?</p>
-            <CButton color="link" href="/contact" className="fw-bold">
-              Contactez notre équipe commerciale
-            </CButton>
-          </div>
-        </div>
-      </section>
 
       {/* Dashboard Widgets */}
       <WidgetsDropdown className="mb-4" />
@@ -701,6 +576,140 @@ const Dashboard = () => {
             <TeamMembersWidget />
           </CCol>
         </CRow>
+      </section>
+
+      {/* Section Tarification */}
+      <section className="dashboard-section">
+        <div className="section-header">
+          <h2 className="section-title">
+            <CIcon icon={cilSettings} className="icon" />
+            Tarification
+          </h2>
+        </div>
+
+        <div className="text-center mb-4">
+          <p className="lead">Choisissez le plan qui correspond à vos besoins</p>
+        </div>
+
+        <CRow className="justify-content-center">
+          {[
+            {
+              plan: 'Gratuit',
+              price: '0 DT',
+              period: 'pour toujours',
+              popular: false,
+              color: 'info',
+              features: [
+                "Jusqu'à 3 projets",
+                "Jusqu'à 5 utilisateurs",
+                'Fonctionnalités de base',
+                'Support communautaire',
+                'Mises à jour gratuites'
+              ]
+            },
+            {
+              plan: 'Standard',
+              price: '10 DT',
+              period: 'par mois',
+              popular: true,
+              color: 'primary',
+              features: [
+                'Projets illimités',
+                "Jusqu'à 20 utilisateurs",
+                'Fonctionnalités avancées',
+                'Support par email',
+                'Analyses de performance',
+                "Intégration avec d'autres outils"
+              ]
+            },
+            {
+              plan: 'Premium',
+              price: '20 DT',
+              period: 'par mois',
+              popular: false,
+              color: 'dark',
+              features: [
+                'Projets illimités',
+                'Utilisateurs illimités',
+                'Toutes les fonctionnalités',
+                'Support prioritaire 24/7',
+                'Analyses avancées avec IA',
+                'API complète',
+                'Personnalisation avancée'
+              ]
+            },
+          ].map((pricing, index) => (
+            <CCol key={index} md={4} className="mb-4">
+              <div className={`project-card card-hover-effect ${pricing.popular ? 'border-primary' : ''}`}
+                style={{
+                  transform: pricing.popular ? 'scale(1.05)' : 'scale(1)',
+                  zIndex: pricing.popular ? 1 : 0
+                }}
+              >
+                {pricing.popular && (
+                  <div className="position-relative">
+                    <CBadge
+                      color="primary"
+                      shape="rounded-pill"
+                      className="position-absolute top-0 start-50 translate-middle px-3 py-2 fw-bold"
+                    >
+                      RECOMMANDÉ
+                    </CBadge>
+                  </div>
+                )}
+
+                <div className="project-card-header text-center" style={{
+                  backgroundColor: `var(--${pricing.color === 'dark' ? 'dark' : pricing.color === 'primary' ? 'primary' : 'info'}-color)`,
+                  color: 'white',
+                  padding: 'var(--spacing-sm)'
+                }}>
+                  <h4 className="fw-bold mb-0">{pricing.plan}</h4>
+                </div>
+
+                <div className="project-card-content text-center">
+                  <div className="mb-4">
+                    <span className="display-4 fw-bold">{pricing.price}</span>
+                    <span className="text-muted fs-5">{pricing.period}</span>
+                  </div>
+
+                  <ul className="list-unstyled mb-4">
+                    {pricing.features.map((feature, i) => (
+                      <li key={i} className="py-2 d-flex align-items-center">
+                        <CIcon
+                          icon={cilCheck}
+                          className="me-2"
+                          style={{
+                            width: '1rem',
+                            height: '1rem',
+                            color: `var(--${pricing.color === 'dark' ? 'dark' : pricing.color === 'primary' ? 'primary' : 'info'}-color)`
+                          }}
+                        />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="project-card-footer">
+                  <Link
+                    to="/pricing"
+                    className={`btn-dashboard ${pricing.popular ? 'btn-primary' : pricing.color === 'dark' ? 'btn-outline' : 'btn-outline'}`}
+                    style={{ width: '100%' }}
+                  >
+                    {pricing.popular ? 'Essai gratuit de 14 jours' : pricing.plan === 'Gratuit' ? 'Commencer gratuitement' : 'Contacter les ventes'}
+                  </Link>
+                </div>
+              </div>
+            </CCol>
+          ))}
+        </CRow>
+
+        <div className="text-center mt-4">
+          <p className="text-muted mb-2">Besoin d'une solution personnalisée pour votre entreprise ?</p>
+          <Link to="/contact" className="btn-dashboard btn-outline">
+            Contactez notre équipe commerciale
+          </Link>
+        </div>
       </section>
     </>
   )
