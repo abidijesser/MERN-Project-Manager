@@ -306,8 +306,24 @@ const Resources = () => {
       doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (doc.displayId && doc.displayId.toLowerCase().includes(searchTerm.toLowerCase()))
 
+    // Filtre par projet
     const matchesProject = selectedProject ? doc.project === selectedProject : true
-    const matchesType = filterType ? doc.type === filterType : true
+
+    // Filtre par type de fichier (plus flexible)
+    let matchesType = true
+    if (filterType) {
+      // Normaliser le type de fichier du document
+      const docType = (doc.type || '').toLowerCase()
+
+      // Vérifier si le type de fichier correspond au filtre
+      matchesType = docType === filterType.toLowerCase()
+
+      // Logs pour le débogage
+      console.log(
+        `Filtering document: ${doc.name}, type: ${docType}, filter: ${filterType}, matches: ${matchesType}`,
+      )
+    }
+
     return matchesSearch && matchesProject && matchesType
   })
 
@@ -455,7 +471,7 @@ const Resources = () => {
 
     try {
       // Utiliser l'ID MongoDB pour la compatibilité avec l'API existante
-      const mongoId = typeof docId === 'object' ? (docId.id || docId._id) : docId;
+      const mongoId = typeof docId === 'object' ? docId.id || docId._id : docId
 
       if (!mongoId) {
         console.error('Erreur: ID MongoDB non trouvé pour la suppression', docId)
@@ -470,23 +486,35 @@ const Resources = () => {
 
       if (response.data.success) {
         // Identifier le document à supprimer par son ID unique ou MongoDB
-        setDocuments(documents.filter((doc) => {
-          // Si docId est un objet (document complet)
-          if (typeof docId === 'object') {
-            const uniqueIdToRemove = docId.uniqueId || docId.displayId || docId.id || docId._id;
-            const docUniqueId = doc.uniqueId || doc.displayId || doc.id || doc._id;
-            return docUniqueId !== uniqueIdToRemove;
-          }
-          // Si docId est une chaîne (juste l'ID)
-          return doc.id !== docId && doc._id !== docId && doc.uniqueId !== docId && doc.displayId !== docId;
-        }))
+        setDocuments(
+          documents.filter((doc) => {
+            // Si docId est un objet (document complet)
+            if (typeof docId === 'object') {
+              const uniqueIdToRemove = docId.uniqueId || docId.displayId || docId.id || docId._id
+              const docUniqueId = doc.uniqueId || doc.displayId || doc.id || doc._id
+              return docUniqueId !== uniqueIdToRemove
+            }
+            // Si docId est une chaîne (juste l'ID)
+            return (
+              doc.id !== docId &&
+              doc._id !== docId &&
+              doc.uniqueId !== docId &&
+              doc.displayId !== docId
+            )
+          }),
+        )
 
         // If the deleted document was selected, clear the selection
         if (selectedDocument) {
-          const selectedId = selectedDocument.uniqueId || selectedDocument.displayId || selectedDocument.id || selectedDocument._id;
-          const deletedId = typeof docId === 'object'
-            ? (docId.uniqueId || docId.displayId || docId.id || docId._id)
-            : docId;
+          const selectedId =
+            selectedDocument.uniqueId ||
+            selectedDocument.displayId ||
+            selectedDocument.id ||
+            selectedDocument._id
+          const deletedId =
+            typeof docId === 'object'
+              ? docId.uniqueId || docId.displayId || docId.id || docId._id
+              : docId
 
           if (selectedId === deletedId) {
             setSelectedDocument(null)
@@ -508,15 +536,15 @@ const Resources = () => {
   const handleTogglePin = async (docId, currentPinned) => {
     try {
       // Utiliser l'ID MongoDB pour la compatibilité avec l'API existante
-      const mongoId = typeof docId === 'object' ? (docId.id || docId._id) : docId;
+      const mongoId = typeof docId === 'object' ? docId.id || docId._id : docId
 
       if (!mongoId) {
         console.error("Erreur: ID MongoDB non trouvé pour l'épinglage", docId)
-        toast.error("Erreur: ID du document non trouvé")
+        toast.error('Erreur: ID du document non trouvé')
         return
       }
 
-      console.log('Modification du statut d\'épinglage pour le document avec ID MongoDB:', mongoId)
+      console.log("Modification du statut d'épinglage pour le document avec ID MongoDB:", mongoId)
       console.log('Document à modifier:', docId)
 
       const response = await axios.put(`/api/documents/${mongoId}/pin`)
@@ -527,23 +555,31 @@ const Resources = () => {
           documents.map((doc) => {
             // Si docId est un objet (document complet)
             if (typeof docId === 'object') {
-              const uniqueIdToUpdate = docId.uniqueId || docId.displayId || docId.id || docId._id;
-              const docUniqueId = doc.uniqueId || doc.displayId || doc.id || doc._id;
-              return docUniqueId === uniqueIdToUpdate ? { ...doc, pinned: !currentPinned } : doc;
+              const uniqueIdToUpdate = docId.uniqueId || docId.displayId || docId.id || docId._id
+              const docUniqueId = doc.uniqueId || doc.displayId || doc.id || doc._id
+              return docUniqueId === uniqueIdToUpdate ? { ...doc, pinned: !currentPinned } : doc
             }
             // Si docId est une chaîne (juste l'ID)
-            return (doc.id === docId || doc._id === docId || doc.uniqueId === docId || doc.displayId === docId)
+            return doc.id === docId ||
+              doc._id === docId ||
+              doc.uniqueId === docId ||
+              doc.displayId === docId
               ? { ...doc, pinned: !currentPinned }
-              : doc;
+              : doc
           }),
         )
 
         // If the document was selected, update the selection
         if (selectedDocument) {
-          const selectedId = selectedDocument.uniqueId || selectedDocument.displayId || selectedDocument.id || selectedDocument._id;
-          const updatedId = typeof docId === 'object'
-            ? (docId.uniqueId || docId.displayId || docId.id || docId._id)
-            : docId;
+          const selectedId =
+            selectedDocument.uniqueId ||
+            selectedDocument.displayId ||
+            selectedDocument.id ||
+            selectedDocument._id
+          const updatedId =
+            typeof docId === 'object'
+              ? docId.uniqueId || docId.displayId || docId.id || docId._id
+              : docId
 
           if (selectedId === updatedId) {
             setSelectedDocument({ ...selectedDocument, pinned: !currentPinned })
@@ -572,18 +608,31 @@ const Resources = () => {
 
       <CRow className="mb-4">
         <CCol md={4}>
-          <CFormSelect
-            value={selectedProject}
-            onChange={(e) => setSelectedProject(e.target.value)}
-            aria-label="Sélectionner un projet"
-          >
-            <option value="">Tous les projets</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.name}
-              </option>
-            ))}
-          </CFormSelect>
+          <div className="position-relative">
+            <CFormSelect
+              value={selectedProject}
+              onChange={(e) => setSelectedProject(e.target.value)}
+              aria-label="Sélectionner un projet"
+              className={selectedProject ? 'filter-active' : ''}
+            >
+              <option value="">Tous les projets</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </CFormSelect>
+            {selectedProject && (
+              <button
+                className="position-absolute end-0 top-0 btn btn-sm btn-link text-danger"
+                style={{ padding: '0.375rem 0.75rem' }}
+                onClick={() => setSelectedProject('')}
+                title="Effacer la sélection"
+              >
+                ×
+              </button>
+            )}
+          </div>
         </CCol>
         <CCol md={6}>
           <CInputGroup>
@@ -591,23 +640,112 @@ const Resources = () => {
               placeholder="Rechercher un document..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className={searchTerm ? 'filter-active' : ''}
             />
-            <CButton type="button" color="primary" variant="outline">
+            {searchTerm ? (
+              <CButton
+                type="button"
+                color="danger"
+                variant="outline"
+                onClick={() => setSearchTerm('')}
+                title="Effacer la recherche"
+              >
+                ×
+              </CButton>
+            ) : null}
+            <CButton type="button" color={searchTerm ? 'success' : 'primary'} variant="outline">
               <CIcon icon={cilSearch} />
             </CButton>
             <CDropdown variant="btn-group">
-              <CDropdownToggle color="primary" variant="outline">
+              <CDropdownToggle
+                color={filterType ? 'success' : 'primary'}
+                variant="outline"
+                title={filterType ? `Filtré par: ${filterType.toUpperCase()}` : 'Filtrer par type'}
+              >
                 <CIcon icon={cilFilter} />
+                {filterType && (
+                  <span className="ms-1 badge bg-success">{filterType.toUpperCase()}</span>
+                )}
               </CDropdownToggle>
               <CDropdownMenu>
-                <CDropdownItem onClick={() => setFilterType('')}>Tous les types</CDropdownItem>
-                <CDropdownItem onClick={() => setFilterType('pdf')}>PDF</CDropdownItem>
-                <CDropdownItem onClick={() => setFilterType('excel')}>Excel</CDropdownItem>
-                <CDropdownItem onClick={() => setFilterType('powerpoint')}>
-                  PowerPoint
+                {filterType && (
+                  <CDropdownItem onClick={() => setFilterType('')} className="text-danger fw-bold">
+                    <CIcon icon={cilFilter} className="me-2" />
+                    Effacer le filtre
+                  </CDropdownItem>
+                )}
+                <CDropdownItem
+                  onClick={() => setFilterType('')}
+                  className={!filterType ? 'fw-bold' : ''}
+                >
+                  Tous les types
                 </CDropdownItem>
-                <CDropdownItem onClick={() => setFilterType('image')}>Images</CDropdownItem>
-                <CDropdownItem onClick={() => setFilterType('video')}>Vidéos</CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('pdf')}
+                  className={filterType === 'pdf' ? 'fw-bold bg-light' : ''}
+                >
+                  PDF
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('doc')}
+                  className={filterType === 'doc' ? 'fw-bold bg-light' : ''}
+                >
+                  Word (.doc)
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('docx')}
+                  className={filterType === 'docx' ? 'fw-bold bg-light' : ''}
+                >
+                  Word (.docx)
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('xls')}
+                  className={filterType === 'xls' ? 'fw-bold bg-light' : ''}
+                >
+                  Excel (.xls)
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('xlsx')}
+                  className={filterType === 'xlsx' ? 'fw-bold bg-light' : ''}
+                >
+                  Excel (.xlsx)
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('ppt')}
+                  className={filterType === 'ppt' ? 'fw-bold bg-light' : ''}
+                >
+                  PowerPoint (.ppt)
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('pptx')}
+                  className={filterType === 'pptx' ? 'fw-bold bg-light' : ''}
+                >
+                  PowerPoint (.pptx)
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('jpg')}
+                  className={filterType === 'jpg' ? 'fw-bold bg-light' : ''}
+                >
+                  Images JPG
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('png')}
+                  className={filterType === 'png' ? 'fw-bold bg-light' : ''}
+                >
+                  Images PNG
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('mp4')}
+                  className={filterType === 'mp4' ? 'fw-bold bg-light' : ''}
+                >
+                  Vidéos MP4
+                </CDropdownItem>
+                <CDropdownItem
+                  onClick={() => setFilterType('txt')}
+                  className={filterType === 'txt' ? 'fw-bold bg-light' : ''}
+                >
+                  Texte
+                </CDropdownItem>
               </CDropdownMenu>
             </CDropdown>
           </CInputGroup>
@@ -659,9 +797,76 @@ const Resources = () => {
                   {filteredDocuments.length === 0 ? (
                     <div className="text-center my-5">
                       <p>Aucun document trouvé.</p>
+                      {(searchTerm || selectedProject || filterType) && (
+                        <div>
+                          <p className="text-muted">
+                            Essayez de modifier vos critères de recherche :
+                          </p>
+                          <div className="d-flex justify-content-center gap-2">
+                            {searchTerm && (
+                              <CButton
+                                color="danger"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSearchTerm('')}
+                              >
+                                Effacer la recherche
+                              </CButton>
+                            )}
+                            {selectedProject && (
+                              <CButton
+                                color="danger"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedProject('')}
+                              >
+                                Effacer le filtre de projet
+                              </CButton>
+                            )}
+                            {filterType && (
+                              <CButton
+                                color="danger"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setFilterType('')}
+                              >
+                                Effacer le filtre de type
+                              </CButton>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="documents-list">
+                      <div className="filter-count">
+                        <div>
+                          <span>
+                            Affichage de <strong>{filteredDocuments.length}</strong> document
+                            {filteredDocuments.length > 1 ? 's' : ''}
+                            {documents.length !== filteredDocuments.length &&
+                              ` sur ${documents.length}`}
+                          </span>
+                          {(searchTerm || selectedProject || filterType) && (
+                            <span className="filter-badge bg-info">Filtré</span>
+                          )}
+                        </div>
+                        {(searchTerm || selectedProject || filterType) && (
+                          <CButton
+                            color="link"
+                            size="sm"
+                            className="filter-clear-button"
+                            onClick={() => {
+                              setSearchTerm('')
+                              setSelectedProject('')
+                              setFilterType('')
+                            }}
+                          >
+                            <CIcon icon={cilFilter} className="me-1" />
+                            Effacer tous les filtres
+                          </CButton>
+                        )}
+                      </div>
                       <CRow className="documents-header mb-2 p-2 bg-light">
                         <CCol xs={6}>Nom</CCol>
                         <CCol xs={2}>Taille</CCol>
@@ -670,7 +875,7 @@ const Resources = () => {
                       </CRow>
                       {filteredDocuments.map((doc) => {
                         // Utiliser uniqueId ou displayId s'ils existent, sinon utiliser id ou _id
-                        const documentId = doc.uniqueId || doc.displayId || doc.id || doc._id;
+                        const documentId = doc.uniqueId || doc.displayId || doc.id || doc._id
 
                         return (
                           <CRow
@@ -693,135 +898,137 @@ const Resources = () => {
                                     <small className="ms-2 text-muted">({doc.displayId})</small>
                                   )}
                                   {/* Afficher un badge pour les documents dupliqués */}
-                                  {doc.name && doc.name.includes(' (') && doc.name.includes(')') && (
-                                    <span className="ms-2 badge bg-info">Duplicata</span>
-                                  )}
+                                  {doc.name &&
+                                    doc.name.includes(' (') &&
+                                    doc.name.includes(')') && (
+                                      <span className="ms-2 badge bg-info">Duplicata</span>
+                                    )}
                                   {doc.pinned && (
                                     <CTooltip content="Document épinglé">
-                                    <CIcon
-                                      icon={cilStar}
-                                      className="ms-2 text-warning"
-                                      style={{ width: '14px', height: '14px' }}
-                                    />
-                                  </CTooltip>
-                                )}
-                              </div>
-                              <div className="document-meta">
-                                <CBadge
-                                  color={getFileTypeBadgeColor(doc.type)}
-                                  shape="rounded-pill"
-                                  size="sm"
-                                  className="me-2"
-                                >
-                                  {doc.type.toUpperCase()}
-                                </CBadge>
-                                {doc.isPublic && (
+                                      <CIcon
+                                        icon={cilStar}
+                                        className="ms-2 text-warning"
+                                        style={{ width: '14px', height: '14px' }}
+                                      />
+                                    </CTooltip>
+                                  )}
+                                </div>
+                                <div className="document-meta">
                                   <CBadge
-                                    color="info"
+                                    color={getFileTypeBadgeColor(doc.type)}
                                     shape="rounded-pill"
                                     size="sm"
                                     className="me-2"
                                   >
-                                    Public
+                                    {doc.type.toUpperCase()}
                                   </CBadge>
-                                )}
-                                {doc.permissions === 'edit' ? (
-                                  <CBadge color="success" shape="rounded-pill" size="sm">
-                                    Éditable
-                                  </CBadge>
-                                ) : (
-                                  <CBadge color="secondary" shape="rounded-pill" size="sm">
-                                    Lecture seule
-                                  </CBadge>
-                                )}
+                                  {doc.isPublic && (
+                                    <CBadge
+                                      color="info"
+                                      shape="rounded-pill"
+                                      size="sm"
+                                      className="me-2"
+                                    >
+                                      Public
+                                    </CBadge>
+                                  )}
+                                  {doc.permissions === 'edit' ? (
+                                    <CBadge color="success" shape="rounded-pill" size="sm">
+                                      Éditable
+                                    </CBadge>
+                                  ) : (
+                                    <CBadge color="secondary" shape="rounded-pill" size="sm">
+                                      Lecture seule
+                                    </CBadge>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          </CCol>
-                          <CCol xs={2}>{doc.size}</CCol>
-                          <CCol xs={2}>{doc.uploadedBy}</CCol>
-                          <CCol
-                            xs={2}
-                            className="d-flex justify-content-between align-items-center"
-                          >
-                            {new Date(doc.uploadedDate).toLocaleDateString()}
-                            <CDropdown alignment="end">
-                              <CDropdownToggle color="transparent" caret={false}>
-                                <CIcon icon={cilOptions} />
-                              </CDropdownToggle>
-                              <CDropdownMenu>
-                                <CDropdownItem onClick={() => handleDocumentSelect(doc)}>
-                                  <CIcon icon={cilMagnifyingGlass} className="me-2" />
-                                  Aperçu
-                                </CDropdownItem>
-                                <CDropdownItem
-                                  onClick={(e) => {
-                                    e.preventDefault() // Empêcher le comportement par défaut
-                                    e.stopPropagation() // Empêcher la propagation de l'événement
+                            </CCol>
+                            <CCol xs={2}>{doc.size}</CCol>
+                            <CCol xs={2}>{doc.uploadedBy}</CCol>
+                            <CCol
+                              xs={2}
+                              className="d-flex justify-content-between align-items-center"
+                            >
+                              {new Date(doc.uploadedDate).toLocaleDateString()}
+                              <CDropdown alignment="end">
+                                <CDropdownToggle color="transparent" caret={false}>
+                                  <CIcon icon={cilOptions} />
+                                </CDropdownToggle>
+                                <CDropdownMenu>
+                                  <CDropdownItem onClick={() => handleDocumentSelect(doc)}>
+                                    <CIcon icon={cilMagnifyingGlass} className="me-2" />
+                                    Aperçu
+                                  </CDropdownItem>
+                                  <CDropdownItem
+                                    onClick={(e) => {
+                                      e.preventDefault() // Empêcher le comportement par défaut
+                                      e.stopPropagation() // Empêcher la propagation de l'événement
 
-                                    // Logs détaillés pour le débogage
-                                    console.log(
-                                      'Clic sur le bouton de téléchargement pour le document:',
-                                      doc,
-                                    )
-                                    console.log('ID du document:', doc.id || doc._id)
-                                    console.log('Nom du document:', doc.name)
+                                      // Logs détaillés pour le débogage
+                                      console.log(
+                                        'Clic sur le bouton de téléchargement pour le document:',
+                                        doc,
+                                      )
+                                      console.log('ID du document:', doc.id || doc._id)
+                                      console.log('Nom du document:', doc.name)
 
-                                    // Appeler la fonction de téléchargement avec un délai pour éviter les conflits d'événements
-                                    setTimeout(() => {
-                                      handleDownload(doc)
-                                    }, 100)
-                                  }}
-                                >
-                                  <CIcon icon={cilCloudDownload} className="me-2" />
-                                  Télécharger
-                                </CDropdownItem>
-                                <CDropdownItem
-                                  onClick={() => {
-                                    setSelectedDocument(doc)
-                                    setShareModalVisible(true)
-                                  }}
-                                >
-                                  <CIcon icon={cilShareBoxed} className="me-2" />
-                                  Partager
-                                </CDropdownItem>
-                                {doc.permissions === 'edit' && (
-                                  <>
-                                    <CDropdownItem
-                                      onClick={() => {
-                                        setSelectedDocument(doc)
-                                        setPermissionsModalVisible(true)
-                                      }}
-                                    >
-                                      <CIcon icon={cilLockLocked} className="me-2" />
-                                      Permissions
-                                    </CDropdownItem>
-                                    <CDropdownItem
-                                      onClick={() => {
-                                        setSelectedDocument(doc)
-                                        setEditModalVisible(true)
-                                      }}
-                                    >
-                                      <CIcon icon={cilPencil} className="me-2" />
-                                      Modifier
-                                    </CDropdownItem>
-                                    <CDropdownItem onClick={() => handleDelete(doc)}>
-                                      <CIcon icon={cilTrash} className="me-2" />
-                                      Supprimer
-                                    </CDropdownItem>
-                                  </>
-                                )}
-                                <CDropdownItem onClick={() => handleTogglePin(doc, doc.pinned)}>
-                                  <CIcon
-                                    icon={cilStar}
-                                    className={`me-2 ${doc.pinned ? 'text-warning' : ''}`}
-                                  />
-                                  {doc.pinned ? 'Désépingler' : 'Épingler'}
-                                </CDropdownItem>
-                              </CDropdownMenu>
-                            </CDropdown>
-                          </CCol>
-                        </CRow>
-                        );
+                                      // Appeler la fonction de téléchargement avec un délai pour éviter les conflits d'événements
+                                      setTimeout(() => {
+                                        handleDownload(doc)
+                                      }, 100)
+                                    }}
+                                  >
+                                    <CIcon icon={cilCloudDownload} className="me-2" />
+                                    Télécharger
+                                  </CDropdownItem>
+                                  <CDropdownItem
+                                    onClick={() => {
+                                      setSelectedDocument(doc)
+                                      setShareModalVisible(true)
+                                    }}
+                                  >
+                                    <CIcon icon={cilShareBoxed} className="me-2" />
+                                    Partager
+                                  </CDropdownItem>
+                                  {doc.permissions === 'edit' && (
+                                    <>
+                                      <CDropdownItem
+                                        onClick={() => {
+                                          setSelectedDocument(doc)
+                                          setPermissionsModalVisible(true)
+                                        }}
+                                      >
+                                        <CIcon icon={cilLockLocked} className="me-2" />
+                                        Permissions
+                                      </CDropdownItem>
+                                      <CDropdownItem
+                                        onClick={() => {
+                                          setSelectedDocument(doc)
+                                          setEditModalVisible(true)
+                                        }}
+                                      >
+                                        <CIcon icon={cilPencil} className="me-2" />
+                                        Modifier
+                                      </CDropdownItem>
+                                      <CDropdownItem onClick={() => handleDelete(doc)}>
+                                        <CIcon icon={cilTrash} className="me-2" />
+                                        Supprimer
+                                      </CDropdownItem>
+                                    </>
+                                  )}
+                                  <CDropdownItem onClick={() => handleTogglePin(doc, doc.pinned)}>
+                                    <CIcon
+                                      icon={cilStar}
+                                      className={`me-2 ${doc.pinned ? 'text-warning' : ''}`}
+                                    />
+                                    {doc.pinned ? 'Désépingler' : 'Épingler'}
+                                  </CDropdownItem>
+                                </CDropdownMenu>
+                              </CDropdown>
+                            </CCol>
+                          </CRow>
+                        )
                       })}
                     </div>
                   )}
@@ -837,12 +1044,16 @@ const Resources = () => {
                         <CIcon icon={getFileIcon(selectedDocument.type)} className="me-2" />
                         {selectedDocument.name}
                         {selectedDocument.displayId && (
-                          <small className="ms-2 text-muted" style={{ fontSize: '0.7em' }}>({selectedDocument.displayId})</small>
+                          <small className="ms-2 text-muted" style={{ fontSize: '0.7em' }}>
+                            ({selectedDocument.displayId})
+                          </small>
                         )}
                         {/* Afficher un badge pour les documents dupliqués */}
-                        {selectedDocument.name && selectedDocument.name.includes(' (') && selectedDocument.name.includes(')') && (
-                          <span className="ms-2 badge bg-info">Duplicata</span>
-                        )}
+                        {selectedDocument.name &&
+                          selectedDocument.name.includes(' (') &&
+                          selectedDocument.name.includes(')') && (
+                            <span className="ms-2 badge bg-info">Duplicata</span>
+                          )}
                       </h3>
                       <div>
                         <CButton
@@ -955,7 +1166,10 @@ const Resources = () => {
                         <CCardHeader>Informations</CCardHeader>
                         <CCardBody>
                           <div className="mb-2">
-                            <strong>ID:</strong> {selectedDocument.displayId || selectedDocument.uniqueId || 'Non défini'}
+                            <strong>ID:</strong>{' '}
+                            {selectedDocument.displayId ||
+                              selectedDocument.uniqueId ||
+                              'Non défini'}
                           </div>
                           <div className="mb-2">
                             <strong>Type:</strong> {selectedDocument.type.toUpperCase()}
@@ -1067,12 +1281,14 @@ const Resources = () => {
               setDocuments(
                 documents.map((doc) => {
                   // Utiliser les identifiants uniques pour comparer les documents
-                  const docId = doc.uniqueId || doc.displayId || doc.id || doc._id;
-                  const selectedId = selectedDocument.uniqueId || selectedDocument.displayId || selectedDocument.id || selectedDocument._id;
+                  const docId = doc.uniqueId || doc.displayId || doc.id || doc._id
+                  const selectedId =
+                    selectedDocument.uniqueId ||
+                    selectedDocument.displayId ||
+                    selectedDocument.id ||
+                    selectedDocument._id
 
-                  return docId === selectedId
-                    ? { ...doc, permissions: updatedPermissions }
-                    : doc;
+                  return docId === selectedId ? { ...doc, permissions: updatedPermissions } : doc
                 }),
               )
             }}
@@ -1102,10 +1318,14 @@ const Resources = () => {
             setDocuments(
               documents.map((doc) => {
                 // Utiliser les identifiants uniques pour comparer les documents
-                const docId = doc.uniqueId || doc.displayId || doc.id || doc._id;
-                const selectedId = selectedDocument.uniqueId || selectedDocument.displayId || selectedDocument.id || selectedDocument._id;
+                const docId = doc.uniqueId || doc.displayId || doc.id || doc._id
+                const selectedId =
+                  selectedDocument.uniqueId ||
+                  selectedDocument.displayId ||
+                  selectedDocument.id ||
+                  selectedDocument._id
 
-                return docId === selectedId ? updatedDoc : doc;
+                return docId === selectedId ? updatedDoc : doc
               }),
             )
 

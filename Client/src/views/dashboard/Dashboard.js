@@ -4,39 +4,41 @@ import { Link } from 'react-router-dom'
 
 import {
   CButton,
-  CButtonGroup,
   CCard,
   CCardBody,
-  CCardFooter,
   CCardHeader,
   CCol,
   CProgress,
   CRow,
   CBadge,
-  CTooltip,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
-  cilCloudDownload,
   cilPeople,
   cilChart,
-  cilSpeedometer,
-  cilNotes,
   cilTask,
   cilCalendar,
   cilFolder,
   cilArrowRight,
-  cilPencil,
-  cilUserFollow,
-  cilInfo
+  cilCheck,
+  cilSpeedometer,
+  cilLightbulb,
+  cilSettings,
+  cilPuzzle,
+  cilGraph,
+  cilBriefcase,
+  cilChatBubble
 } from '@coreui/icons'
 
 import projectManagementImage from 'src/assets/images/gestion_projet.png'
+import worktrackLogo from 'src/assets/images/worktrack-logo.svg'
 
 import WidgetsDropdown from '../widgets/WidgetsDropdown'
 import MainChart from './MainChart'
-import RecentActivityWidget from '../../components/ActivityLog/RecentActivityWidget'
+
+import RecentActivityListWidget from '../../components/ActivityLog/RecentActivityListWidget'
 import UpcomingEvents from '../../components/UpcomingEvents/UpcomingEvents'
+import TeamMembersWidget from '../../components/dashboard/TeamMembersWidget'
 import socketService from '../../services/socketService'
 import { getProjectsForDashboard } from '../../services/dashboardService'
 import './Dashboard.css'
@@ -44,23 +46,53 @@ import './Dashboard.css'
 const Dashboard = () => {
   const [dashboardProjects, setDashboardProjects] = useState([])
   const [loading, setLoading] = useState(true)
+  const [allProjects, setAllProjects] = useState([])
+
+  // Fonction pour sélectionner des projets aléatoires à afficher
+  const selectRandomProjects = () => {
+    if (allProjects.length === 0) return
+
+    // Sélectionner 3 projets aléatoires pour l'affichage
+    let randomProjects = [...allProjects]
+
+    // Mélanger les projets et prendre les 3 premiers
+    randomProjects = randomProjects.sort(() => 0.5 - Math.random())
+
+    // Limiter à 3 projets si nécessaire
+    if (randomProjects.length > 3) {
+      randomProjects = randomProjects.slice(0, 3)
+    }
+
+    // Mettre à jour l'affichage avec les projets aléatoires
+    setDashboardProjects(randomProjects)
+  }
 
   // Fonction pour récupérer les projets pour le tableau de bord
   const fetchDashboardProjects = async () => {
     try {
       setLoading(true)
-      // Récupérer 3 projets aléatoirement (la sélection aléatoire est faite dans le service)
-      const projects = await getProjectsForDashboard(3)
-      console.log('Dashboard projects received randomly:', projects)
+
+      // Récupérer tous les projets pour la fonction aléatoire
+      const allProjectsData = await getProjectsForDashboard(0) // 0 = tous les projets
+      setAllProjects(allProjectsData)
+
+      // Sélectionner 3 projets aléatoires pour l'affichage
+      let displayProjects = allProjectsData
+      if (allProjectsData.length > 3) {
+        // Mélanger les projets et prendre les 3 premiers
+        displayProjects = [...allProjectsData].sort(() => 0.5 - Math.random()).slice(0, 3)
+      }
+
+      console.log('Dashboard projects received:', displayProjects)
 
       // Log task counts for each project
-      projects.forEach((project) => {
+      displayProjects.forEach((project) => {
         console.log(
           `Dashboard - Project ${project.title}: ${project.completedTasks}/${project.tasks} tasks`,
         )
       })
 
-      setDashboardProjects(projects)
+      setDashboardProjects(displayProjects)
     } catch (error) {
       console.error('Erreur lors de la récupération des projets pour le tableau de bord:', error)
     } finally {
@@ -84,94 +116,236 @@ const Dashboard = () => {
   return (
     <>
       {/* Section Héro */}
-      <section className="hero-section text-center py-5 bg-primary text-white">
-        <div className="container">
-          <h1 className="display-4 fw-bold">
-            Optimisez vos projets, anticipez les risques, réussissez en toute sérénité !
+      <section className="hero-section text-center py-5 text-white"
+        style={{
+          background: 'linear-gradient(135deg, #321fdb 0%, #1f67db 50%, #1f9adb 100%)',
+          borderRadius: '15px',
+          boxShadow: '0 10px 30px rgba(50, 31, 219, 0.25)',
+          margin: '0 15px 30px',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+        {/* Cercles décoratifs */}
+        <div className="circle-decoration" style={{
+          position: 'absolute',
+          top: '-50px',
+          right: '-50px',
+          width: '200px',
+          height: '200px',
+          borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.1)',
+          zIndex: 1
+        }}></div>
+        <div className="circle-decoration" style={{
+          position: 'absolute',
+          bottom: '-30px',
+          left: '-30px',
+          width: '150px',
+          height: '150px',
+          borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.1)',
+          zIndex: 1
+        }}></div>
+
+        {/* Éléments décoratifs supplémentaires */}
+        <div className="circle-decoration" style={{
+          position: 'absolute',
+          top: '20%',
+          left: '10%',
+          width: '80px',
+          height: '80px',
+          borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.05)',
+          zIndex: 1
+        }}></div>
+        <div className="circle-decoration" style={{
+          position: 'absolute',
+          bottom: '20%',
+          right: '10%',
+          width: '120px',
+          height: '120px',
+          borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.05)',
+          zIndex: 1
+        }}></div>
+
+        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
+          {/* Logo WorkTrack - Position centrée améliorée */}
+          <div className="mb-4" style={{
+            animation: 'fadeInUp 0.8s ease-out forwards',
+            marginBottom: '30px'
+          }}>
+            <img
+              src={worktrackLogo}
+              alt="WorkTrack Logo"
+              style={{
+                height: '130px',
+                filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))',
+                transition: 'transform 0.3s ease',
+                cursor: 'pointer'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            />
+          </div>
+
+          <h1 className="display-4 fw-bold" style={{
+            textShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
+            letterSpacing: '0.5px',
+            marginBottom: '20px'
+          }}>
+            Optimisez vos projets, anticipez les risques, <br />
+            <span style={{ color: '#ffffff', background: 'rgba(0, 0, 0, 0.2)', padding: '0 15px', borderRadius: '5px' }}>
+              réussissez en toute sérénité !
+            </span>
           </h1>
-          <p className="lead mt-3">
-            Notre plateforme utilise l’IA pour vous aider à gérer vos projets de manière efficace,
+          <p className="lead mt-4 mb-5" style={{
+            maxWidth: '800px',
+            margin: '0 auto',
+            fontSize: '1.3rem',
+            lineHeight: '1.6',
+            textShadow: '0 1px 5px rgba(0, 0, 0, 0.15)'
+          }}>
+            Notre plateforme utilise l'<span style={{ fontWeight: 'bold', color: '#ffeb3b' }}>IA</span> pour vous aider à gérer vos projets de manière efficace,
             en identifiant les risques et en optimisant vos ressources.
           </p>
-          <div className="d-flex justify-content-center gap-3 mt-4">
-            <CButton color="light" size="lg" href="/signup" className="fw-bold">
-              Commencer gratuitement
-            </CButton>
-            <CButton color="secondary" size="lg" href="/demo" className="fw-bold">
-              Voir une démo
-            </CButton>
+
+          <div className="position-relative" style={{
+            display: 'inline-block',
+            borderRadius: '15px',
+            overflow: 'hidden',
+            boxShadow: '0 15px 50px rgba(0, 0, 0, 0.3)',
+            transition: 'all 0.5s ease',
+            transform: 'perspective(1000px) rotateX(5deg)',
+            maxWidth: '85%'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) rotateX(0deg)';
+            e.currentTarget.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.4)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'perspective(1000px) rotateX(5deg)';
+            e.currentTarget.style.boxShadow = '0 15px 50px rgba(0, 0, 0, 0.3)';
+          }}>
+            <img
+              src={projectManagementImage}
+              alt="Illustration de gestion de projet"
+              className="img-fluid"
+              style={{
+                display: 'block',
+                borderRadius: '15px'
+              }}
+            />
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(to bottom, rgba(0,0,0,0) 80%, rgba(0,0,0,0.5) 100%)',
+              pointerEvents: 'none'
+            }}></div>
           </div>
-          <img
-            src={projectManagementImage}
-            alt="Illustration de gestion de projet"
-            className="img-fluid mt-5 rounded shadow"
-            style={{ maxWidth: '80%' }}
-          />
         </div>
       </section>
 
       {/* Présentation des Fonctionnalités Clés */}
-      <section className="features-section py-5 bg-light">
+      <section className="features-section py-5">
         <div className="container">
-          <h2 className="text-center mb-5 fw-bold">Fonctionnalités Clés</h2>
-          <CRow className="text-center">
+          <div className="text-center mb-5">
+            <h2 className="display-5 fw-bold">Fonctionnalités Clés</h2>
+            <p className="lead text-muted">Découvrez comment notre plateforme peut transformer votre gestion de projet</p>
+          </div>
+          <CRow className="g-4">
             {[
               {
-                icon: '📌',
+                icon: cilSpeedometer,
                 title: 'Planification intelligente',
-                description: 'Gantt, Kanban, Sprints',
+                description: "Utilisez nos outils avancés de planification avec vues Gantt, Kanban et gestion de Sprints pour organiser efficacement vos projets.",
+                color: 'primary',
+                image: 'planning.svg'
               },
-              { icon: '📌', title: 'Suivi des tâches et jalons', description: '' },
-              { icon: '📌', title: 'Prédiction des délais grâce à l’IA', description: '' },
-              { icon: '📌', title: 'Optimisation des ressources', description: '' },
               {
-                icon: '📌',
+                icon: cilTask,
+                title: 'Suivi des tâches et jalons',
+                description: "Suivez la progression de vos tâches en temps réel, définissez des jalons clés et recevez des notifications automatiques sur l'avancement.",
+                color: 'success',
+                image: 'tasks.svg'
+              },
+              {
+                icon: cilLightbulb,
+                title: 'Prédiction des délais grâce à l\'IA',
+                description: "Notre intelligence artificielle analyse vos données historiques pour prédire les délais réalistes et identifier les risques potentiels.",
+                color: 'warning',
+                image: 'ai.svg'
+              },
+              {
+                icon: cilSettings,
+                title: 'Optimisation des ressources',
+                description: "Gérez efficacement vos ressources humaines et matérielles, évitez la surcharge et maximisez la productivité de votre équipe.",
+                color: 'danger',
+                image: 'resources.svg'
+              },
+              {
+                icon: cilChatBubble,
                 title: 'Collaboration en équipe',
-                description: 'Messagerie, documents partagés',
+                description: "Facilitez la communication avec messagerie intégrée, partage de documents et espaces de travail collaboratifs pour une meilleure synergie.",
+                color: 'info',
+                image: 'collaboration.svg'
               },
             ].map((feature, index) => (
-              <CCol key={index} md={4} className="mb-4">
-                <div className="feature-icon display-4 text-primary">{feature.icon}</div>
-                <h5 className="mt-3 fw-bold">{feature.title}</h5>
-                <p className="text-muted">{feature.description}</p>
-                <CButton color="link" href="/features" className="text-primary fw-bold">
-                  En savoir plus
-                </CButton>
+              <CCol key={index} md={6} lg={4} className="mb-4">
+                <div
+                  className="h-100 feature-card p-4 rounded-4 shadow-sm border-top border-4 hover-shadow transition-all"
+                  style={{
+                    borderColor: `var(--cui-${feature.color})`,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  <div className="d-flex align-items-center mb-4">
+                    <div
+                      className={`feature-icon-container d-flex align-items-center justify-content-center rounded-circle bg-${feature.color} bg-opacity-10 p-3 me-3`}
+                      style={{ width: '60px', height: '60px' }}
+                    >
+                      <CIcon
+                        icon={feature.icon}
+                        size="xl"
+                        className={`text-${feature.color}`}
+                      />
+                    </div>
+                    <h4 className="fw-bold mb-0">{feature.title}</h4>
+                  </div>
+                  <p className="text-muted mb-4">{feature.description}</p>
+                  <div className="text-center mt-auto">
+                    <img
+                      src={`/assets/images/features/${feature.image}`}
+                      alt={feature.title}
+                      className="img-fluid feature-image mb-3"
+                      style={{ maxHeight: '120px', opacity: '0.9' }}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                    <div>
+                      <CButton
+                        color={feature.color}
+                        variant="outline"
+                        href="/features"
+                        className="fw-bold mt-2"
+                      >
+                        En savoir plus
+                        <CIcon icon={cilArrowRight} className="ms-2" />
+                      </CButton>
+                    </div>
+                  </div>
+                </div>
               </CCol>
             ))}
           </CRow>
         </div>
       </section>
 
-      {/* Témoignages & Avis Clients */}
-      <section className="testimonials-section py-5">
-        <div className="container">
-          <h2 className="text-center mb-5 fw-bold">Témoignages & Avis Clients</h2>
-          <CRow>
-            {[
-              {
-                name: 'Alice Dupont',
-                company: 'Entreprise A',
-                feedback: 'Une plateforme révolutionnaire !',
-              },
-              {
-                name: 'Jean Martin',
-                company: 'Entreprise B',
-                feedback: 'Gestion simplifiée et efficace.',
-              },
-            ].map((testimonial, index) => (
-              <CCol key={index} md={6} className="mb-4">
-                <blockquote className="blockquote p-4 bg-light rounded shadow">
-                  <p className="mb-3">{testimonial.feedback}</p>
-                  <footer className="blockquote-footer">
-                    {testimonial.name}, <cite>{testimonial.company}</cite>
-                  </footer>
-                </blockquote>
-              </CCol>
-            ))}
-          </CRow>
-        </div>
-      </section>
 
       {/* Section "Comment ça marche ?" */}
       <section className="how-it-works-section py-5 bg-light">
@@ -193,143 +367,181 @@ const Dashboard = () => {
       </section>
 
       {/* Section Tarification */}
-      <section className="pricing-section py-5">
+      <section className="pricing-section py-5 bg-light">
         <div className="container">
-          <h2 className="text-center mb-5 fw-bold">Tarification</h2>
-          <CRow className="text-center">
+          <div className="text-center mb-5">
+            <h2 className="display-5 fw-bold">Tarification</h2>
+            <p className="lead text-muted">Choisissez le plan qui correspond à vos besoins</p>
+          </div>
+          <CRow className="justify-content-center">
             {[
-              { plan: 'Gratuit', price: '0€', features: ['Fonctionnalités de base'] },
-              { plan: 'Standard', price: '10€/mois', features: ['Fonctionnalités avancées'] },
-              { plan: 'Premium', price: '20€/mois', features: ['Toutes les fonctionnalités'] },
+              {
+                plan: 'Gratuit',
+                price: '0Dt',
+                period: 'pour toujours',
+                popular: false,
+                color: 'info',
+                features: [
+                  "Jusqu'à 3 projets",
+                  "Jusqu'à 5 utilisateurs",
+                  'Fonctionnalités de base',
+                  'Support communautaire',
+                  'Mises à jour gratuites'
+                ],
+                buttonText: 'Commencer gratuitement'
+              },
+              {
+                plan: 'Standard',
+                price: '10Dt',
+                period: 'par mois',
+                popular: true,
+                color: 'primary',
+                features: [
+                  'Projets illimités',
+                  "Jusqu'à 20 utilisateurs",
+                  'Fonctionnalités avancées',
+                  'Support par email',
+                  'Analyses de performance',
+                  "Intégration avec d'autres outils"
+                ],
+                buttonText: 'Essai gratuit de 14 jours'
+              },
+              {
+                plan: 'Premium',
+                price: '20Dt',
+                period: 'par mois',
+                popular: false,
+                color: 'dark',
+                features: [
+                  'Projets illimités',
+                  'Utilisateurs illimités',
+                  'Toutes les fonctionnalités',
+                  'Support prioritaire 24/7',
+                  'Analyses avancées avec IA',
+                  'API complète',
+                  'Personnalisation avancée'
+                ],
+                buttonText: 'Contacter les ventes'
+              },
             ].map((pricing, index) => (
               <CCol key={index} md={4} className="mb-4">
-                <div className="bg-light p-4 rounded shadow">
-                  <h5 className="fw-bold">{pricing.plan}</h5>
-                  <p className="display-4 fw-bold text-primary">{pricing.price}</p>
-                  <ul className="list-unstyled text-muted">
-                    {pricing.features.map((feature, i) => (
-                      <li key={i}>{feature}</li>
-                    ))}
-                  </ul>
-                  <CButton color="primary" href="/pricing" className="fw-bold">
-                    Choisir
-                  </CButton>
+                <div
+                  className={`pricing-card h-100 p-0 rounded-4 overflow-hidden shadow-sm hover-shadow transition-all ${pricing.popular ? 'border border-2 border-primary transform-scale' : ''}`}
+                  style={{
+                    backgroundColor: 'white',
+                    transform: pricing.popular ? 'scale(1.05)' : 'scale(1)',
+                    zIndex: pricing.popular ? 1 : 0,
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  {pricing.popular && (
+                    <div className="position-relative">
+                      <CBadge
+                        color="primary"
+                        shape="rounded-pill"
+                        className="position-absolute top-0 start-50 translate-middle px-3 py-2 fw-bold"
+                        style={{ fontSize: '0.8rem', boxShadow: '0 3px 6px rgba(0, 0, 0, 0.1)' }}
+                      >
+                        RECOMMANDÉ
+                      </CBadge>
+                    </div>
+                  )}
+
+                  <div className={`p-4 text-center bg-${pricing.color} bg-opacity-10 border-bottom border-${pricing.color}`}>
+                    <h4 className="fw-bold mb-0">{pricing.plan}</h4>
+                  </div>
+
+                  <div className="p-4 text-center">
+                    <div className="mb-4">
+                      <span className="display-4 fw-bold text-dark">{pricing.price}</span>
+                      <span className="text-muted fs-5">{pricing.period}</span>
+                    </div>
+
+                    <ul className="list-unstyled mb-4 pricing-features">
+                      {pricing.features.map((feature, i) => (
+                        <li key={i} className="py-2 d-flex align-items-center justify-content-center">
+                          <CIcon
+                            icon={cilCheck}
+                            className={`me-2 text-${pricing.color}`}
+                            style={{ width: '1rem', height: '1rem' }}
+                          />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <CButton
+                      color={pricing.popular ? 'primary' : pricing.color}
+                      size="lg"
+                      href="/pricing"
+                      className={`fw-bold w-100 ${pricing.popular ? 'btn-lg shadow-sm' : ''}`}
+                    >
+                      {pricing.buttonText}
+                    </CButton>
+                  </div>
                 </div>
               </CCol>
             ))}
           </CRow>
+
+          <div className="text-center mt-5">
+            <p className="text-muted mb-0">Besoin d'une solution personnalisée pour votre entreprise?</p>
+            <CButton color="link" href="/contact" className="fw-bold">
+              Contactez notre équipe commerciale
+            </CButton>
+          </div>
         </div>
       </section>
 
       {/* Dashboard Widgets */}
       <WidgetsDropdown className="mb-4" />
 
-      <CRow className="mb-4">
-        <CCol md={8}>
-          <CCard className="mb-4 dashboard-card">
-            <CCardHeader className="dashboard-card-header">
-              <h4 className="mb-0">
-                <CIcon icon={cilChart} className="me-2" />
-                Activité du projet
-              </h4>
-            </CCardHeader>
-            <CCardBody>
-              <MainChart />
-            </CCardBody>
-          </CCard>
-        </CCol>
-        <CCol md={4}>
-          <RecentActivityWidget limit={8} />
-        </CCol>
-      </CRow>
+      <section className="dashboard-section">
+        <div className="section-header">
+          <h2 className="section-title">
+            <CIcon icon={cilChart} className="icon" />
+            Activité du projet
+          </h2>
+        </div>
+        <CRow>
+          <CCol md={12}>
+            <CCard className="dashboard-card">
+              <CCardBody>
+                <MainChart />
+              </CCardBody>
+            </CCard>
+          </CCol>
+        </CRow>
+      </section>
 
       {/* Section Projets */}
-      <section style={{ padding: '2rem 0' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '1.5rem',
-            paddingBottom: '0.75rem',
-            borderBottom: '2px solid #ebedef',
-          }}
-        >
-          <h2
-            style={{
-              fontSize: '1.75rem',
-              fontWeight: '600',
-              color: '#3c4b64',
-              margin: 0,
-            }}
-          >
-            <CIcon icon={cilFolder} style={{ marginRight: '10px', color: '#321fdb' }} />
+      <section className="dashboard-section">
+        <div className="section-header">
+          <h2 className="section-title">
+            <CIcon icon={cilFolder} className="icon" />
             Vos projets en cours
           </h2>
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div className="d-flex gap-2">
             <button
-              onClick={fetchDashboardProjects}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '6px 12px',
-                backgroundColor: '#321fdb',
-                color: 'white',
-                borderRadius: '4px',
-                border: 'none',
-                textDecoration: 'none',
-                fontWeight: '500',
-                fontSize: '0.875rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#2a1ab9'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#321fdb'
-              }}
+              onClick={selectRandomProjects}
+              disabled={allProjects.length === 0}
+              className="btn-dashboard btn-success"
+              title="Sélectionner un projet aléatoire"
             >
-              Actualiser aléatoirement
+              Aléatoire
             </button>
             <Link
               to="/projects"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '6px 12px',
-                backgroundColor: '#ebedef',
-                color: '#3c4b64',
-                borderRadius: '4px',
-                textDecoration: 'none',
-                fontWeight: '500',
-                fontSize: '0.875rem',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#d8dbe0'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#ebedef'
-              }}
+              className="btn-dashboard btn-outline"
             >
               Tous les projets
               <CIcon icon={cilArrowRight} style={{ marginLeft: '6px' }} size="sm" />
             </Link>
           </div>
         </div>
-        <CRow className="mb-4">
+        <CRow>
           <CCol md={12}>
             <CCard className="dashboard-card">
-              <CCardHeader className="dashboard-card-header d-flex justify-content-between align-items-center">
-                <h4 className="mb-0">
-                  <CIcon icon={cilTask} className="me-2 text-primary" />
-                  Aperçu des projets
-                </h4>
-                <Link to="/projects" className="btn btn-sm btn-outline-primary">
-                  Tous les projets <CIcon icon={cilArrowRight} size="sm" />
-                </Link>
-              </CCardHeader>
               <CCardBody>
                 <CRow>
                   {loading ? (
@@ -368,68 +580,27 @@ const Dashboard = () => {
                         lg={4}
                         key={index}
                         className="mb-4"
-                        onMouseEnter={(e) => {
-                          e.currentTarget.querySelector('div').style.transform = 'translateY(-5px)'
-                          e.currentTarget.querySelector('div').style.boxShadow =
-                            '0 10px 20px rgba(0, 0, 0, 0.15)'
-                          e.currentTarget.querySelector('div').style.borderColor = '#1b8eb7'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.querySelector('div').style.transform = 'translateY(0)'
-                          e.currentTarget.querySelector('div').style.boxShadow =
-                            '0 4px 12px rgba(0, 0, 0, 0.1)'
-                          e.currentTarget.querySelector('div').style.borderColor = '#dee2e6'
-                        }}
                       >
-                        <div
-                          style={{
-                            padding: '1.5rem',
-                            borderRadius: '8px',
-                            height: '100%',
-                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                            transition: 'all 0.3s ease',
-                            border: '1px solid #dee2e6',
-                            backgroundColor: 'white',
-                          }}
-                        >
-                          <div className="d-flex justify-content-between align-items-center mb-3">
-                            <h5
-                              className="mb-0 text-truncate"
-                              title={project.title}
-                              style={{ maxWidth: '70%' }}
-                            >
-                              <CIcon icon={cilFolder} className="text-primary me-2" />
+                        <div className="project-card card-hover-effect">
+                          <div className="project-card-header">
+                            <h5 className="project-card-title text-truncate" title={project.title}>
+                              <CIcon icon={cilFolder} className="icon" />
                               {project.title}
                             </h5>
                             <CBadge
                               color={project.statusColor}
                               shape="rounded-pill"
-                              style={{
-                                padding: '0.5rem 1rem',
-                                fontSize: '0.8rem',
-                                fontWeight: '500',
-                                letterSpacing: '0.3px',
-                                boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
-                              }}
                             >
                               {project.status}
                             </CBadge>
                           </div>
-                          <div className="mb-4">
+
+                          <div className="project-card-content">
                             <div className="d-flex justify-content-between mb-1 align-items-center">
-                              <span
-                                style={{ fontWeight: '600', fontSize: '0.95rem', color: '#3c4b64' }}
-                              >
-                                Progression
-                              </span>
+                              <span className="fw-semibold">Progression</span>
                             </div>
-                            <div
-                              style={{
-                                position: 'relative',
-                                marginTop: '10px',
-                                marginBottom: '15px',
-                              }}
-                            >
+
+                            <div className="progress-container">
                               <CProgress
                                 value={project.progress}
                                 color={
@@ -440,64 +611,31 @@ const Dashboard = () => {
                                       : 'warning'
                                 }
                                 height={12}
-                                style={{
-                                  borderRadius: '6px',
-                                  boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)',
-                                }}
+                                className="progress-bar"
                               />
                               <div
+                                className="progress-label"
                                 style={{
-                                  position: 'absolute',
-                                  top: '-10px',
-                                  right: '0',
                                   backgroundColor:
                                     project.progress > 75
-                                      ? '#2eb85c'
+                                      ? 'var(--success-color)'
                                       : project.progress > 40
-                                        ? '#321fdb'
-                                        : '#f9b115',
-                                  color: 'white',
-                                  padding: '2px 8px',
-                                  borderRadius: '10px',
-                                  fontSize: '0.75rem',
-                                  fontWeight: 'bold',
-                                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                                        ? 'var(--primary-color)'
+                                        : 'var(--warning-color)',
                                 }}
                               >
                                 {project.progress}%
                               </div>
                             </div>
-                            <div
-                              style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                marginTop: '20px',
-                                padding: '10px',
-                                backgroundColor: '#f8f9fa',
-                                borderRadius: '6px',
-                                border: '1px solid #ebedef',
-                              }}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <div
-                                  style={{
-                                    backgroundColor: '#e6f7ff',
-                                    borderRadius: '50%',
-                                    width: '32px',
-                                    height: '32px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    marginRight: '8px',
-                                  }}
-                                >
-                                  <CIcon icon={cilTask} style={{ color: '#1890ff' }} size="sm" />
+
+                            <div className="project-stats">
+                              <div className="stat-item">
+                                <div className="stat-icon tasks">
+                                  <CIcon icon={cilTask} size="sm" />
                                 </div>
                                 <div>
-                                  <div style={{ fontSize: '0.75rem', color: '#8a93a2' }}>
-                                    Tâches
-                                  </div>
-                                  <div style={{ fontWeight: 'bold', color: '#3c4b64' }}>
+                                  <div className="stat-label">Tâches</div>
+                                  <div className="stat-value">
                                     {project.completedTasks !== undefined
                                       ? project.completedTasks
                                       : 0}
@@ -505,71 +643,25 @@ const Dashboard = () => {
                                   </div>
                                 </div>
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <div
-                                  style={{
-                                    backgroundColor: '#fff7e6',
-                                    borderRadius: '50%',
-                                    width: '32px',
-                                    height: '32px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    marginRight: '8px',
-                                  }}
-                                >
-                                  <CIcon
-                                    icon={cilCalendar}
-                                    style={{ color: '#fa8c16' }}
-                                    size="sm"
-                                  />
+
+                              <div className="stat-item">
+                                <div className="stat-icon deadline">
+                                  <CIcon icon={cilCalendar} size="sm" />
                                 </div>
                                 <div>
-                                  <div style={{ fontSize: '0.75rem', color: '#8a93a2' }}>
-                                    Échéance
-                                  </div>
-                                  <div style={{ fontWeight: 'bold', color: '#3c4b64' }}>
-                                    {project.dueDate}
-                                  </div>
+                                  <div className="stat-label">Échéance</div>
+                                  <div className="stat-value">{project.dueDate}</div>
                                 </div>
                               </div>
                             </div>
                           </div>
-                          <div
-                            style={{
-                              textAlign: 'center',
-                              marginTop: '20px',
-                              borderTop: '1px solid #ebedef',
-                              paddingTop: '15px',
-                            }}
-                          >
+
+                          <div className="project-card-footer">
                             <Link
                               to={`/projects/${project.id}`}
-                              style={{
-                                display: 'inline-block',
-                                padding: '8px 16px',
-                                backgroundColor: '#321fdb',
-                                color: 'white',
-                                borderRadius: '4px',
-                                textDecoration: 'none',
-                                fontWeight: '500',
-                                boxShadow: '0 2px 6px rgba(50, 31, 219, 0.3)',
-                                transition: 'all 0.2s ease',
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = '#2a1ab9'
-                                e.currentTarget.style.boxShadow = '0 4px 8px rgba(50, 31, 219, 0.4)'
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = '#321fdb'
-                                e.currentTarget.style.boxShadow = '0 2px 6px rgba(50, 31, 219, 0.3)'
-                              }}
+                              className="btn-dashboard btn-primary"
                             >
-                              <CIcon
-                                icon={cilArrowRight}
-                                style={{ marginRight: '6px' }}
-                                size="sm"
-                              />
+                              <CIcon icon={cilArrowRight} className="me-2" size="sm" />
                               Voir détails du projet
                             </Link>
                           </div>
@@ -585,240 +677,28 @@ const Dashboard = () => {
       </section>
 
       {/* Section Activités, Événements et Équipe */}
-      <section style={{ padding: '1rem 0' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '1.5rem',
-            paddingBottom: '0.75rem',
-            borderBottom: '2px solid #ebedef',
-          }}
-        >
-          <h2
-            style={{
-              fontSize: '1.75rem',
-              fontWeight: '600',
-              color: '#3c4b64',
-              margin: 0,
-            }}
-          >
-            <CIcon icon={cilPeople} style={{ marginRight: '10px', color: '#321fdb' }} />
+      <section className="dashboard-section">
+        <div className="section-header">
+          <h2 className="section-title">
+            <CIcon icon={cilPeople} className="icon" />
             Activités, Événements et Équipe
           </h2>
         </div>
 
-        <CRow className="mb-4">
+        <CRow>
           {/* Activités récentes */}
-          <CCol md={4}>
-            <CCard className="dashboard-card h-100 shadow-sm">
-              <CCardHeader className="dashboard-card-header d-flex justify-content-between align-items-center">
-                <h4 className="mb-0 fs-5">
-                  <CIcon icon={cilNotes} className="me-2 text-primary" />
-                  Activités récentes
-                </h4>
-                <CTooltip content="Dernières activités sur vos projets et tâches">
-                  <CIcon icon={cilInfo} className="text-muted" size="sm" />
-                </CTooltip>
-              </CCardHeader>
-              <CCardBody className="p-0">
-                <div className="activity-timeline">
-                  {[
-                    {
-                      user: 'Sophie Martin',
-                      action: 'a terminé la tâche',
-                      target: "Conception de la page d'accueil",
-                      time: 'Il y a 2 heures',
-                      icon: cilTask,
-                      color: 'success',
-                    },
-                    {
-                      user: 'Thomas Dubois',
-                      action: 'a commenté sur',
-                      target: 'Intégration API',
-                      time: 'Il y a 4 heures',
-                      icon: cilNotes,
-                      color: 'info',
-                    },
-                    {
-                      user: 'Emma Petit',
-                      action: 'a créé un nouveau projet',
-                      target: 'Refonte application mobile',
-                      time: 'Hier à 14:30',
-                      icon: cilFolder,
-                      color: 'primary',
-                    },
-                    {
-                      user: 'Lucas Bernard',
-                      action: 'a modifié la tâche',
-                      target: 'Analyse des données marketing',
-                      time: 'Hier à 10:15',
-                      icon: cilPencil,
-                      color: 'warning',
-                    },
-                  ].map((activity, index) => (
-                    <div
-                      key={index}
-                      className={`activity-item d-flex p-3 ${index < 3 ? 'border-bottom' : ''}`}
-                      style={{ transition: 'all 0.2s ease' }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#f8f9fa'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent'
-                      }}
-                    >
-                      <div
-                        className="activity-icon me-3 rounded-circle d-flex align-items-center justify-content-center"
-                        style={{
-                          width: '36px',
-                          height: '36px',
-                          backgroundColor: `var(--cui-${activity.color})`,
-                          flexShrink: 0,
-                        }}
-                      >
-                        <CIcon icon={activity.icon} className="text-white" size="sm" />
-                      </div>
-                      <div className="activity-content flex-grow-1">
-                        <div className="d-flex justify-content-between align-items-center mb-1">
-                          <div className="fw-bold">{activity.user}</div>
-                          <div className="text-muted small">{activity.time}</div>
-                        </div>
-                        <div>
-                          <span className="text-muted">{activity.action} </span>
-                          <span className="fw-medium">{activity.target}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="text-center p-3 border-top">
-                  <Link to="#" className="btn btn-sm btn-outline-primary">
-                    Voir toutes les activités
-                  </Link>
-                </div>
-              </CCardBody>
-            </CCard>
+          <CCol md={4} className="mb-4">
+            <RecentActivityListWidget limit={5} />
           </CCol>
 
           {/* Événements à venir */}
-          <CCol md={4}>
+          <CCol md={4} className="mb-4">
             <UpcomingEvents />
           </CCol>
 
           {/* Membres de l'équipe */}
-          <CCol md={4}>
-            <CCard className="dashboard-card h-100 shadow-sm">
-              <CCardHeader className="dashboard-card-header d-flex justify-content-between align-items-center">
-                <h4 className="mb-0 fs-5">
-                  <CIcon icon={cilPeople} className="me-2 text-primary" />
-                  Membres de l'équipe
-                </h4>
-                <Link to="#" className="btn btn-sm btn-outline-primary">
-                  <CIcon icon={cilUserFollow} className="me-1" size="sm" />
-                  Inviter
-                </Link>
-              </CCardHeader>
-              <CCardBody>
-                <div className="team-members">
-                  <CRow className="g-3">
-                    {[
-                      {
-                        name: 'Sophie Martin',
-                        role: 'Chef de projet',
-                        tasks: 8,
-                        status: 'En ligne',
-                        statusColor: 'success',
-                      },
-                      {
-                        name: 'Thomas Dubois',
-                        role: 'Développeur',
-                        tasks: 12,
-                        status: 'En ligne',
-                        statusColor: 'success',
-                      },
-                      {
-                        name: 'Emma Petit',
-                        role: 'Designer',
-                        tasks: 6,
-                        status: 'Absent',
-                        statusColor: 'danger',
-                      },
-                      {
-                        name: 'Lucas Bernard',
-                        role: 'Marketing',
-                        tasks: 5,
-                        status: 'Occupé',
-                        statusColor: 'warning',
-                      },
-                    ].map((member, index) => (
-                      <CCol md={12} lg={6} key={index}>
-                        <div
-                          className="team-member-card p-3 border rounded h-100"
-                          style={{
-                            transition: 'all 0.3s ease',
-                            boxShadow: '0 2px 5px rgba(0, 0, 0, 0.05)',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'translateY(-3px)'
-                            e.currentTarget.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.1)'
-                            e.currentTarget.style.borderColor = '#d8dbe0'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'translateY(0)'
-                            e.currentTarget.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.05)'
-                            e.currentTarget.style.borderColor = '#d8dbe0'
-                          }}
-                        >
-                          <div className="d-flex align-items-center">
-                            <div
-                              className="member-avatar me-3 text-white rounded-circle d-flex align-items-center justify-content-center"
-                              style={{
-                                width: '48px',
-                                height: '48px',
-                                background: 'linear-gradient(135deg, #321fdb 0%, #1f67db 100%)',
-                                boxShadow: '0 3px 6px rgba(50, 31, 219, 0.2)',
-                              }}
-                            >
-                              {member.name
-                                .split(' ')
-                                .map((n) => n[0])
-                                .join('')}
-                            </div>
-                            <div>
-                              <h6 className="mb-0 d-flex align-items-center">
-                                {member.name}
-                                <span
-                                  className="ms-2 rounded-circle"
-                                  style={{
-                                    width: '8px',
-                                    height: '8px',
-                                    backgroundColor: `var(--cui-${member.statusColor})`,
-                                    display: 'inline-block'
-                                  }}
-                                  title={member.status}
-                                ></span>
-                              </h6>
-                              <p className="text-muted small mb-0">{member.role}</p>
-                            </div>
-                          </div>
-                          <div className="d-flex justify-content-between align-items-center mt-3">
-                            <span className="badge bg-light text-dark">
-                              <CIcon icon={cilTask} size="sm" className="me-1" />
-                              {member.tasks} tâches
-                            </span>
-                            <Link to="#" className="btn btn-sm btn-ghost-primary">
-                              Profil
-                            </Link>
-                          </div>
-                        </div>
-                      </CCol>
-                    ))}
-                  </CRow>
-                </div>
-              </CCardBody>
-            </CCard>
+          <CCol md={4} className="mb-4">
+            <TeamMembersWidget />
           </CCol>
         </CRow>
       </section>

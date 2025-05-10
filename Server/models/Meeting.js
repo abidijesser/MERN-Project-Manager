@@ -54,7 +54,7 @@ const meetingSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: false,
-    }
+    },
   },
   { timestamps: true }
 );

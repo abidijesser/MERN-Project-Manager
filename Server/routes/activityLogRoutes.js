@@ -11,5 +11,6 @@ router.get("/project/:projectId", activityLogController.getProjectActivityLogs);
 router.get("/task/:taskId", activityLogController.getTaskActivityLogs);
 router.get("/user/:userId", activityLogController.getUserActivityLogs);
 router.get("/recent", activityLogController.getRecentActivityLogs);
+router.get("/comments", activityLogController.getRecentComments);
 
 module.exports = router;

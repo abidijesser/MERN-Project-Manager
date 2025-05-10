@@ -130,7 +130,7 @@ const AppHeader = () => {
         <div className="d-flex align-items-center justify-content-between w-100">
           <div className="d-flex align-items-center">
             <div className="app-logo me-4">
-              <span className="fw-bold fs-4 text-white">WebTrack</span>
+              <span className="fw-bold fs-4 text-white">worktrack</span>
             </div>
             <CHeaderToggler
               onClick={() => dispatch({ type: 'set', sidebarShow: !sidebarShow })}

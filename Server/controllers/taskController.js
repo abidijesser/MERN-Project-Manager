@@ -1,5 +1,6 @@
 const Task = require("../models/Task");
 const Project = require("../models/Project");
+const ActivityLog = require("../models/ActivityLog");
 const mongoose = require("mongoose");
 const notificationService = require("../services/notificationService");
 
@@ -93,6 +94,22 @@ const createTask = async (req, res) => {
       );
       console.log(`Added task ${task._id} to project ${project}`);
     }
+
+    // Create activity log for task creation
+    const activityLog = new ActivityLog({
+      user: req.user.id,
+      action: "CREATE",
+      entityType: "TASK",
+      entityId: task._id,
+      task: task._id,
+      project: project || null,
+      details: {
+        title: task.title,
+        description: task.description ? task.description.substring(0, 100) : "",
+      },
+    });
+    await activityLog.save();
+    console.log("Activity log created for task creation");
 
     // Créer une notification pour la nouvelle tâche
     await notificationService.createTaskNotification(
@@ -439,6 +456,23 @@ const updateTask = async (req, res) => {
       }
     }
 
+    // Create activity log for task update
+    const activityLog = new ActivityLog({
+      user: req.user.id,
+      action: "UPDATE",
+      entityType: "TASK",
+      entityId: task._id,
+      task: task._id,
+      project: task.project || null,
+      details: {
+        title: task.title,
+        description: task.description ? task.description.substring(0, 100) : "",
+        changes: Object.keys(updateData).join(", "),
+      },
+    });
+    await activityLog.save();
+    console.log("Activity log created for task update");
+
     // Créer une notification pour la mise à jour de la tâche
     await notificationService.createTaskNotification(
       task,
@@ -523,6 +557,21 @@ const deleteTask = async (req, res) => {
         `Removed task ${req.params.id} from project ${task.project._id}`
       );
     }
+
+    // Create activity log for task deletion
+    const activityLog = new ActivityLog({
+      user: req.user.id,
+      action: "DELETE",
+      entityType: "TASK",
+      entityId: req.params.id,
+      project: task.project ? task.project._id : null,
+      details: {
+        title: task.title,
+        description: task.description ? task.description.substring(0, 100) : "",
+      },
+    });
+    await activityLog.save();
+    console.log("Activity log created for task deletion");
 
     // Supprimer la tâche
     await Task.findByIdAndDelete(req.params.id);
@@ -688,6 +737,31 @@ const updateTaskStatus = async (req, res) => {
       );
       // Continuer même si la récupération échoue, car la mise à jour a déjà réussi
       updatedTask = existingTask;
+    }
+
+    // Create activity log for status change
+    try {
+      const activityLog = new ActivityLog({
+        user: req.user.id,
+        action: "STATUS_CHANGE",
+        entityType: "TASK",
+        entityId: updatedTask._id,
+        task: updatedTask._id,
+        project: updatedTask.project || null,
+        details: {
+          title: updatedTask.title,
+          oldStatus: existingTask.status,
+          newStatus: status,
+        },
+      });
+      await activityLog.save();
+      console.log("updateTaskStatus - Activity log created for status change");
+    } catch (activityError) {
+      console.error(
+        "updateTaskStatus - Error creating activity log:",
+        activityError
+      );
+      // Continue even if activity log creation fails
     }
 
     // Créer une notification (gérer les erreurs sans interrompre le processus)

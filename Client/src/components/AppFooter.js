@@ -22,7 +22,7 @@ const AppFooter = () => {
         <CContainer fluid="lg">
           <CRow className="align-items-start">
             <CCol md={4} className="mb-4 mb-md-0">
-              <h4 className="text-white mb-3 footer-title">WebTrack</h4>
+              <h4 className="text-white mb-3 footer-title">worktrack</h4>
               <p className="text-white-50 mb-0">
                 Streamline your project management with our powerful and intuitive platform.
               </p>
@@ -39,7 +39,7 @@ const AppFooter = () => {
                 <div className="footer-icon-wrapper me-3">
                   <CIcon icon={cilEnvelopeOpen} className="footer-icon" />
                 </div>
-                <span className="text-white-50">support@webtrack.com</span>
+                <span className="text-white-50">support@worktrack.com</span>
               </div>
               <div className="d-flex align-items-center">
                 <div className="footer-icon-wrapper me-3">
@@ -69,7 +69,7 @@ const AppFooter = () => {
         <CContainer fluid="lg">
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-center">
             <div className="mb-3 mb-md-0">
-              <span className="text-dark">&copy; {currentYear} WebTrack. All rights reserved.</span>
+              <span className="text-dark">&copy; {currentYear} worktrack. All rights reserved.</span>
             </div>
             <div className="d-flex gap-4">
               <a href="#" className="footer-link-dark">

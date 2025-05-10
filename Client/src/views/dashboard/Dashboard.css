@@ -1,48 +1,197 @@
 /* Styles pour le tableau de bord */
 
+/* Animations pour la section hero */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Styles pour la section hero */
+.hero-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section h1 {
+  animation: fadeInUp 1s ease-out forwards;
+}
+
+.hero-section p {
+  animation: fadeInUp 1.2s ease-out forwards;
+}
+
+/* Les styles des boutons ont été supprimés car les boutons ont été retirés */
+
+.hero-section img {
+  animation: float 6s ease-in-out infinite;
+}
+
+.hero-section .circle-decoration {
+  animation: pulse 8s ease-in-out infinite;
+}
+
+/* Variables CSS pour la cohérence */
+:root {
+  --primary-color: #321fdb;
+  --primary-hover: #2a1ab9;
+  --success-color: #2eb85c;
+  --success-hover: #27a04a;
+  --info-color: #39f;
+  --warning-color: #f9b115;
+  --danger-color: #e55353;
+  --light-color: #ebedef;
+  --dark-color: #3c4b64;
+  --text-muted: #8a93a2;
+  --border-color: #ebedef;
+  --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  --card-shadow-hover: 0 5px 15px rgba(0, 0, 0, 0.1);
+  --transition-speed: 0.3s;
+  --border-radius: 8px;
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 3rem;
+}
+
 /* Style général pour le tableau de bord */
 .dashboard-page {
-  padding: 1.5rem 0;
+  padding: var(--spacing-md) 0;
 }
 
 /* Style pour les cartes du tableau de bord */
 .dashboard-card {
-  border-radius: 8px !important;
+  border-radius: var(--border-radius) !important;
   overflow: hidden;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: all var(--transition-speed) ease;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border-color);
+  height: 100%;
 }
 
 .dashboard-card:hover {
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--card-shadow-hover);
+  border-color: rgba(50, 31, 219, 0.3);
 }
 
 .dashboard-card-header {
   background-color: #fff;
-  border-bottom: 1px solid #ebedef;
-  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  padding: var(--spacing-sm) var(--spacing-md);
+  display: flex;
+  align-items: center;
+}
+
+/* Classes utilitaires pour la cohérence */
+.card-hover-effect {
+  transition: all var(--transition-speed) ease;
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--card-shadow-hover);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--dark-color);
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.section-title .icon {
+  margin-right: 10px;
+  color: var(--primary-color);
 }
 
 /* Style pour les activités récentes */
 .activity-timeline {
-  max-height: 400px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-.activity-timeline::-webkit-scrollbar {
+/* Scrollbar styling */
+::-webkit-scrollbar {
   width: 6px;
 }
 
-.activity-timeline::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: #f1f1f1;
 }
 
-.activity-timeline::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background: #d8dbe0;
   border-radius: 3px;
 }
 
-.activity-timeline::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
   background: #a9aeb6;
 }
 
@@ -69,19 +218,49 @@
   font-size: 1rem;
 }
 
-/* Style pour les titres de section */
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #3c4b64;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #ebedef;
+/* Style pour le sélecteur de projet dans le widget des membres */
+.project-selector {
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.project-selector select {
+  border-radius: 6px;
+  border: 1px solid #d8dbe0;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.project-selector select:focus {
+  border-color: #321fdb;
+  box-shadow: 0 0 0 0.2rem rgba(50, 31, 219, 0.25);
+}
+
+/* Animation pour le chargement des membres */
+.members-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+  color: #8a93a2;
+}
+
+/* Style pour l'état vide des membres */
+.no-members {
+  text-align: center;
+  padding: 2rem 0;
+  color: #8a93a2;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 1rem;
 }
 
 /* Style pour les sections du tableau de bord */
 .dashboard-section {
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md) 0;
 }
 
 /* Animation pour les barres de progression */
@@ -91,24 +270,78 @@
 
 /* Effet de survol pour les cartes de projet */
 .hover-shadow {
-  transition: all 0.3s ease;
+  transition: all var(--transition-speed) ease;
 }
 
 .hover-shadow:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
-  border-color: #1b8eb7 !important;
+  border-color: var(--primary-color) !important;
 }
 
 /* Transition pour tous les éléments */
 .transition-all {
-  transition: all 0.3s ease;
+  transition: all var(--transition-speed) ease;
 }
 
 /* Style pour les badges arrondis */
 .badge.rounded-pill {
   font-weight: 500;
   letter-spacing: 0.3px;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Styles pour les boutons */
+.btn-dashboard {
+  padding: 0.5rem 1.25rem;
+  border-radius: 30px;
+  font-weight: 500;
+  transition: all var(--transition-speed) ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-dashboard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-dashboard.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-dashboard.btn-primary:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.btn-dashboard.btn-success {
+  background-color: var(--success-color);
+  border-color: var(--success-color);
+}
+
+.btn-dashboard.btn-success:hover {
+  background-color: var(--success-hover);
+  border-color: var(--success-hover);
+}
+
+.btn-dashboard.btn-outline {
+  background-color: transparent;
+  color: var(--dark-color);
+  border: 1px solid var(--border-color);
+}
+
+.btn-dashboard.btn-outline:hover {
+  background-color: var(--light-color);
+  border-color: var(--border-color);
+}
+
+.btn-dashboard .icon {
+  margin-right: 0.5rem;
 }
 
 /* Style pour l'état vide */
@@ -129,7 +362,120 @@
   display: flex;
   flex-direction: column;
   background-color: #fff;
-  transition: all 0.3s ease;
+  transition: all var(--transition-speed) ease;
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border-color);
+  height: 100%;
+  padding: var(--spacing-md);
+}
+
+.project-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--card-shadow-hover);
+  border-color: rgba(50, 31, 219, 0.3);
+}
+
+.project-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.project-card-title {
+  font-weight: 600;
+  color: var(--dark-color);
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.project-card-title .icon {
+  margin-right: 8px;
+  color: var(--primary-color);
+}
+
+.project-card-content {
+  flex: 1;
+  margin-bottom: var(--spacing-sm);
+}
+
+.project-card-footer {
+  border-top: 1px solid var(--border-color);
+  padding-top: var(--spacing-sm);
+  text-align: center;
+}
+
+/* Style pour les statistiques de projet */
+.project-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: #f8f9fa;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+}
+
+.stat-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+}
+
+.stat-icon.tasks {
+  background-color: #e6f7ff;
+  color: #1890ff;
+}
+
+.stat-icon.deadline {
+  background-color: #fff7e6;
+  color: #fa8c16;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.stat-value {
+  font-weight: bold;
+  color: var(--dark-color);
+}
+
+/* Style pour les barres de progression */
+.progress-container {
+  position: relative;
+  margin-top: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+}
+
+.progress-bar {
+  height: 12px;
+  border-radius: 6px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.progress-label {
+  position: absolute;
+  top: -10px;
+  right: 0;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Style pour les titres de projet tronqués */
@@ -143,6 +489,18 @@
 /* Responsive design pour les petits écrans */
 @media (max-width: 768px) {
   .project-card {
-    margin-bottom: 1rem;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .section-header .actions {
+    margin-top: var(--spacing-xs);
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
   }
 }

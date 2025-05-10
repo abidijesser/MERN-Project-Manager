@@ -14,6 +14,8 @@ import {
   CSpinner,
   CFormInput,
   CAlert,
+  CPagination,
+  CPaginationItem,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilX } from '@coreui/icons'
@@ -28,6 +30,8 @@ const TaskList = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -54,7 +58,19 @@ const TaskList = () => {
       )
       setFilteredTasks(filtered)
     }
+    // Reset to first page when search query changes
+    setCurrentPage(1)
   }, [searchQuery, tasks])
+
+  // Get current tasks for pagination
+  const indexOfLastTask = currentPage * itemsPerPage
+  const indexOfFirstTask = indexOfLastTask - itemsPerPage
+  const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask)
+
+  // Change page
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber)
+  }
 
   const fetchTasks = async () => {
     try {
@@ -211,7 +227,7 @@ const TaskList = () => {
                 </CTableDataCell>
               </CTableRow>
             ) : (
-              filteredTasks.map((task) => (
+              currentTasks.map((task) => (
                 <CTableRow key={task._id}>
                   <CTableDataCell>{task.title}</CTableDataCell>
                   <CTableDataCell>{task.project?.projectName || 'Non assigné'}</CTableDataCell>
@@ -304,6 +320,37 @@ const TaskList = () => {
             )}
           </CTableBody>
         </CTable>
+
+        {/* Pagination */}
+        {filteredTasks.length > itemsPerPage && (
+          <CPagination className="mt-4 justify-content-center" aria-label="Pagination des tâches">
+            <CPaginationItem
+              aria-label="Précédent"
+              disabled={currentPage === 1}
+              onClick={() => handlePageChange(currentPage - 1)}
+            >
+              <span aria-hidden="true">&laquo;</span>
+            </CPaginationItem>
+
+            {[...Array(Math.ceil(filteredTasks.length / itemsPerPage)).keys()].map((number) => (
+              <CPaginationItem
+                key={number + 1}
+                active={currentPage === number + 1}
+                onClick={() => handlePageChange(number + 1)}
+              >
+                {number + 1}
+              </CPaginationItem>
+            ))}
+
+            <CPaginationItem
+              aria-label="Suivant"
+              disabled={currentPage === Math.ceil(filteredTasks.length / itemsPerPage)}
+              onClick={() => handlePageChange(currentPage + 1)}
+            >
+              <span aria-hidden="true">&raquo;</span>
+            </CPaginationItem>
+          </CPagination>
+        )}
       </CCardBody>
     </CCard>
   )
