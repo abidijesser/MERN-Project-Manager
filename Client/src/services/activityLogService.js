@@ -36,9 +36,16 @@ export const getUserActivityLogs = async (userId, limit = 50, skip = 0) => {
 }
 
 // Get recent activity logs for dashboard
-export const getRecentActivityLogs = async (limit = 10) => {
+export const getRecentActivityLogs = async (limit = 20, skip = 0, action = null) => {
   try {
-    const response = await axios.get(`${API_URL}/recent?limit=${limit}`)
+    let url = `${API_URL}/recent?limit=${limit}&skip=${skip}`
+
+    // Add action filter if provided
+    if (action && action !== 'all') {
+      url += `&action=${action}`
+    }
+
+    const response = await axios.get(url)
     return response.data
   } catch (error) {
     console.error('Error getting recent activity logs:', error)

@@ -16,7 +16,9 @@ const EditProfile = () => {
   const [user, setUser] = useState({
     name: '',
     email: '',
+    skills: [],
   })
+  const [newSkill, setNewSkill] = useState('')
   const [error, setError] = useState('')
   const { id } = useParams()
   const navigate = useNavigate()
@@ -40,6 +42,30 @@ const EditProfile = () => {
       ...prevState,
       [name]: value,
     }))
+  }
+
+  const handleAddSkill = () => {
+    if (newSkill.trim() !== '' && !user.skills.includes(newSkill.trim())) {
+      setUser((prevState) => ({
+        ...prevState,
+        skills: [...prevState.skills, newSkill.trim()],
+      }))
+      setNewSkill('')
+    }
+  }
+
+  const handleRemoveSkill = (skillToRemove) => {
+    setUser((prevState) => ({
+      ...prevState,
+      skills: prevState.skills.filter((skill) => skill !== skillToRemove),
+    }))
+  }
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleAddSkill()
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -81,6 +107,46 @@ const EditProfile = () => {
                   onChange={handleChange}
                 />
               </div>
+
+              <div className="mb-3">
+                <label className="form-label">Compétences</label>
+                <div className="d-flex mb-2">
+                  <CFormInput
+                    type="text"
+                    placeholder="Ajouter une compétence"
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    className="me-2"
+                  />
+                  <CButton type="button" color="success" onClick={handleAddSkill}>
+                    Ajouter
+                  </CButton>
+                </div>
+
+                {user.skills && user.skills.length > 0 ? (
+                  <div className="d-flex flex-wrap gap-2 mt-2">
+                    {user.skills.map((skill, index) => (
+                      <div
+                        key={index}
+                        className="bg-light rounded-pill px-3 py-1 d-flex align-items-center"
+                      >
+                        <span>{skill}</span>
+                        <button
+                          type="button"
+                          className="btn-close ms-2"
+                          style={{ fontSize: '0.7rem' }}
+                          onClick={() => handleRemoveSkill(skill)}
+                          aria-label="Remove"
+                        ></button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-muted">Aucune compétence ajoutée</div>
+                )}
+              </div>
+
               <CButton type="submit" color="primary">
                 Save Changes
               </CButton>

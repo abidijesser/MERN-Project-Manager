@@ -152,22 +152,42 @@
 
 /* Pagination styles */
 .activity-pagination {
-  margin-top: 1.5rem;
+  margin-top: 2rem !important;
   display: flex;
   justify-content: center;
+  padding-bottom: 1rem;
 }
 
 .activity-pagination .page-link {
-  border-radius: 50px;
+  border-radius: 8px;
   margin: 0 0.25rem;
   padding: 0.5rem 0.75rem;
   color: #321fdb;
   border: 1px solid #d8dbe0;
+  transition: all 0.2s ease;
+  min-width: 40px;
+  text-align: center;
+}
+
+.activity-pagination .page-link:hover {
+  background-color: #f0f0f0;
+  border-color: #321fdb;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .activity-pagination .page-item.active .page-link {
   background-color: #321fdb;
   border-color: #321fdb;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(50, 31, 219, 0.3);
+}
+
+.activity-pagination .page-item.disabled .page-link {
+  color: #8a93a2;
+  background-color: #f8f9fa;
+  border-color: #ebedef;
 }
 
 /* Responsive adjustments */
@@ -175,20 +195,20 @@
   .activity-card-header h4 {
     font-size: 1.2rem !important;
   }
-  
+
   .activity-item {
     padding: 1rem !important;
   }
-  
+
   .activity-icon {
     width: 36px !important;
     height: 36px !important;
   }
-  
+
   .activity-user {
     font-size: 1rem;
   }
-  
+
   .activity-text {
     font-size: 0.9rem;
   }

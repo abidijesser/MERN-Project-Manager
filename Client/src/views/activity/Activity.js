@@ -61,35 +61,27 @@ const Activity = () => {
       setLoading(true)
       setError(null)
 
-      // Fetch all activity logs
-      const response = await getRecentActivityLogs(100) // Increased limit to ensure we get enough data
+      // Fetch activity logs with pagination and filtering
+      const response = await getRecentActivityLogs(pagination.limit, pagination.skip, filter)
 
       console.log('Activity logs response:', response)
       console.log('Activity logs data:', response.activityLogs)
+      console.log('Pagination info:', response.pagination)
 
       if (response.success) {
-        // Filter activities based on the selected filter
-        let filteredActivities = response.activityLogs
-        if (filter !== 'all') {
-          filteredActivities = response.activityLogs.filter(
-            (activity) => activity.action === filter,
-          )
+        setActivities(response.activityLogs)
+
+        // Update pagination with server response
+        if (response.pagination) {
+          setPagination(response.pagination)
         }
 
         // Log the activity types to help with debugging
         const activityTypes = [...new Set(response.activityLogs.map((a) => a.action))]
         console.log('All activity types in data:', activityTypes)
         console.log('Current filter:', filter)
-        console.log('Filtered activities count:', filteredActivities.length)
-        console.log('Filtered activity types:', [
-          ...new Set(filteredActivities.map((a) => a.action)),
-        ])
-
-        setActivities(filteredActivities)
-        setPagination({
-          ...pagination,
-          total: response.activityLogs.length,
-        })
+        console.log('Activities count:', response.activityLogs.length)
+        console.log('Total activities:', response.pagination?.total || 'unknown')
       } else {
         setError('Failed to load activity logs')
       }
@@ -109,6 +101,11 @@ const Activity = () => {
   }
 
   const handleFilterChange = (e) => {
+    // Reset pagination when filter changes
+    setPagination((prev) => ({
+      ...prev,
+      skip: 0,
+    }))
     setFilter(e.target.value)
   }
 
@@ -247,10 +244,21 @@ const Activity = () => {
 
               {loading ? (
                 <div className="text-center my-5">
-                  <CSpinner />
+                  <CSpinner color="primary" />
+                  <p className="mt-3 text-muted">Chargement des activités...</p>
                 </div>
               ) : activities.length === 0 ? (
-                <div className="text-center text-muted my-5">Aucune activité trouvée</div>
+                <div className="text-center text-muted my-5">
+                  <div className="mb-3">
+                    <CIcon icon={filter !== 'all' ? getActivityIcon(filter) : cilNotes} size="xl" />
+                  </div>
+                  <h5>Aucune activité trouvée</h5>
+                  <p className="text-muted">
+                    {filter !== 'all'
+                      ? "Essayez de changer le filtre pour voir d'autres types d'activités"
+                      : "Aucune activité n'a été enregistrée pour le moment"}
+                  </p>
+                </div>
               ) : (
                 <>
                   <div className="activity-timeline">
@@ -300,19 +308,95 @@ const Activity = () => {
                   </div>
 
                   {pagination.total > pagination.limit && (
-                    <CPagination className="activity-pagination">
-                      {Array.from(
-                        { length: Math.ceil(pagination.total / pagination.limit) },
-                        (_, i) => (
-                          <CPaginationItem
-                            key={i}
-                            active={i === pagination.skip / pagination.limit}
-                            onClick={() => handlePageChange(i + 1)}
-                          >
-                            {i + 1}
-                          </CPaginationItem>
-                        ),
-                      )}
+                    <CPagination
+                      className="activity-pagination justify-content-center mt-4"
+                      aria-label="Pagination des activités"
+                    >
+                      <CPaginationItem
+                        aria-label="Précédent"
+                        disabled={pagination.skip === 0}
+                        onClick={() =>
+                          handlePageChange(Math.floor(pagination.skip / pagination.limit))
+                        }
+                      >
+                        <span aria-hidden="true">&laquo;</span>
+                      </CPaginationItem>
+
+                      {(() => {
+                        const totalPages = Math.ceil(pagination.total / pagination.limit)
+                        const currentPage = Math.floor(pagination.skip / pagination.limit) + 1
+
+                        // Determine which page numbers to show
+                        let startPage = Math.max(1, currentPage - 2)
+                        let endPage = Math.min(totalPages, startPage + 4)
+
+                        // Adjust if we're near the end
+                        if (endPage - startPage < 4) {
+                          startPage = Math.max(1, endPage - 4)
+                        }
+
+                        const pages = []
+
+                        // Add first page and ellipsis if needed
+                        if (startPage > 1) {
+                          pages.push(
+                            <CPaginationItem key={1} onClick={() => handlePageChange(1)}>
+                              1
+                            </CPaginationItem>,
+                          )
+                          if (startPage > 2) {
+                            pages.push(
+                              <CPaginationItem key="ellipsis1" disabled>
+                                ...
+                              </CPaginationItem>,
+                            )
+                          }
+                        }
+
+                        // Add page numbers
+                        for (let i = startPage; i <= endPage; i++) {
+                          pages.push(
+                            <CPaginationItem
+                              key={i}
+                              active={i === currentPage}
+                              onClick={() => handlePageChange(i)}
+                            >
+                              {i}
+                            </CPaginationItem>,
+                          )
+                        }
+
+                        // Add last page and ellipsis if needed
+                        if (endPage < totalPages) {
+                          if (endPage < totalPages - 1) {
+                            pages.push(
+                              <CPaginationItem key="ellipsis2" disabled>
+                                ...
+                              </CPaginationItem>,
+                            )
+                          }
+                          pages.push(
+                            <CPaginationItem
+                              key={totalPages}
+                              onClick={() => handlePageChange(totalPages)}
+                            >
+                              {totalPages}
+                            </CPaginationItem>,
+                          )
+                        }
+
+                        return pages
+                      })()}
+
+                      <CPaginationItem
+                        aria-label="Suivant"
+                        disabled={pagination.skip + pagination.limit >= pagination.total}
+                        onClick={() =>
+                          handlePageChange(Math.floor(pagination.skip / pagination.limit) + 2)
+                        }
+                      >
+                        <span aria-hidden="true">&raquo;</span>
+                      </CPaginationItem>
                     </CPagination>
                   )}
                 </>
