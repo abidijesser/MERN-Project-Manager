@@ -11,19 +11,15 @@ import {
   CInputGroup,
   CInputGroupText,
   CRow,
-  CFormSelect,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilLockLocked, cilUser } from '@coreui/icons'
-import axios from 'axios'
-import { toast } from 'react-toastify'
 
 const Register = () => {
   const [name, setname] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [role, setRole] = useState('Client')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
@@ -31,48 +27,41 @@ const Register = () => {
   const handleRegister = async (e) => {
     e.preventDefault()
 
-    // Validation des champs
-    if (!name || !email || !password || !confirmPassword) {
-      setError('Tous les champs sont obligatoires')
-      toast.error('Tous les champs sont obligatoires')
-      return
-    }
-
     if (password !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas')
-      toast.error('Les mots de passe ne correspondent pas')
-      return
-    }
-
-    if (password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères')
-      toast.error('Le mot de passe doit contenir au moins 6 caractères')
+      setError('Passwords do not match')
       return
     }
 
     setLoading(true)
     setError('')
 
-    const userData = { name, email, password, role }
+    const userData = { name, email, password }
+    console.log('Attempting to register with:', { name, email })
 
     try {
-      console.log('Envoi des données:', { ...userData, password: '***' })
-      const response = await axios.post('http://localhost:3001/api/auth/register', userData)
-      console.log('Réponse du serveur:', response.data)
+      console.log('Sending registration request to: http://localhost:3001/api/auth/register')
+      const response = await fetch('http://localhost:3001/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      })
 
-      if (response.data.success) {
-        toast.success('Inscription réussie !')
-        navigate('/login')
+      console.log('Registration response status:', response.status)
+      const data = await response.json()
+      console.log('Registration response data:', data)
+
+      if (!response.ok) {
+        setError(data.error || 'Registration failed')
       } else {
-        const errorMsg = response.data.error || 'Erreur lors de l\'inscription'
-        setError(errorMsg)
-        toast.error(errorMsg)
+        // We're not storing the token anymore - user needs to log in manually
+        console.log('Registration successful, redirecting to login')
+        navigate('/login')
       }
     } catch (err) {
-      console.error('Erreur détaillée:', err)
-      const errorMessage = err.response?.data?.error || err.response?.data?.details || 'Erreur lors de l\'inscription'
-      setError(errorMessage)
-      toast.error(errorMessage)
+      console.error('Registration error:', err)
+      setError('An error occurred during registration')
     } finally {
       setLoading(false)
     }
@@ -94,11 +83,10 @@ const Register = () => {
                       <CIcon icon={cilUser} />
                     </CInputGroupText>
                     <CFormInput
-                      placeholder="Nom"
+                      placeholder="name"
                       autoComplete="name"
                       value={name}
                       onChange={(e) => setname(e.target.value)}
-                      required
                     />
                   </CInputGroup>
                   <CInputGroup className="mb-3">
@@ -108,7 +96,6 @@ const Register = () => {
                       autoComplete="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      required
                     />
                   </CInputGroup>
                   <CInputGroup className="mb-3">
@@ -117,40 +104,27 @@ const Register = () => {
                     </CInputGroupText>
                     <CFormInput
                       type="password"
-                      placeholder="Mot de passe"
+                      placeholder="Password"
                       autoComplete="new-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      required
                     />
                   </CInputGroup>
-                  <CInputGroup className="mb-3">
+                  <CInputGroup className="mb-4">
                     <CInputGroupText>
                       <CIcon icon={cilLockLocked} />
                     </CInputGroupText>
                     <CFormInput
                       type="password"
-                      placeholder="Confirmer le mot de passe"
+                      placeholder="Repeat password"
                       autoComplete="new-password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
                     />
-                  </CInputGroup>
-                  <CInputGroup className="mb-4">
-                    <CInputGroupText>Role</CInputGroupText>
-                    <CFormSelect
-                      value={role}
-                      onChange={(e) => setRole(e.target.value)}
-                      required
-                    >
-                      <option value="Client">Client</option>
-                      <option value="Admin">Admin</option>
-                    </CFormSelect>
                   </CInputGroup>
                   <div className="d-grid">
                     <CButton color="success" type="submit" disabled={loading}>
-                      {loading ? 'Inscription en cours...' : 'Créer un compte'}
+                      {loading ? 'Registering...' : 'Create Account'}
                     </CButton>
                   </div>
                 </CForm>

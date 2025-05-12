@@ -1,36 +1,21 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 
-// Initialize the Google Generative AI with your API key and timeout options
-const createGenAIInstance = (apiVersion) => {
-  try {
-    return new GoogleGenerativeAI(process.env.GEMINI_API_KEY, {
-      apiVersion: apiVersion,
-      timeout: 30000, // 30 seconds timeout for API requests
-    });
-  } catch (error) {
-    console.error(`Error creating GenAI instance with ${apiVersion} API:`, error);
-    return null;
-  }
-};
+// Initialize the Google Generative AI with your API key
+// Créer deux instances, une pour chaque version de l'API
+const genAIv1 = new GoogleGenerativeAI(process.env.GEMINI_API_KEY, {
+  apiVersion: "v1"
+});
 
-// Create instances for each API version with error handling
-const genAIv1 = createGenAIInstance("v1");
-const genAIv1beta = createGenAIInstance("v1beta");
+const genAIv1beta = new GoogleGenerativeAI(process.env.GEMINI_API_KEY, {
+  apiVersion: "v1beta"
+});
 
-// Default instance
+// Instance par défaut
 const genAI = genAIv1;
 
-// Fonction pour obtenir un modèle Gemini disponible avec gestion des erreurs réseau
+// Fonction pour obtenir un modèle Gemini disponible
 const getAvailableModel = async () => {
-  // Vérifier si les instances d'API sont disponibles
-  if (!genAIv1 && !genAIv1beta) {
-    return {
-      success: false,
-      error: 'Failed to initialize Gemini API clients. Check your API key and network connection.'
-    };
-  }
-
   // Liste des modèles à essayer dans l'ordre (mise à jour avec les modèles les plus récents)
   const modelOptions = [
     // Modèles Gemini 1.5
@@ -53,78 +38,35 @@ const getAvailableModel = async () => {
     'models/chat-bison-001'
   ];
 
-  // Fonction pour tester un modèle avec gestion des timeouts
-  const testModel = async (apiInstance, modelName, apiVersion) => {
-    if (!apiInstance) {
-      console.log(`API instance for ${apiVersion} is not available`);
-      return null;
-    }
-
-    try {
-      console.log(`Trying model with ${apiVersion} API: ${modelName}`);
-
-      // Utiliser Promise.race pour implémenter un timeout supplémentaire
-      const modelPromise = new Promise(async (resolve, reject) => {
-        try {
-          const model = apiInstance.getGenerativeModel({
-            model: modelName,
-            generationConfig: {
-              maxOutputTokens: 100, // Limiter pour le test
-            }
-          });
-
-          // Tester le modèle avec une requête simple
-          await model.generateContent('Test');
-          console.log(`Model ${modelName} is available with ${apiVersion} API`);
-          resolve({ success: true, model, modelName, apiVersion });
-        } catch (error) {
-          reject(error);
-        }
-      });
-
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error(`Request timed out for model ${modelName}`)), 15000);
-      });
-
-      return await Promise.race([modelPromise, timeoutPromise]);
-    } catch (error) {
-      console.error(`Model ${modelName} with ${apiVersion} API failed:`, error.message);
-      return null;
-    }
-  };
-
   // Essayer d'abord avec l'API v1
-  if (genAIv1) {
-    for (const modelName of modelOptions) {
-      try {
-        const result = await testModel(genAIv1, modelName, 'v1');
-        if (result && result.success) {
-          return result;
-        }
-      } catch (error) {
-        console.error(`Error testing ${modelName} with v1 API:`, error.message);
-      }
+  for (const modelName of modelOptions) {
+    try {
+      console.log(`Trying model with v1 API: ${modelName}`);
+      const model = genAIv1.getGenerativeModel({ model: modelName });
+      // Tester le modèle avec une requête simple
+      await model.generateContent('Test');
+      console.log(`Model ${modelName} is available with v1 API`);
+      return { success: true, model, modelName, apiVersion: 'v1' };
+    } catch (error) {
+      console.error(`Model ${modelName} with v1 API failed:`, error.message);
     }
   }
 
   // Si aucun modèle ne fonctionne avec v1, essayer avec v1beta
-  if (genAIv1beta) {
-    for (const modelName of modelOptions) {
-      try {
-        const result = await testModel(genAIv1beta, modelName, 'v1beta');
-        if (result && result.success) {
-          return result;
-        }
-      } catch (error) {
-        console.error(`Error testing ${modelName} with v1beta API:`, error.message);
-      }
+  for (const modelName of modelOptions) {
+    try {
+      console.log(`Trying model with v1beta API: ${modelName}`);
+      const model = genAIv1beta.getGenerativeModel({ model: modelName });
+      // Tester le modèle avec une requête simple
+      await model.generateContent('Test');
+      console.log(`Model ${modelName} is available with v1beta API`);
+      return { success: true, model, modelName, apiVersion: 'v1beta' };
+    } catch (error) {
+      console.error(`Model ${modelName} with v1beta API failed:`, error.message);
     }
   }
 
-  return {
-    success: false,
-    error: 'No available Gemini models found with either v1 or v1beta API. This may be due to network connectivity issues.'
-  };
+  return { success: false, error: 'No available Gemini models found with either v1 or v1beta API' };
 };
 
 // Vérifier que la clé API est configurée

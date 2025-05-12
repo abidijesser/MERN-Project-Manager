@@ -1,65 +1,216 @@
 import React, { useState, useEffect } from 'react'
-import { CCard, CCardBody, CCardHeader, CButton, CTable, CTableBody, CTableHead, CTableRow, CTableHeaderCell, CTableDataCell } from '@coreui/react'
+import {
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CButton,
+  CTable,
+  CTableBody,
+  CTableHead,
+  CTableRow,
+  CTableHeaderCell,
+  CTableDataCell,
+  CBadge,
+  CSpinner,
+  CFormInput,
+  CAlert,
+  CPagination,
+  CPaginationItem,
+} from '@coreui/react'
+import CIcon from '@coreui/icons-react'
+import { cilX } from '@coreui/icons'
 import { useNavigate } from 'react-router-dom'
-import axios from '../../utils/axios'
+import axios from 'axios'
 import { toast } from 'react-toastify'
+import { getUserTasks } from '../../services/taskService'
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([])
+  const [filteredTasks, setFilteredTasks] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
   const navigate = useNavigate()
 
   useEffect(() => {
     fetchTasks()
   }, [])
 
+  // Filter tasks based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredTasks(tasks)
+    } else {
+      const lowercasedQuery = searchQuery.toLowerCase()
+      const filtered = tasks.filter(
+        (task) =>
+          (task.title && task.title.toLowerCase().includes(lowercasedQuery)) ||
+          (task.project &&
+            task.project.projectName &&
+            task.project.projectName.toLowerCase().includes(lowercasedQuery)) ||
+          (task.assignedTo &&
+            task.assignedTo.name &&
+            task.assignedTo.name.toLowerCase().includes(lowercasedQuery)) ||
+          (task.status && task.status.toLowerCase().includes(lowercasedQuery)) ||
+          (task.priority && task.priority.toLowerCase().includes(lowercasedQuery)),
+      )
+      setFilteredTasks(filtered)
+    }
+    // Reset to first page when search query changes
+    setCurrentPage(1)
+  }, [searchQuery, tasks])
+
+  // Get current tasks for pagination
+  const indexOfLastTask = currentPage * itemsPerPage
+  const indexOfFirstTask = indexOfLastTask - itemsPerPage
+  const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask)
+
+  // Change page
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber)
+  }
+
   const fetchTasks = async () => {
     try {
       setLoading(true)
-      const response = await axios.get('/api/tasks')
-      setTasks(response.data.tasks)
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setError('No authentication token found')
+        setLoading(false)
+        return
+      }
+
+      console.log('TaskList - Fetching tasks using taskService...')
+      const tasksData = await getUserTasks()
+      console.log('TaskList - Tasks fetched successfully:', tasksData.length)
+      setTasks(tasksData)
     } catch (error) {
       console.error('Error fetching tasks:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la récupération des tâches')
+      setError('Erreur lors de la récupération des tâches')
+      toast.error('Erreur lors de la récupération des tâches')
     } finally {
       setLoading(false)
     }
   }
 
   const handleDelete = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
-      try {
-        await axios.delete(`/api/tasks/${id}`)
-        toast.success('Tâche supprimée avec succès')
-        fetchTasks()
-      } catch (error) {
-        console.error('Error deleting task:', error)
-        toast.error(error.response?.data?.error || 'Erreur lors de la suppression de la tâche')
+    // Récupérer la tâche pour vérifier si l'utilisateur est le propriétaire du projet
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setError('No authentication token found')
+        return
       }
+
+      // Vérifier le rôle de l'utilisateur
+      const userRole = localStorage.getItem('userRole')
+      const userId = localStorage.getItem('userId')
+      console.log('TaskList - User role:', userRole)
+      console.log('TaskList - User ID:', userId)
+
+      // Récupérer les détails de la tâche pour vérifier le propriétaire du projet
+      const taskResponse = await axios.get(`/api/tasks/${id}`)
+
+      const task = taskResponse.data.task
+      const isAdmin = userRole === 'Admin'
+      const isProjectOwner = task.project && task.project.owner && task.project.owner._id === userId
+
+      console.log('TaskList - Is admin:', isAdmin)
+      console.log('TaskList - Is project owner:', isProjectOwner)
+
+      // Seuls les administrateurs ou les propriétaires du projet peuvent supprimer des tâches
+      if (!isAdmin && !isProjectOwner) {
+        toast.error(
+          'Seuls les administrateurs ou le propriétaire du projet peuvent supprimer cette tâche',
+        )
+        return
+      }
+
+      if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
+        await axios.delete(`/api/tasks/${id}`)
+        toast.success('Tâche supprimée avec succès !')
+        fetchTasks()
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de la suppression de la tâche')
     }
   }
 
+  const getStatusBadge = (status) => {
+    const statusColors = {
+      'To Do': 'warning',
+      'In Progress': 'info',
+      Done: 'success',
+    }
+    return <CBadge color={statusColors[status] || 'secondary'}>{status}</CBadge>
+  }
+
+  const getPriorityBadge = (priority) => {
+    const priorityColors = {
+      Low: 'success',
+      Medium: 'warning',
+      High: 'danger',
+    }
+    return <CBadge color={priorityColors[priority] || 'secondary'}>{priority}</CBadge>
+  }
+
   if (loading) {
-    return <div>Chargement...</div>
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+        <CSpinner color="primary" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return <div className="alert alert-danger">{error}</div>
   }
 
   return (
     <CCard>
       <CCardHeader>
-        <strong>Liste des tâches</strong>
-        <CButton
-          color="primary"
-          className="float-end"
-          onClick={() => navigate('/tasks/new')}
-        >
-          Nouvelle tâche
-        </CButton>
+        <div className="d-flex justify-content-between align-items-center">
+          <h5>Liste des tâches</h5>
+          <div className="d-flex align-items-center">
+            <div className="position-relative me-2" style={{ width: '300px' }}>
+              <CFormInput
+                placeholder="Rechercher des tâches..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pr-5"
+              />
+              {searchQuery && (
+                <CButton
+                  color="link"
+                  className="position-absolute"
+                  style={{ right: '5px', top: '3px' }}
+                  onClick={() => setSearchQuery('')}
+                >
+                  <CIcon icon={cilX} size="sm" />
+                </CButton>
+              )}
+            </div>
+            <CButton color="primary" onClick={() => navigate('/tasks/new')}>
+              Nouvelle tâche
+            </CButton>
+          </div>
+        </div>
+        <div className="mt-2">
+          <CAlert color="info" className="p-2 mb-0 small">
+            Seuls les administrateurs ou le propriétaire du projet peuvent supprimer des tâches
+          </CAlert>
+        </div>
       </CCardHeader>
       <CCardBody>
-        <CTable hover>
+        <CTable hover responsive>
           <CTableHead>
             <CTableRow>
               <CTableHeaderCell>Titre</CTableHeaderCell>
+              <CTableHeaderCell>Projet</CTableHeaderCell>
+              <CTableHeaderCell>Assigné à</CTableHeaderCell>
               <CTableHeaderCell>Statut</CTableHeaderCell>
               <CTableHeaderCell>Priorité</CTableHeaderCell>
               <CTableHeaderCell>Date d'échéance</CTableHeaderCell>
@@ -67,41 +218,139 @@ const TaskList = () => {
             </CTableRow>
           </CTableHead>
           <CTableBody>
-            {tasks.map((task) => (
-              <CTableRow key={task._id}>
-                <CTableDataCell>{task.title}</CTableDataCell>
-                <CTableDataCell>{task.status}</CTableDataCell>
-                <CTableDataCell>{task.priority}</CTableDataCell>
-                <CTableDataCell>{new Date(task.dueDate).toLocaleDateString()}</CTableDataCell>
-                <CTableDataCell>
-                  <CButton
-                    color="info"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => navigate(`/tasks/${task._id}`)}
-                  >
-                    Détails
-                  </CButton>
-                  <CButton
-                    color="warning"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => navigate(`/tasks/edit/${task._id}`)}
-                  >
-                    Modifier
-                  </CButton>
-                  <CButton
-                    color="danger"
-                    size="sm"
-                    onClick={() => handleDelete(task._id)}
-                  >
-                    Supprimer
-                  </CButton>
+            {filteredTasks.length === 0 ? (
+              <CTableRow>
+                <CTableDataCell colSpan="7" className="text-center">
+                  {searchQuery
+                    ? 'Aucune tâche ne correspond à votre recherche'
+                    : 'Aucune tâche trouvée'}
                 </CTableDataCell>
               </CTableRow>
-            ))}
+            ) : (
+              currentTasks.map((task) => (
+                <CTableRow key={task._id}>
+                  <CTableDataCell>{task.title}</CTableDataCell>
+                  <CTableDataCell>{task.project?.projectName || 'Non assigné'}</CTableDataCell>
+                  <CTableDataCell>{task.assignedTo?.name || 'Non assigné'}</CTableDataCell>
+                  <CTableDataCell>{getStatusBadge(task.status)}</CTableDataCell>
+                  <CTableDataCell>{getPriorityBadge(task.priority)}</CTableDataCell>
+                  <CTableDataCell>
+                    {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Non définie'}
+                  </CTableDataCell>
+                  <CTableDataCell>
+                    <CButton
+                      color="info"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => navigate(`/tasks/${task._id}`)}
+                    >
+                      Détails
+                    </CButton>
+
+                    {/* Buttons for project owners */}
+                    <CButton
+                      color="primary"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => navigate(`/tasks/edit/${task._id}`)}
+                      disabled={
+                        !(
+                          task.project &&
+                          task.project.owner &&
+                          task.project.owner._id === localStorage.getItem('userId')
+                        )
+                      }
+                      title={
+                        task.project &&
+                        task.project.owner &&
+                        task.project.owner._id === localStorage.getItem('userId')
+                          ? 'Modifier la tâche'
+                          : 'Seul le propriétaire du projet peut modifier la tâche'
+                      }
+                    >
+                      Modifier
+                    </CButton>
+                    <CButton
+                      color="danger"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => handleDelete(task._id)}
+                      disabled={
+                        !(
+                          localStorage.getItem('userRole') === 'Admin' ||
+                          (task.project &&
+                            task.project.owner &&
+                            task.project.owner._id === localStorage.getItem('userId'))
+                        )
+                      }
+                      title={
+                        localStorage.getItem('userRole') === 'Admin' ||
+                        (task.project &&
+                          task.project.owner &&
+                          task.project.owner._id === localStorage.getItem('userId'))
+                          ? 'Supprimer la tâche'
+                          : 'Seuls les administrateurs ou le propriétaire du projet peuvent supprimer cette tâche'
+                      }
+                    >
+                      Supprimer
+                    </CButton>
+
+                    {/* Status modification button for assigned users */}
+                    {task.assignedTo && task.assignedTo._id === localStorage.getItem('userId') ? (
+                      <CButton
+                        color="warning"
+                        size="sm"
+                        onClick={() => navigate(`/tasks/status/${task._id}`)}
+                      >
+                        Modifier statut
+                      </CButton>
+                    ) : (
+                      <CButton
+                        color="warning"
+                        size="sm"
+                        disabled
+                        title="Seul l'utilisateur assigné peut modifier le statut"
+                      >
+                        Modifier statut
+                      </CButton>
+                    )}
+                  </CTableDataCell>
+                </CTableRow>
+              ))
+            )}
           </CTableBody>
         </CTable>
+
+        {/* Pagination */}
+        {filteredTasks.length > itemsPerPage && (
+          <CPagination className="mt-4 justify-content-center" aria-label="Pagination des tâches">
+            <CPaginationItem
+              aria-label="Précédent"
+              disabled={currentPage === 1}
+              onClick={() => handlePageChange(currentPage - 1)}
+            >
+              <span aria-hidden="true">&laquo;</span>
+            </CPaginationItem>
+
+            {[...Array(Math.ceil(filteredTasks.length / itemsPerPage)).keys()].map((number) => (
+              <CPaginationItem
+                key={number + 1}
+                active={currentPage === number + 1}
+                onClick={() => handlePageChange(number + 1)}
+              >
+                {number + 1}
+              </CPaginationItem>
+            ))}
+
+            <CPaginationItem
+              aria-label="Suivant"
+              disabled={currentPage === Math.ceil(filteredTasks.length / itemsPerPage)}
+              onClick={() => handlePageChange(currentPage + 1)}
+            >
+              <span aria-hidden="true">&raquo;</span>
+            </CPaginationItem>
+          </CPagination>
+        )}
       </CCardBody>
     </CCard>
   )

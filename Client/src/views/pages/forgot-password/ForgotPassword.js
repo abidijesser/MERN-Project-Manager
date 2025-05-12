@@ -21,13 +21,14 @@ const ForgotPassword = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const response = await axios.post('http://localhost:3001/forgot-password', { email })
+      const response = await axios.post('http://localhost:3001/api/auth/forgot-password', { email })
 
-      if (response.data.resetUrl) {
-        setResetLink(response.data.resetUrl)
+      if (response.data.success) {
+        // Always show a generic success message for security reasons
+        setResetLink('Le lien de réinitialisation a été envoyé à votre adresse email.')
         setError('')
       } else {
-        setError('Une erreur est survenue')
+        setError(response.data.error || 'Une erreur est survenue')
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Une erreur est survenue')
@@ -53,10 +54,11 @@ const ForgotPassword = () => {
 
                     {resetLink && (
                       <CAlert color="success">
-                        <p>Cliquez sur ce lien pour réinitialiser votre mot de passe :</p>
-                        <a href={resetLink} className="alert-link">
-                          Réinitialiser mon mot de passe
-                        </a>
+                        <p>{resetLink}</p>
+                        <p>
+                          Veuillez vérifier votre boîte de réception et suivre les instructions dans
+                          l'email.
+                        </p>
                       </CAlert>
                     )}
 

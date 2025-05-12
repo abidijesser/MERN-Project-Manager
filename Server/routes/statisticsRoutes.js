@@ -25,6 +25,12 @@ router.get("/users/active-today", statisticsController.getActiveUsersToday);
 // Get all dashboard statistics in one call
 router.get("/dashboard", statisticsController.getDashboardStats);
 
+// Get detailed task counts
+router.get(
+  "/tasks/detailed-counts",
+  statisticsController.getDetailedTaskCounts
+);
+
 // Get task distribution by project and status
 router.get("/tasks/distribution", statisticsController.getTaskDistribution);
 

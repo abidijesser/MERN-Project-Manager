@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import axios from '../utils/axios'
+import axios from 'axios'
 import { toast } from 'react-toastify'
 import './Notifications.css' // Assurez-vous de créer ce fichier CSS pour les styles
 
-const Notifications = () => {
+const Notifications = ({ socket }) => {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -16,14 +16,27 @@ const Notifications = () => {
       setLoading(false)
       return
     }
-    
+
     console.log('Token trouvé:', token.substring(0, 20) + '...')
     fetchNotifications()
-    
+
     // Rafraîchir les notifications toutes les 30 secondes
     const interval = setInterval(fetchNotifications, 30000)
     return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    if (socket) {
+      socket.on('notification', (notification) => {
+        console.log('Notification reçue via socket:', notification)
+        setNotifications((prevNotifications) => [notification, ...prevNotifications])
+      })
+
+      return () => {
+        socket.off('notification')
+      }
+    }
+  }, [socket])
 
   const fetchNotifications = async () => {
     try {
@@ -31,9 +44,20 @@ const Notifications = () => {
       setError(null)
       console.log('Récupération des notifications...')
       
-      const response = await axios.get('/api/notifications')
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setError('No authentication token found')
+        setLoading(false)
+        return
+      }
+
+      const response = await axios.get('http://localhost:3001/api/notifications', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       console.log('Réponse des notifications:', response.data)
-      
+
       if (response.data && response.data.success) {
         setNotifications(response.data.notifications)
       } else {
@@ -44,10 +68,10 @@ const Notifications = () => {
     } catch (error) {
       console.error('Error fetching notifications:', error)
       setError(error.message || 'Erreur inconnue')
-      
+
       // Afficher plus de détails sur l'erreur
       if (error.response) {
-        console.error('Détails de l\'erreur:', error.response.data)
+        console.error("Détails de l'erreur:", error.response.data)
         toast.error(`Erreur: ${error.response.data.error || 'Erreur inconnue'}`)
       } else if (error.request) {
         console.error('Pas de réponse du serveur:', error.request)
@@ -63,13 +87,19 @@ const Notifications = () => {
 
   const markAsRead = async (notificationId) => {
     try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('No authentication token found')
+        return
+      }
+
       console.log('Marquage de la notification comme lue:', notificationId)
-      await axios.put(`/api/notifications/${notificationId}/read`)
-      setNotifications(notifications.map(notification => 
-        notification._id === notificationId 
-          ? { ...notification, read: true }
-          : notification
-      ))
+      await axios.put(`/notifications/${notificationId}/read`)
+      setNotifications(
+        notifications.map((notification) =>
+          notification._id === notificationId ? { ...notification, read: true } : notification,
+        ),
+      )
       toast.success('Notification marquée comme lue')
     } catch (error) {
       console.error('Error marking notification as read:', error)
@@ -116,14 +146,12 @@ const Notifications = () => {
       ) : (
         <ul className="notifications-list">
           {notifications.map((notification) => (
-            <li 
-              key={notification._id} 
+            <li
+              key={notification._id}
               className={`notification-item ${!notification.read ? 'unread' : ''}`}
               onClick={() => markAsRead(notification._id)}
             >
-              <div className="notification-icon">
-                {getNotificationIcon(notification.type)}
-              </div>
+              <div className="notification-icon">{getNotificationIcon(notification.type)}</div>
               <div className="notification-content">
                 <p className="notification-message">{notification.message}</p>
                 <span className="notification-time">

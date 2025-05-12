@@ -6,6 +6,7 @@ const RoleEnum = ["Client", "Admin"];
 
 const UserSchema = new Schema({
   googleId: { type: String, unique: true, sparse: true },
+  facebookId: { type: String, unique: true, sparse: true },
   name: {
     type: String,
     required: true,
@@ -22,14 +23,36 @@ const UserSchema = new Schema({
   role: { type: String, enum: RoleEnum, default: "Client" },
   projects: [{ type: Schema.Types.ObjectId, ref: "Project" }],
   tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
+  skills: {
+    type: [String],
+    default: [],
+  },
   resetPasswordToken: String,
   resetPasswordExpires: Date,
+  twoFactorSecret: String,
+  twoFactorEnabled: { type: Boolean, default: false },
   isVerified: {
     type: Boolean,
     default: true, // Pour le moment
   },
   verificationToken: String,
   verificationTokenExpires: Date,
+  googleCalendarToken: {
+    type: Object,
+    default: null,
+  },
+  lastLogin: {
+    type: Date,
+    default: Date.now,
+  },
+  profilePicture: {
+    type: String,
+    default: null,
+  },
+  isBlocked: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Modifier le middleware pre-save

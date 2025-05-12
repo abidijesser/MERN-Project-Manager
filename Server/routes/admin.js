@@ -1,15 +1,37 @@
-// filepath: c:\Users\Lenovo\Desktop\pi1\MERN-Project-Manager\Server\routes\adminRoutes.js
-const express = require('express');
-const { getAllUsers, getUserById, updateUserById } = require('../controllers/adminController');
-const { auth, isAdmin } = require('../middleware/auth');
+const express = require("express");
+const {
+  getAllUsers,
+  getUserById,
+  updateUserById,
+  getAllProjects,
+  getProjectById,
+  getAllTasks,
+  getDashboardStats,
+} = require("../controllers/adminController");
+const auth = require("../middleware/auth");
+const { isAdmin } = require("../middleware/roleAuth");
 const router = express.Router();
 
-// Protéger toutes les routes admin avec auth et isAdmin
+// Apply auth middleware to all routes
 router.use(auth);
+// Apply admin role check to all routes
 router.use(isAdmin);
 
-router.get('/users', getAllUsers);
-router.get('/users/:id', getUserById);
-router.put('/users/:id', updateUserById);
+// Admin-only routes
+
+// User management routes
+router.get("/users", getAllUsers);
+router.get("/users/:id", getUserById);
+router.put("/users/:id", updateUserById);
+
+// Project management routes
+router.get("/projects", getAllProjects);
+router.get("/projects/:id", getProjectById);
+
+// Task management routes
+router.get("/tasks", getAllTasks);
+
+// Dashboard statistics
+router.get("/dashboard/stats", getDashboardStats);
 
 module.exports = router;

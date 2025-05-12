@@ -2,122 +2,164 @@ const express = require("express");
 const passport = require("passport");
 const router = express.Router();
 const authController = require("../controllers/authController");
+const auth = require("../middleware/auth");
+const adminAuth = require("../middleware/adminAuth");
 const jwt = require("jsonwebtoken");
-const { auth, isAdmin } = require('../middleware/auth');
 
-// Existing routes
+// Import Facebook strategy
+require("../config/facebookStrategy");
+
+// Public routes
 router.post("/register", authController.register);
 router.post("/login", authController.login);
-router.get("/profile", authController.getProfile);
-router.get("/profile/:id", authController.getProfileById);
-router.put("/profile/:id", authController.updateProfile);
+
+// Protected routes
+router.get("/profile", auth, authController.getProfile);
+router.get("/profile/:id", auth, authController.getProfileById);
+router.put("/profile/:id", auth, authController.updateProfile);
+// User management routes
+router.get("/users", auth, authController.getAllUsers); // Allow all authenticated users to get the list of users
+router.get("/users/:id", auth, authController.getUserById); // Allow all authenticated users to get user details
+// Admin-only routes
+router.post("/users", auth, adminAuth, authController.createUserByAdmin); // Nouvelle route pour créer des utilisateurs par les admins
+router.put("/users/:id", auth, adminAuth, authController.updateUser);
+router.delete("/users/:id", auth, adminAuth, authController.deleteUser);
+router.put("/users/:id/block", auth, adminAuth, authController.toggleBlockUser); // Route pour bloquer/débloquer un utilisateur
+
+// Route pour récupérer les utilisateurs pour le partage de documents - accessible à tous les utilisateurs authentifiés
+router.get("/users-for-sharing", auth, authController.getUsersForSharing);
+
+// Password routes
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
+router.post("/change-password", auth, authController.changePassword);
 
-// Google authentication routes
-router.get(
-  "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+// Two-Factor Authentication routes
+router.post("/generate-2fa", auth, authController.generate2FA);
+router.post("/verify-2fa", auth, authController.verify2FA);
+router.post("/disable-2fa", auth, authController.disable2FA);
+
+// Profile picture upload route
+router.post(
+  "/upload-profile-picture",
+  auth,
+  authController.uploadUserProfilePicture
 );
 
-router.get(
-  "/google/callback",
-  passport.authenticate("google", { failureRedirect: "/" }),
-  (req, res) => {
-    // Générer un token JWT après une connexion réussie
-    const token = jwt.sign(
-      { id: req.user._id, role: req.user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+// Logout route - version simplifiée sans session
+router.get("/logout", (req, res) => {
+  try {
+    console.log("Logout route called");
 
-    // Envoyer le token au frontend via un cookie sécurisé
-    res.cookie("token", token, { httpOnly: true, secure: false }); // `secure: true` en production
-    res.redirect("http://localhost:3000/#/dashboard");
+    // Pour JWT, la déconnexion est gérée côté client en supprimant le token
+    // Nous renvoyons simplement une réponse de succès
+
+    // Clear the token cookie if it exists
+    if (req.cookies && req.cookies.token) {
+      res.clearCookie("token");
+    }
+
+    // Send success response
+    res.json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error during logout",
+    });
   }
+});
+
+// Email verification
+router.get("/verify-email/:token", authController.verifyEmail);
+
+// Google authentication routes
+const googleAuthRouter = express.Router();
+
+// Route initiale pour l'authentification Google
+googleAuthRouter.get(
+  "/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    accessType: "offline",
+    prompt: "consent",
+  })
 );
 
 // Facebook authentication routes
 router.get(
   "/facebook",
-  passport.authenticate("facebook", { scope: ["email"] })
+  passport.authenticate("facebook", {
+    scope: ["email", "public_profile"],
+  })
 );
 
+// Route de callback Google
+googleAuthRouter.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  (req, res) => {
+    if (!req.user) {
+      console.log("❌ Google auth callback: No user found");
+      return res.redirect(
+        "http://localhost:3000/#/login?error=authentication_failed"
+      );
+    }
+
+    console.log("✅ Google auth callback: User authenticated", {
+      id: req.user._id,
+      email: req.user.email,
+      role: req.user.role,
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: req.user._id, email: req.user.email, role: req.user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    console.log("✅ Token generated, redirecting to dashboard");
+
+    // Redirect to frontend with token
+    // Use hash format that works with the client's HashRouter
+    res.redirect(`http://localhost:3000/#/auth-redirect?token=${token}`);
+  }
+);
+
+// Route de callback Facebook
 router.get(
   "/facebook/callback",
-  passport.authenticate("facebook", { failureRedirect: "/" }),
+  passport.authenticate("facebook", { failureRedirect: "/login" }),
   (req, res) => {
-    try {
-      // Générer un token JWT après une connexion réussie
-      const token = jwt.sign(
-        { id: req.user._id, role: req.user.role },
-        process.env.JWT_SECRET,
-        { expiresIn: "1h" }
+    if (!req.user) {
+      console.log("❌ Facebook auth callback: No user found");
+      return res.redirect(
+        "http://localhost:3000/#/login?error=authentication_failed"
       );
-
-      // Stocker le token et les informations utilisateur dans des cookies
-      res.cookie("token", token, { 
-        httpOnly: true, 
-        secure: false, // En production, mettre à true
-        sameSite: 'lax',
-        maxAge: 3600000 // 1 heure
-      });
-
-      // Rediriger vers le dashboard avec les informations utilisateur
-      const userInfo = encodeURIComponent(JSON.stringify({
-        id: req.user._id,
-        name: req.user.name,
-        email: req.user.email,
-        role: req.user.role
-      }));
-
-      res.redirect(`http://localhost:3000/#/dashboard?user=${userInfo}&token=${token}`);
-    } catch (error) {
-      console.error("Erreur dans le callback Facebook:", error);
-      res.redirect("http://localhost:3000/#/login?error=auth_failed");
     }
+
+    console.log("✅ Facebook auth callback: User authenticated", {
+      id: req.user._id,
+      email: req.user.email,
+      role: req.user.role,
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: req.user._id, email: req.user.email, role: req.user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    console.log("✅ Token generated, redirecting to dashboard");
+
+    // Redirect to frontend with token
+    res.redirect(`http://localhost:3000/#/auth-redirect?token=${token}`);
   }
 );
 
-// Logout route
-router.post("/logout", auth, (req, res) => {
-  try {
-    // Supprimer le cookie contenant le token
-    res.clearCookie("token");
-    
-    // Répondre avec succès
-    res.json({
-      success: true,
-      message: "Déconnexion réussie"
-    });
-  } catch (error) {
-    console.error("Erreur lors de la déconnexion:", error);
-    res.status(500).json({
-      success: false,
-      error: "Erreur lors de la déconnexion"
-    });
-  }
-});
-
-// Email verification route
-router.get("/verify-email/:token", authController.verifyEmail);
-
-// Test authentication route
-router.get("/test-auth", (req, res) => {
-  const { token } = req.cookies;
-  if (!token) {
-    return res.json({ authenticated: false });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
-      return res.json({ authenticated: false, error: "Token invalide" });
-    }
-    res.json({ authenticated: true, user: decoded });
-  });
-});
-
-// Delete account route
-router.delete("/delete-account", auth, authController.deleteAccount);
-
-module.exports = router;
+module.exports = { authRouter: router, googleAuthRouter };

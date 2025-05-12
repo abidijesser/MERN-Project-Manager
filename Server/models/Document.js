@@ -1,7 +1,21 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+const crypto = require("crypto");
 
 const DocumentSchema = new Schema({
+  uniqueId: {
+    type: String,
+    default: () => crypto.randomUUID(),
+    index: true, // Pour des recherches plus rapides
+  },
+  displayId: {
+    type: String,
+    default: function() {
+      // Générer un ID court et lisible (ex: DOC-XXXX-XXXX)
+      const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase();
+      return `DOC-${randomPart}`;
+    }
+  },
   name: {
     type: String,
     required: true,
@@ -61,6 +75,10 @@ const DocumentSchema = new Schema({
   ],
   versions: [
     {
+      uniqueId: {
+        type: String,
+        default: () => crypto.randomUUID(),
+      },
       filePath: String,
       fileSize: Number,
       fileType: String,

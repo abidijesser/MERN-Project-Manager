@@ -1,0 +1,29 @@
+.chat-modal .modal-dialog {
+  max-width: 700px;
+}
+
+.chat-modal .modal-content {
+  height: 80vh;
+  max-height: 700px;
+}
+
+.chat-modal-content {
+  height: calc(100% - 56px); /* Hauteur totale moins la hauteur de l'en-tête */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ajustements pour le composant ProjectChat à l'intérieur de la modale */
+.chat-modal .project-chat-container {
+  height: 100%;
+  border: none;
+  border-radius: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .chat-modal .modal-content {
+    height: 90vh;
+  }
+}

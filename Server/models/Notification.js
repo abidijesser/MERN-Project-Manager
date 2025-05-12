@@ -8,12 +8,34 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['task_created', 'task_updated', 'task_assigned', 'task_completed'],
+    enum: [
+      // Notifications de tâches
+      'task_created',
+      'task_updated',
+      'task_assigned',
+      'task_completed',
+      // Notifications de documents
+      'document_uploaded',
+      'document_updated',
+      'document_version_added',
+      'document_commented',
+      'document_shared',
+      // Notifications de chat
+      'chat_message'
+    ],
     required: true
   },
   task: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Task'
+  },
+  document: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Document'
+  },
+  project: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Project'
   },
   message: {
     type: String,
@@ -26,6 +48,10 @@ const notificationSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }
 })
 

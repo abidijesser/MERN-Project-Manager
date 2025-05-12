@@ -134,12 +134,17 @@ class SocketService {
   }
 
   // Join a room
-  joinRoom(room) {
+  joinRoom(roomType, roomId) {
     try {
+      // Handle both old and new format
+      let room = roomId ? `${roomType}-${roomId}` : roomType;
+
       if (!room) {
         console.warn('Cannot join room: missing room name')
         return
       }
+
+      console.log(`Attempting to join room: ${room}`)
 
       // If we don't have a socket yet, create one
       if (!this.socket) {
@@ -160,7 +165,13 @@ class SocketService {
         // Set up a one-time listener for the connect event
         const connectHandler = () => {
           if (this.socket) {
+            // Try both formats for compatibility
             this.socket.emit('joinRoom', room)
+
+            if (roomType && roomId) {
+              this.socket.emit('joinProject', roomId)
+            }
+
             console.log(`Joined room (delayed): ${room}`)
           }
         }
@@ -173,7 +184,13 @@ class SocketService {
 
       // If socket is connected, join the room immediately
       if (this.socket && this.connected) {
+        // Try both formats for compatibility
         this.socket.emit('joinRoom', room)
+
+        if (roomType === 'project' && roomId) {
+          this.socket.emit('joinProject', roomId)
+        }
+
         console.log(`Joined room: ${room}`)
       } else {
         console.warn(`Failed to join room ${room}: socket not connected`)
@@ -184,18 +201,75 @@ class SocketService {
   }
 
   // Leave a room
-  leaveRoom(room) {
+  leaveRoom(roomType, roomId) {
     try {
+      // Handle both old and new format
+      let room = roomId ? `${roomType}-${roomId}` : roomType;
+
       if (!room) {
         console.warn('Cannot leave room: missing room name')
         return
       }
 
       if (!this.socket || !this.connected) return
+
+      // Try both formats for compatibility
       this.socket.emit('leaveRoom', room)
+
+      if (roomType === 'project' && roomId) {
+        this.socket.emit('leaveProject', roomId)
+      }
+
       console.log(`Left room: ${room}`)
     } catch (error) {
       console.error('Error leaving room:', error)
+    }
+  }
+
+  // Send a message to a project chat
+  sendMessage(messageData) {
+    try {
+      if (!messageData) {
+        console.warn('Cannot send message: missing message data')
+        return
+      }
+
+      console.log('Attempting to send message:', messageData)
+
+      // If we don't have a socket yet, create one
+      if (!this.socket) {
+        this.connect()
+      }
+
+      // If socket exists but not connected yet
+      if (this.socket && !this.connected) {
+        console.log('Socket exists but not connected. Setting up delayed message send')
+
+        // Set up a one-time listener for the connect event
+        const connectHandler = () => {
+          if (this.socket) {
+            this.socket.emit('sendMessage', messageData)
+            console.log('Message sent (delayed)')
+            this.socket.off('connect', connectHandler)
+          }
+        }
+
+        this.socket.on('connect', connectHandler)
+        return
+      }
+
+      // If socket is connected, send immediately
+      if (this.socket && this.connected) {
+        this.socket.emit('sendMessage', messageData)
+        console.log('Message sent via socket')
+        return true
+      } else {
+        console.warn('Failed to send message: socket not connected')
+        return false
+      }
+    } catch (error) {
+      console.error('Error sending message:', error)
+      return false
     }
   }
 

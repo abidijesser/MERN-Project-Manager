@@ -1,0 +1,96 @@
+      {/* Présentation des Fonctionnalités Clés */}
+      <section className="features-section py-5">
+        <div className="container">
+          <div className="text-center mb-5">
+            <h2 className="display-5 fw-bold">Fonctionnalités Clés</h2>
+            <p className="lead text-muted">Découvrez comment notre plateforme peut transformer votre gestion de projet</p>
+          </div>
+          <CRow className="g-4">
+            {[
+              {
+                icon: cilSpeedometer,
+                title: 'Planification intelligente',
+                description: "Utilisez nos outils avancés de planification avec vues Gantt, Kanban et gestion de Sprints pour organiser efficacement vos projets.",
+                color: 'primary',
+                image: 'planning.svg'
+              },
+              { 
+                icon: cilTask, 
+                title: 'Suivi des tâches et jalons', 
+                description: "Suivez la progression de vos tâches en temps réel, définissez des jalons clés et recevez des notifications automatiques sur l'avancement.",
+                color: 'success',
+                image: 'tasks.svg'
+              },
+              { 
+                icon: cilLightbulb, 
+                title: 'Prédiction des délais grâce à l\'IA', 
+                description: "Notre intelligence artificielle analyse vos données historiques pour prédire les délais réalistes et identifier les risques potentiels.",
+                color: 'warning',
+                image: 'ai.svg'
+              },
+              { 
+                icon: cilSettings, 
+                title: 'Optimisation des ressources', 
+                description: "Gérez efficacement vos ressources humaines et matérielles, évitez la surcharge et maximisez la productivité de votre équipe.",
+                color: 'danger',
+                image: 'resources.svg'
+              },
+              {
+                icon: cilChatBubble,
+                title: 'Collaboration en équipe',
+                description: "Facilitez la communication avec messagerie intégrée, partage de documents et espaces de travail collaboratifs pour une meilleure synergie.",
+                color: 'info',
+                image: 'collaboration.svg'
+              },
+            ].map((feature, index) => (
+              <CCol key={index} md={6} lg={4} className="mb-4">
+                <div 
+                  className="h-100 feature-card p-4 rounded-4 shadow-sm border-top border-4 hover-shadow transition-all"
+                  style={{ 
+                    borderColor: `var(--cui-${feature.color})`,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  <div className="d-flex align-items-center mb-4">
+                    <div 
+                      className={`feature-icon-container d-flex align-items-center justify-content-center rounded-circle bg-${feature.color} bg-opacity-10 p-3 me-3`}
+                      style={{ width: '60px', height: '60px' }}
+                    >
+                      <CIcon 
+                        icon={feature.icon} 
+                        size="xl" 
+                        className={`text-${feature.color}`} 
+                      />
+                    </div>
+                    <h4 className="fw-bold mb-0">{feature.title}</h4>
+                  </div>
+                  <p className="text-muted mb-4">{feature.description}</p>
+                  <div className="text-center mt-auto">
+                    <img 
+                      src={`/assets/images/features/${feature.image}`} 
+                      alt={feature.title}
+                      className="img-fluid feature-image mb-3"
+                      style={{ maxHeight: '120px', opacity: '0.9' }}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                    <div>
+                      <CButton 
+                        color={feature.color} 
+                        variant="outline" 
+                        href="/features" 
+                        className="fw-bold mt-2"
+                      >
+                        En savoir plus
+                        <CIcon icon={cilArrowRight} className="ms-2" />
+                      </CButton>
+                    </div>
+                  </div>
+                </div>
+              </CCol>
+            ))}
+          </CRow>
+        </div>
+      </section>
