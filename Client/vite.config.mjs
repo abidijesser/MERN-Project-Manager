@@ -8,7 +8,7 @@ import stdLibBrowser from 'vite-plugin-node-stdlib-browser'
 export default defineConfig(() => ({
   base: './',
   build: {
-    outDir: 'build',
+    outDir: 'dist',
   },
   css: {
     postcss: {
