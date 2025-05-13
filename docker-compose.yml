@@ -1,26 +1,33 @@
 version: '3.8'
+
 services:
+  # MongoDB Database
   db:
     image: mongo:4.2
     container_name: db
     restart: always
-    
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
     ports:
-      - 27017:27017
+      - '27017:27017'
     volumes:
-      - ./data/dump:/dump
-  app:
-    build: .
+      - ./data/mongo:/data/db
+    networks:
+      - app-network
+
+  # Backend (Server)
+  server:
+    build:
+      context: ./Server
+      dockerfile: Dockerfile
     image: 192.168.33.10:8083/nodemongoapp:6.0
-    restart: always
     container_name: back
+    restart: always
     ports:
       - '5000:5000'
     environment:
-      MONGO_URI: ${MONGO_URI}
+      MONGO_URI: mongodb://root:example@db:27017/?authSource=admin
       JWT_SECRET: ${JWT_SECRET}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
@@ -31,8 +38,42 @@ services:
       GOOGLE_CALENDAR_CLIENT_ID: ${GOOGLE_CALENDAR_CLIENT_ID}
       GOOGLE_CALENDAR_CLIENT_SECRET: ${GOOGLE_CALENDAR_CLIENT_SECRET}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
-      VITE_API_URL: ${VITE_API_URL}
+      VITE_API_URL: http://client:3000
     depends_on:
       - db
-volumes:
-  mongo-data:
+    networks:
+      - app-network
+
+  # Client (CoreUI React)
+  client:
+    build:
+      context: ./Client
+      dockerfile: Dockerfile
+    image: 192.168.33.10:8083/client:latest
+    container_name: client
+    restart: always
+    ports:
+      - '3000:80'
+    environment:
+      VITE_API_URL: http://back:5000
+    networks:
+      - app-network
+
+  # Admin (Mantis React)
+  admin:
+    build:
+      context: ./Admin
+      dockerfile: Dockerfile
+    image: 192.168.33.10:8083/admin:latest
+    container_name: admin
+    restart: always
+    ports:
+      - '4000:80'
+    environment:
+      VITE_API_URL: http://back:5000
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
