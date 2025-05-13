@@ -229,7 +229,7 @@ const CreateProject = () => {
                 className="me-2 text-white"
                 onClick={() => setModalVisible(true)}
               >
-                Predire
+                Predire le budget
               </CButton>
             </div>
           </CCardHeader>
@@ -361,7 +361,7 @@ const CreateProject = () => {
               <CRow className="mb-3">
                 <CCol>
                   <CFormInput
-                    label="Coût réel"
+                    label="Coût attendu"
                     name="Actual Cost"
                     type="number"
                     value={predictionData['Actual Cost']}
