@@ -1,8 +1,10 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'node:path'
-import autoprefixer from 'autoprefixer'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'node:path';
+import autoprefixer from 'autoprefixer';
+import NodeGlobalsPolyfillPlugin from 'vite-plugin-node-polyfills';
 
+// https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
     base: './',
@@ -29,7 +31,15 @@ export default defineConfig(() => {
         },
       },
     },
-    plugins: [react()],
+    plugins: [
+      react(),
+      NodeGlobalsPolyfillPlugin({
+        // Enables the polyfill for `crypto` and other necessary modules
+        buffer: true, 
+        crypto: true,
+        process: true,
+      }),
+    ],
     resolve: {
       alias: [
         {
@@ -45,5 +55,5 @@ export default defineConfig(() => {
         // https://vitejs.dev/config/server-options.html
       },
     },
-  }
-})
+  };
+});
