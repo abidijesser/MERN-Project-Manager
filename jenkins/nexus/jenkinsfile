@@ -38,24 +38,22 @@ pipeline {
         }
 
         stage('Push to Nexus') {
-            steps {
-                script {
-                    docker.withRegistry("http://${registry}", registryCredentials) {
-                        echo "Pushing Server image..."
-                        sh "docker tag nodemongoapp ${registry}/${serverImage}:${imageTag}"
-                        sh "docker push ${registry}/${serverImage}:${imageTag}"
+    steps {
+        script {
+            docker.withRegistry("http://${registry}", registryCredentials) {
+                echo "Pushing Server image..."
+                sh "docker push ${registry}/${serverImage}:${imageTag}"
 
-                        echo "Pushing Client image..."
-                        sh "docker tag client ${registry}/${clientImage}:${imageTag}"
-                        sh "docker push ${registry}/${clientImage}:${imageTag}"
+                echo "Pushing Client image..."
+                sh "docker push ${registry}/${clientImage}:${imageTag}"
 
-                        echo "Pushing Admin image..."
-                        sh "docker tag admin ${registry}/${adminImage}:${imageTag}"
-                        sh "docker push ${registry}/${adminImage}:${imageTag}"
-                    }
-                }
+                echo "Pushing Admin image..."
+                sh "docker push ${registry}/${adminImage}:${imageTag}"
             }
         }
+    }
+}
+
         
         stage('Deploy Application') { 
             steps { 
