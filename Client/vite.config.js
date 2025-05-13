@@ -2,7 +2,7 @@ const { defineConfig } = require('vite');
 const react = require('@vitejs/plugin-react');
 const path = require('path');
 const autoprefixer = require('autoprefixer');
-const polyfills = require('vite-plugin-node-polyfills');
+const { NodeGlobalsPolyfillPlugin, NodeModulesPolyfillPlugin } = require('vite-plugin-node-polyfills');
 
 // https://vitejs.dev/config/
 module.exports = defineConfig(() => {
@@ -14,7 +14,7 @@ module.exports = defineConfig(() => {
     css: {
       postcss: {
         plugins: [
-          autoprefixer({}), // add options if needed
+          autoprefixer({}),
         ],
       },
     },
@@ -22,23 +22,31 @@ module.exports = defineConfig(() => {
       loader: 'jsx',
       include: /src\/.*\.jsx?$/,
       exclude: [],
+      plugins: [
+        NodeGlobalsPolyfillPlugin({
+          buffer: true,
+          process: true,
+        }),
+        NodeModulesPolyfillPlugin(),
+      ],
     },
     optimizeDeps: {
       force: true,
       esbuildOptions: {
-        loader: {
-          '.js': 'jsx',
+        define: {
+          global: 'globalThis',
         },
+        plugins: [
+          NodeGlobalsPolyfillPlugin({
+            buffer: true,
+            process: true,
+          }),
+          NodeModulesPolyfillPlugin(),
+        ],
       },
     },
     plugins: [
       react(),
-      polyfills({
-        // Enables the polyfill for `crypto` and other necessary modules
-        buffer: true, 
-        crypto: true,
-        process: true,
-      }),
     ],
     resolve: {
       alias: [
