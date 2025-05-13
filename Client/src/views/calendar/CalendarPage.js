@@ -17,8 +17,8 @@ import CIcon from '@coreui/icons-react'
 import { cilCalendar, cilTask, cilNotes, cilOptions } from '@coreui/icons'
 import Calendar from 'react-calendar'
 import 'react-calendar/dist/Calendar.css'
-import { fetchProjects } from '../../services/projectService'
-import { getUserTasks } from '../../services/taskService'
+import { fetchUserProjects } from '../../services/projectService'
+import { getCalendarTasks } from '../../services/taskService'
 import './CalendarPage.css'
 
 const CalendarPage = () => {
@@ -36,7 +36,14 @@ const CalendarPage = () => {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const [projectsData, tasksData] = await Promise.all([fetchProjects(), getUserTasks()])
+        console.log('CalendarPage - Fetching data...')
+        const [projectsData, tasksData] = await Promise.all([
+          fetchUserProjects(),
+          getCalendarTasks(),
+        ])
+
+        console.log('CalendarPage - Projects fetched:', projectsData.length)
+        console.log('CalendarPage - Tasks fetched:', tasksData.length)
 
         setProjects(projectsData)
         setTasks(tasksData)
@@ -52,19 +59,32 @@ const CalendarPage = () => {
           data: project,
         }))
 
-        const taskEvents = tasksData.map((task) => ({
-          id: task._id,
-          title: task.title,
-          date: new Date(task.dueDate),
-          type: 'task',
-          color:
-            task.priority === 'High'
-              ? '#e55353'
-              : task.priority === 'Medium'
-                ? '#f9b115'
-                : '#2eb85c',
-          data: task,
-        }))
+        const taskEvents = tasksData
+          .map((task) => {
+            // Check if task has a valid dueDate
+            if (!task.dueDate) {
+              console.log('CalendarPage - Task without dueDate:', task.title, task._id)
+              return null
+            }
+
+            return {
+              id: task._id,
+              title: task.title,
+              date: new Date(task.dueDate),
+              type: 'task',
+              color:
+                task.priority === 'High'
+                  ? '#e55353'
+                  : task.priority === 'Medium'
+                    ? '#f9b115'
+                    : '#2eb85c',
+              data: task,
+            }
+          })
+          .filter(Boolean) // Remove null entries
+
+        console.log('CalendarPage - Task events created:', taskEvents.length)
+        console.log('CalendarPage - Project events created:', projectEvents.length)
 
         setEvents([...projectEvents, ...taskEvents])
       } catch (err) {

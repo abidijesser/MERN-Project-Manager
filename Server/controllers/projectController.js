@@ -413,6 +413,72 @@ const getProjectMembers = async (req, res) => {
   }
 };
 
+// GET projects for the connected user (where user is a member or owner)
+const getUserProjects = async (req, res) => {
+  try {
+    // Find projects where the user is a member or owner
+    const projects = await Project.find({
+      $or: [{ owner: req.user.id }, { members: req.user.id }],
+    })
+      .populate({
+        path: "owner",
+        select: "name email",
+      })
+      .populate({
+        path: "tasks",
+        model: "Task",
+        select: "title description status priority dueDate assignedTo",
+      })
+      .populate("members");
+
+    console.log(`Found ${projects.length} projects for user ${req.user.id}`);
+
+    // For each project, find all tasks that reference this project
+    for (let i = 0; i < projects.length; i++) {
+      const project = projects[i];
+
+      // If the project has no tasks or empty tasks array, find tasks that reference this project
+      if (!project.tasks || project.tasks.length === 0) {
+        console.log(
+          `Project ${project.projectName} has no tasks in its tasks array. Finding tasks that reference this project...`
+        );
+
+        const tasksForProject = await Task.find({
+          project: project._id,
+        }).select("title description status priority dueDate assignedTo");
+
+        console.log(
+          `Found ${tasksForProject.length} tasks for project ${project.projectName}`
+        );
+
+        // Update the project's tasks array with these tasks
+        if (tasksForProject.length > 0) {
+          await Project.findByIdAndUpdate(project._id, {
+            $set: { tasks: tasksForProject.map((task) => task._id) },
+          });
+
+          // Update the project in our results
+          project.tasks = tasksForProject;
+          console.log(
+            `Updated project ${project.projectName} with ${tasksForProject.length} tasks`
+          );
+        }
+      }
+    }
+
+    res.status(200).json({ success: true, projects });
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des projets de l'utilisateur:",
+      error
+    );
+    res.status(500).json({
+      success: false,
+      error: "Erreur lors de la récupération des projets de l'utilisateur",
+    });
+  }
+};
+
 module.exports = {
   getAllProjects,
   getProjectById,
@@ -421,4 +487,5 @@ module.exports = {
   updateProject,
   deleteProject,
   getProjectMembers,
+  getUserProjects,
 };

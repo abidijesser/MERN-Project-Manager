@@ -16,13 +16,23 @@ import {
   CAlert,
   CPagination,
   CPaginationItem,
+  CDropdown,
+  CDropdownToggle,
+  CDropdownMenu,
+  CDropdownItem,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilX } from '@coreui/icons'
+import { cilX, cilCalendar, cilOptions, cilPencil, cilTrash, cilBell } from '@coreui/icons'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../../utils/axios'
 import { toast } from 'react-toastify'
 import { getUserTasks } from '../../services/taskService'
+import {
+  syncTaskWithGoogleCalendar,
+  checkGoogleCalendarAuth,
+  getGoogleCalendarAuthUrl,
+} from '../../services/calendarService'
+import '../../styles/ActionDropdown.css'
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([])
@@ -32,6 +42,8 @@ const TaskList = () => {
   const [error, setError] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
+  const [syncingCalendar, setSyncingCalendar] = useState(false)
+  const [syncingTaskId, setSyncingTaskId] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -157,6 +169,45 @@ const TaskList = () => {
     return <CBadge color={priorityColors[priority] || 'secondary'}>{priority}</CBadge>
   }
 
+  // Function to handle syncing a task with Google Calendar
+  const handleSyncWithGoogleCalendar = async (taskId) => {
+    try {
+      setSyncingCalendar(true)
+      setSyncingTaskId(taskId)
+
+      // Check if user is authenticated with Google Calendar
+      const authCheckResult = await checkGoogleCalendarAuth()
+
+      if (!authCheckResult.isAuthenticated) {
+        // Get auth URL and redirect user to authenticate
+        const authUrlResult = await getGoogleCalendarAuthUrl()
+        if (authUrlResult.success && authUrlResult.authUrl) {
+          // Store the current URL to redirect back after authentication
+          localStorage.setItem('calendarRedirectUrl', window.location.href)
+          window.location.href = authUrlResult.authUrl
+          return
+        } else {
+          throw new Error('Failed to get Google Calendar authentication URL')
+        }
+      }
+
+      // User is authenticated, sync the task
+      const result = await syncTaskWithGoogleCalendar(taskId)
+
+      if (result.success) {
+        toast.success('Tâche synchronisée avec Google Calendar avec succès!')
+      } else {
+        throw new Error(result.error || 'Failed to sync task with Google Calendar')
+      }
+    } catch (error) {
+      console.error('Error syncing task with Google Calendar:', error)
+      toast.error(error.message || 'Erreur lors de la synchronisation avec Google Calendar')
+    } finally {
+      setSyncingCalendar(false)
+      setSyncingTaskId(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
@@ -238,82 +289,128 @@ const TaskList = () => {
                     {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Non définie'}
                   </CTableDataCell>
                   <CTableDataCell>
-                    <CButton
-                      color="info"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => navigate(`/tasks/${task._id}`)}
-                    >
-                      Détails
-                    </CButton>
+                    <CDropdown alignment="end" className="action-dropdown">
+                      <CDropdownToggle color="light" size="sm" caret={false}>
+                        <CIcon icon={cilOptions} size="lg" />
+                      </CDropdownToggle>
+                      <CDropdownMenu className="action-dropdown-menu">
+                        <CDropdownItem onClick={() => navigate(`/tasks/${task._id}`)}>
+                          <CIcon icon={cilPencil} className="me-2 text-info" />
+                          Détails
+                        </CDropdownItem>
 
-                    {/* Buttons for project owners */}
-                    <CButton
-                      color="primary"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => navigate(`/tasks/edit/${task._id}`)}
-                      disabled={
-                        !(
-                          task.project &&
-                          task.project.owner &&
-                          task.project.owner._id === localStorage.getItem('userId')
-                        )
-                      }
-                      title={
-                        task.project &&
-                        task.project.owner &&
-                        task.project.owner._id === localStorage.getItem('userId')
-                          ? 'Modifier la tâche'
-                          : 'Seul le propriétaire du projet peut modifier la tâche'
-                      }
-                    >
-                      Modifier
-                    </CButton>
-                    <CButton
-                      color="danger"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => handleDelete(task._id)}
-                      disabled={
-                        !(
-                          localStorage.getItem('userRole') === 'Admin' ||
-                          (task.project &&
+                        {/* Edit option for project owners */}
+                        <CDropdownItem
+                          onClick={() => navigate(`/tasks/edit/${task._id}`)}
+                          disabled={
+                            !(
+                              task.project &&
+                              task.project.owner &&
+                              task.project.owner._id === localStorage.getItem('userId')
+                            )
+                          }
+                          title={
+                            task.project &&
                             task.project.owner &&
-                            task.project.owner._id === localStorage.getItem('userId'))
-                        )
-                      }
-                      title={
-                        localStorage.getItem('userRole') === 'Admin' ||
-                        (task.project &&
-                          task.project.owner &&
-                          task.project.owner._id === localStorage.getItem('userId'))
-                          ? 'Supprimer la tâche'
-                          : 'Seuls les administrateurs ou le propriétaire du projet peuvent supprimer cette tâche'
-                      }
-                    >
-                      Supprimer
-                    </CButton>
+                            task.project.owner._id === localStorage.getItem('userId')
+                              ? 'Modifier la tâche'
+                              : 'Seul le propriétaire du projet peut modifier la tâche'
+                          }
+                        >
+                          <CIcon icon={cilPencil} className="me-2 text-primary" />
+                          Modifier
+                        </CDropdownItem>
 
-                    {/* Status modification button for assigned users */}
-                    {task.assignedTo && task.assignedTo._id === localStorage.getItem('userId') ? (
-                      <CButton
-                        color="warning"
-                        size="sm"
-                        onClick={() => navigate(`/tasks/status/${task._id}`)}
-                      >
-                        Modifier statut
-                      </CButton>
-                    ) : (
-                      <CButton
-                        color="warning"
-                        size="sm"
-                        disabled
-                        title="Seul l'utilisateur assigné peut modifier le statut"
-                      >
-                        Modifier statut
-                      </CButton>
-                    )}
+                        {/* Delete option for admins and project owners */}
+                        <CDropdownItem
+                          onClick={() => handleDelete(task._id)}
+                          disabled={
+                            !(
+                              localStorage.getItem('userRole') === 'Admin' ||
+                              (task.project &&
+                                task.project.owner &&
+                                task.project.owner._id === localStorage.getItem('userId'))
+                            )
+                          }
+                          title={
+                            localStorage.getItem('userRole') === 'Admin' ||
+                            (task.project &&
+                              task.project.owner &&
+                              task.project.owner._id === localStorage.getItem('userId'))
+                              ? 'Supprimer la tâche'
+                              : 'Seuls les administrateurs ou le propriétaire du projet peuvent supprimer cette tâche'
+                          }
+                        >
+                          <CIcon icon={cilTrash} className="me-2 text-danger" />
+                          Supprimer
+                        </CDropdownItem>
+
+                        {/* Status modification option for assigned users */}
+                        <CDropdownItem
+                          onClick={() => navigate(`/tasks/status/${task._id}`)}
+                          disabled={
+                            !(
+                              task.assignedTo &&
+                              task.assignedTo._id === localStorage.getItem('userId')
+                            )
+                          }
+                          title={
+                            task.assignedTo &&
+                            task.assignedTo._id === localStorage.getItem('userId')
+                              ? 'Modifier le statut de la tâche'
+                              : "Seul l'utilisateur assigné peut modifier le statut"
+                          }
+                        >
+                          <CIcon icon={cilBell} className="me-2 text-warning" />
+                          Modifier statut
+                        </CDropdownItem>
+
+                        {/* Google Calendar sync option - only for project owners and assigned users */}
+                        <CDropdownItem
+                          onClick={() => handleSyncWithGoogleCalendar(task._id)}
+                          disabled={
+                            (syncingCalendar && syncingTaskId === task._id) ||
+                            !task.dueDate ||
+                            !(
+                              // Project owner
+                              (
+                                (task.project &&
+                                  task.project.owner &&
+                                  task.project.owner._id === localStorage.getItem('userId')) ||
+                                // Assigned user
+                                (task.assignedTo &&
+                                  task.assignedTo._id === localStorage.getItem('userId'))
+                              )
+                            )
+                          }
+                          title={
+                            !task.dueDate
+                              ? "Cette tâche n'a pas de date d'échéance"
+                              : !(
+                                    (task.project &&
+                                      task.project.owner &&
+                                      task.project.owner._id === localStorage.getItem('userId')) ||
+                                    (task.assignedTo &&
+                                      task.assignedTo._id === localStorage.getItem('userId'))
+                                  )
+                                ? "Seul le propriétaire du projet ou l'utilisateur assigné peut ajouter cette tâche à Google Calendar"
+                                : 'Ajouter cette tâche à Google Calendar'
+                          }
+                        >
+                          {syncingCalendar && syncingTaskId === task._id ? (
+                            <>
+                              <CSpinner size="sm" className="me-2" />
+                              Synchronisation...
+                            </>
+                          ) : (
+                            <>
+                              <CIcon icon={cilCalendar} className="me-2 text-primary" />
+                              Ajouter à Google Calendar
+                            </>
+                          )}
+                        </CDropdownItem>
+                      </CDropdownMenu>
+                    </CDropdown>
                   </CTableDataCell>
                 </CTableRow>
               ))
