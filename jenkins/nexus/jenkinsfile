@@ -19,17 +19,20 @@ pipeline {
         GOOGLE_CALENDAR_REDIRECT_URI = "http://localhost:3001/api/calendar/callback"
 
         GEMINI_API_KEY = credentials('GEMINI_API_KEY')
-        VITE_API_URL = "http://localhost:3001"
+        VITE_API_URL = "http://localhost:3000"
 
-        
         registryCredentials = "nexus"
         registry = "192.168.33.10:8083"
+        serverImage = "nodemongoapp"
+        clientImage = "clientapp"
+        adminImage = "adminapp"
         imageTag = "6.0"
     }
 
     stages {
-        stage('Build Docker image') {
+        stage('Build Docker images') {
             steps {
+                echo "Building Docker images for Server, Client, and Admin..."
                 sh 'docker-compose build'
             }
         }
@@ -38,17 +41,33 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("http://${registry}", registryCredentials) {
-                        sh "docker push $registry/nodemongoapp:${imageTag}"
+                        echo "Pushing Server image..."
+                        sh "docker tag nodemongoapp ${registry}/${serverImage}:${imageTag}"
+                        sh "docker push ${registry}/${serverImage}:${imageTag}"
+
+                        echo "Pushing Client image..."
+                        sh "docker tag client ${registry}/${clientImage}:${imageTag}"
+                        sh "docker push ${registry}/${clientImage}:${imageTag}"
+
+                        echo "Pushing Admin image..."
+                        sh "docker tag admin ${registry}/${adminImage}:${imageTag}"
+                        sh "docker push ${registry}/${adminImage}:${imageTag}"
                     }
                 }
             }
         }
         
-        stage('Run application') { 
+        stage('Deploy Application') { 
             steps { 
                 script { 
                     docker.withRegistry("http://${registry}", registryCredentials) {
-                        sh "docker pull $registry/nodemongoapp:${imageTag}"
+                        echo "Pulling Server, Client, and Admin images from Nexus..."
+                        sh "docker pull ${registry}/${serverImage}:${imageTag}"
+                        sh "docker pull ${registry}/${clientImage}:${imageTag}"
+                        sh "docker pull ${registry}/${adminImage}:${imageTag}"
+
+                        echo "Starting Docker containers using Docker Compose..."
+                        sh "docker-compose down"  // Stop any running instances to avoid conflicts
                         sh "docker-compose up -d"
                     } 
                 } 
