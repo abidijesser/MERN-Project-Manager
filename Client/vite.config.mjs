@@ -2,7 +2,10 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 import autoprefixer from 'autoprefixer';
-import { NodeGlobalsPolyfillPlugin } from 'vite-plugin-node-polyfills';
+
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const NodeGlobalsPolyfillPlugin = require('vite-plugin-node-polyfills');
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
