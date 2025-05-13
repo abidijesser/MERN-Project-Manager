@@ -47,7 +47,7 @@ async function testNotificationRoutes() {
     console.log('Notification de test créée:', notification._id);
     
     // 4. Tester la route GET /api/notifications
-    const response = await axios.get('http://localhost:3001/api/notifications', {
+    const response = await axios.get('http://192.168.33.10:3001/api/notifications', {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -58,7 +58,7 @@ async function testNotificationRoutes() {
     // 5. Tester la route PUT /api/notifications/:id/read
     if (response.data.notifications && response.data.notifications.length > 0) {
       const notificationId = response.data.notifications[0]._id;
-      const updateResponse = await axios.put(`http://localhost:3001/api/notifications/${notificationId}/read`, {}, {
+      const updateResponse = await axios.put(`http://192.168.33.10:3001/api/notifications/${notificationId}/read`, {}, {
         headers: {
           Authorization: `Bearer ${token}`
         }

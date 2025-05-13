@@ -307,7 +307,7 @@ const sendShareLinkByEmail = async (shareToken, emailData, userId) => {
     }
 
     // Construire l'URL du lien de partage
-    const baseUrl = process.env.CLIENT_URL || "http://localhost:3000";
+    const baseUrl = process.env.CLIENT_URL || "http://192.168.33.10:3000";
     const shareUrl = `${baseUrl}/shared-document/${shareToken}`;
 
     // Construire le contenu de l'email

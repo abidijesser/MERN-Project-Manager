@@ -74,6 +74,6 @@ app.post('/api/auth/verify-2fa', (req, res) => {
 const PORT = 3002;
 app.listen(PORT, () => {
   console.log(`Test server running on port ${PORT}`);
-  console.log(`Test generate-2fa: http://localhost:${PORT}/api/auth/generate-2fa`);
-  console.log(`Test verify-2fa: http://localhost:${PORT}/api/auth/verify-2fa`);
+  console.log(`Test generate-2fa: http://192.168.33.10:${PORT}/api/auth/generate-2fa`);
+  console.log(`Test verify-2fa: http://192.168.33.10:${PORT}/api/auth/verify-2fa`);
 });

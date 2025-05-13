@@ -105,7 +105,7 @@ googleAuthRouter.get(
     if (!req.user) {
       console.log("❌ Google auth callback: No user found");
       return res.redirect(
-        "http://localhost:3000/#/login?error=authentication_failed"
+        "http://192.168.33.10:3000/#/login?error=authentication_failed"
       );
     }
 
@@ -126,7 +126,7 @@ googleAuthRouter.get(
 
     // Redirect to frontend with token
     // Use hash format that works with the client's HashRouter
-    res.redirect(`http://localhost:3000/#/auth-redirect?token=${token}`);
+    res.redirect(`http://192.168.33.10:3000/#/auth-redirect?token=${token}`);
   }
 );
 
@@ -138,7 +138,7 @@ router.get(
     if (!req.user) {
       console.log("❌ Facebook auth callback: No user found");
       return res.redirect(
-        "http://localhost:3000/#/login?error=authentication_failed"
+        "http://192.168.33.10:3000/#/login?error=authentication_failed"
       );
     }
 
@@ -158,7 +158,7 @@ router.get(
     console.log("✅ Token generated, redirecting to dashboard");
 
     // Redirect to frontend with token
-    res.redirect(`http://localhost:3000/#/auth-redirect?token=${token}`);
+    res.redirect(`http://192.168.33.10:3000/#/auth-redirect?token=${token}`);
   }
 );
 

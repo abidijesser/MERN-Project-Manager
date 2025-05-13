@@ -7,7 +7,7 @@ const token = 'VOTRE_TOKEN_JWT_ICI';
 async function testGenerate2FA() {
   try {
     console.log('Testing generate-2fa route...');
-    const response = await axios.post('http://localhost:3001/api/auth/generate-2fa', {}, {
+    const response = await axios.post('http://192.168.33.10:3001/api/auth/generate-2fa', {}, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -29,7 +29,7 @@ async function testGenerate2FA() {
 async function testVerify2FA(verificationCode) {
   try {
     console.log('Testing verify-2fa route...');
-    const response = await axios.post('http://localhost:3001/api/auth/verify-2fa', 
+    const response = await axios.post('http://192.168.33.10:3001/api/auth/verify-2fa', 
       { token: verificationCode },
       {
         headers: {

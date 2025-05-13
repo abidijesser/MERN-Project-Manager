@@ -6,7 +6,7 @@ const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDBkMWIxOTM4NTc4
 
 // Create an axios instance
 const api = axios.create({
-  baseURL: 'http://localhost:3001/api',
+  baseURL: 'http://192.168.33.10:3001/api',
   headers: {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
