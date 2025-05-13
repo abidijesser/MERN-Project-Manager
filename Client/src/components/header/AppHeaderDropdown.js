@@ -238,6 +238,7 @@ const AppHeaderDropdown = () => {
           <CIcon icon={cilCalendar} className="me-2 text-success" />
           Calendrier
         </CDropdownItem>
+
         <CDropdownItem onClick={() => navigate('/settings')}>
           <CIcon icon={cilSettings} className="me-2 text-secondary" />
           Paramètres

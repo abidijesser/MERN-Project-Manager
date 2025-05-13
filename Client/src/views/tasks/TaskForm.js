@@ -35,6 +35,7 @@ const TaskForm = () => {
     assignedTo: '',
     project: '',
   })
+  const [validationErrors, setValidationErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [projects, setProjects] = useState([])
@@ -50,6 +51,85 @@ const TaskForm = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const isEditMode = Boolean(id)
+
+  // Validation function for individual fields
+  const validateField = (name, value) => {
+    let error = ''
+
+    switch (name) {
+      case 'title':
+        if (!value) {
+          error = 'Le titre est requis'
+        } else if (value.length < 3) {
+          error = 'Le titre doit contenir au moins 3 caractères'
+        } else if (value.length > 100) {
+          error = 'Le titre ne peut pas dépasser 100 caractères'
+        } else if (!/^[a-zA-Z0-9\s\-]+$/.test(value)) {
+          error = 'Le titre ne peut contenir que des lettres, chiffres, espaces ou tirets'
+        }
+        break
+      case 'description':
+        if (!value) {
+          error = 'La description est requise'
+        } else if (value.length < 10) {
+          error = 'La description doit contenir au moins 10 caractères'
+        } else if (value.length > 500) {
+          error = 'La description ne peut pas dépasser 500 caractères'
+        }
+        break
+      case 'status':
+        if (!['To Do', 'In Progress', 'Done'].includes(value)) {
+          error = 'Veuillez sélectionner un statut valide'
+        }
+        break
+      case 'priority':
+        if (!['Low', 'Medium', 'High'].includes(value)) {
+          error = 'Veuillez sélectionner une priorité valide'
+        }
+        break
+      case 'dueDate':
+        if (value) {
+          const selectedDate = new Date(value)
+          const today = new Date()
+          today.setHours(0, 0, 0, 0) // Reset time to midnight for comparison
+          if (selectedDate < today) {
+            error = "La date d'échéance ne peut pas être dans le passé"
+          }
+        }
+        break
+      case 'project':
+        if (!value) {
+          error = 'Veuillez sélectionner un projet'
+        }
+        break
+      case 'assignedTo':
+        if (value && projectMembers.length > 0) {
+          const isValidMember = projectMembers.some((member) => member._id === value)
+          if (!isValidMember) {
+            error = 'Veuillez sélectionner un membre valide du projet'
+          }
+        }
+        break
+      default:
+        break
+    }
+
+    return error
+  }
+
+  // Validate the entire form before submission
+  const validateForm = () => {
+    const errors = {}
+    Object.keys(task).forEach((key) => {
+      const error = validateField(key, task[key])
+      if (error) {
+        errors[key] = error
+      }
+    })
+
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
 
   // Fetch project members when a project is selected
   const fetchProjectMembers = async (projectId) => {
@@ -107,7 +187,6 @@ const TaskForm = () => {
     fetchData()
   }, [id])
 
-  // Add a useEffect to log when projectMembers changes
   useEffect(() => {
     console.log('Project members updated:', projectMembers)
   }, [projectMembers])
@@ -122,22 +201,18 @@ const TaskForm = () => {
         return
       }
 
-      // Vérifier le rôle de l'utilisateur
       const userRole = localStorage.getItem('userRole')
       console.log('TaskForm - User role:', userRole)
 
-      // Récupérer les projets
       const projectsRes = await axios.get('http://localhost:3001/api/projects', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
 
-      // Récupérer tous les utilisateurs pour les assigner aux tâches
       let usersRes = { data: { success: true, users: [] } }
 
       try {
-        // Récupérer tous les utilisateurs
         usersRes = await axios.get('http://localhost:3001/api/auth/users', {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -145,7 +220,6 @@ const TaskForm = () => {
         })
       } catch (error) {
         console.error('Error fetching users:', error)
-        // Si on ne peut pas récupérer tous les utilisateurs, utiliser uniquement l'utilisateur actuel
         try {
           console.log('Falling back to current user only')
           const profileRes = await axios.get('http://localhost:3001/api/auth/profile', {
@@ -174,7 +248,6 @@ const TaskForm = () => {
         throw new Error('Failed to fetch users')
       }
 
-      // Si en mode édition, récupérer la tâche
       if (isEditMode) {
         const taskRes = await axios.get(`http://localhost:3001/api/tasks/${id}`, {
           headers: {
@@ -185,7 +258,6 @@ const TaskForm = () => {
           const taskData = taskRes.data.task
           console.log('Task data fetched:', taskData)
 
-          // Extract project ID correctly, handling both object and string formats
           let projectId = ''
           if (taskData.project) {
             projectId =
@@ -193,15 +265,25 @@ const TaskForm = () => {
           }
           console.log('Project ID extracted:', projectId)
 
-          // Set task data
-          setTask({
+          const formattedTask = {
             ...taskData,
             dueDate: taskData.dueDate ? new Date(taskData.dueDate).toISOString().split('T')[0] : '',
             assignedTo: taskData.assignedTo?._id || '',
             project: projectId,
-          })
+          }
 
-          // Fetch project members if a project is assigned
+          setTask(formattedTask)
+
+          // Validate the loaded task data
+          const errors = {}
+          Object.keys(formattedTask).forEach((key) => {
+            const error = validateField(key, formattedTask[key])
+            if (error) {
+              errors[key] = error
+            }
+          })
+          setValidationErrors(errors)
+
           if (projectId) {
             console.log('Fetching project members for project:', projectId)
             await fetchProjectMembers(projectId)
@@ -223,6 +305,13 @@ const TaskForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    // Validate the form before submission
+    if (!validateForm()) {
+      toast.error('Veuillez corriger les erreurs dans le formulaire')
+      return
+    }
+
     try {
       setLoading(true)
       const token = localStorage.getItem('token')
@@ -268,20 +357,16 @@ const TaskForm = () => {
   const handleChange = (e) => {
     const { name, value } = e.target
 
-    // If project field changed, fetch project members
+    // Update task state
     if (name === 'project') {
       console.log('Project changed to:', value)
-
-      // Reset assignedTo when project changes
       setTask((prev) => ({
         ...prev,
         [name]: value,
-        assignedTo: '',
+        assignedTo: '', // Reset assignedTo when project changes
       }))
-
-      // Fetch project members if a project is selected
       if (value) {
-        console.log('Fetching members for newly selected project:', value)
+        console.log('Fetching members for newlyLECselected project:', value)
         fetchProjectMembers(value)
       } else {
         console.log('No project selected, clearing members')
@@ -293,12 +378,17 @@ const TaskForm = () => {
         [name]: value,
       }))
     }
+
+    // Validate the changed field
+    const error = validateField(name, value)
+    setValidationErrors((prev) => ({
+      ...prev,
+      [name]: error,
+    }))
   }
 
-  // Handle recommendation button click
   const handleRecommendMember = async () => {
     try {
-      // Validate required fields
       if (!task.title || !task.description) {
         toast.error('Le titre et la description sont requis pour les recommandations')
         return
@@ -313,7 +403,6 @@ const TaskForm = () => {
       setRecommendLoading(true)
       setRecommendError(null)
 
-      // Call the recommendation API
       const result = await getRecommendedMembers(task.title, task.description, task.project)
 
       if (result.success) {
@@ -333,11 +422,14 @@ const TaskForm = () => {
     }
   }
 
-  // Handle selecting a recommended member
   const handleSelectRecommendedMember = (memberId) => {
     setTask((prev) => ({
       ...prev,
       assignedTo: memberId,
+    }))
+    setValidationErrors((prev) => ({
+      ...prev,
+      assignedTo: validateField('assignedTo', memberId),
     }))
     setRecommendModalVisible(false)
     toast.success('Membre recommandé sélectionné')
@@ -359,7 +451,7 @@ const TaskForm = () => {
             <strong>{isEditMode ? 'Modifier la tâche' : 'Nouvelle tâche'}</strong>
           </CCardHeader>
           <CCardBody>
-            <CForm onSubmit={handleSubmit}>
+            <CForm onSubmit={handleSubmit} noValidate>
               <div className="mb-3">
                 <CFormInput
                   label="Titre"
@@ -367,7 +459,11 @@ const TaskForm = () => {
                   value={task.title}
                   onChange={handleChange}
                   required
+                  invalid={!!validationErrors.title}
                 />
+                {validationErrors.title && (
+                  <div className="invalid-feedback">{validationErrors.title}</div>
+                )}
               </div>
               <div className="mb-3">
                 <CFormTextarea
@@ -376,7 +472,11 @@ const TaskForm = () => {
                   value={task.description}
                   onChange={handleChange}
                   required
+                  invalid={!!validationErrors.description}
                 />
+                {validationErrors.description && (
+                  <div className="invalid-feedback">{validationErrors.description}</div>
+                )}
               </div>
               <div className="mb-3">
                 <CFormSelect
@@ -384,12 +484,16 @@ const TaskForm = () => {
                   name="status"
                   value={task.status}
                   onChange={handleChange}
+                  invalid={!!validationErrors.status}
                   options={[
                     { label: 'To Do', value: 'To Do' },
                     { label: 'In Progress', value: 'In Progress' },
                     { label: 'Done', value: 'Done' },
                   ]}
                 />
+                {validationErrors.status && (
+                  <div className="invalid-feedback">{validationErrors.status}</div>
+                )}
               </div>
               <div className="mb-3">
                 <CFormSelect
@@ -397,12 +501,16 @@ const TaskForm = () => {
                   name="priority"
                   value={task.priority}
                   onChange={handleChange}
+                  invalid={!!validationErrors.priority}
                   options={[
                     { label: 'Low', value: 'Low' },
                     { label: 'Medium', value: 'Medium' },
                     { label: 'High', value: 'High' },
                   ]}
                 />
+                {validationErrors.priority && (
+                  <div className="invalid-feedback">{validationErrors.priority}</div>
+                )}
               </div>
               <div className="mb-3">
                 <CFormInput
@@ -411,7 +519,11 @@ const TaskForm = () => {
                   name="dueDate"
                   value={task.dueDate}
                   onChange={handleChange}
+                  invalid={!!validationErrors.dueDate}
                 />
+                {validationErrors.dueDate && (
+                  <div className="invalid-feedback">{validationErrors.dueDate}</div>
+                )}
               </div>
               <div className="mb-3">
                 <CFormSelect
@@ -419,6 +531,7 @@ const TaskForm = () => {
                   name="project"
                   value={task.project}
                   onChange={handleChange}
+                  invalid={!!validationErrors.project}
                   options={[
                     { label: 'Sélectionner un projet', value: '' },
                     ...projects.map((project) => ({
@@ -427,6 +540,9 @@ const TaskForm = () => {
                     })),
                   ]}
                 />
+                {validationErrors.project && (
+                  <div className="invalid-feedback">{validationErrors.project}</div>
+                )}
               </div>
               <div className="mb-3">
                 <div className="d-flex align-items-center mb-2">
@@ -435,7 +551,8 @@ const TaskForm = () => {
                     name="assignedTo"
                     value={task.assignedTo}
                     onChange={handleChange}
-                    disabled={!task.project || projectMembers.length === 0} // Disable if no project selected or no members
+                    disabled={!task.project || projectMembers.length === 0}
+                    invalid={!!validationErrors.assignedTo}
                     options={[
                       {
                         label: !task.project
@@ -467,6 +584,9 @@ const TaskForm = () => {
                     Recommander
                   </CButton>
                 </div>
+                {validationErrors.assignedTo && (
+                  <div className="invalid-feedback">{validationErrors.assignedTo}</div>
+                )}
                 {task.project && projectMembers.length === 0 && (
                   <div className="text-danger mt-1 small">
                     Aucun membre disponible pour ce projet. Veuillez ajouter des membres au projet.
@@ -477,7 +597,7 @@ const TaskForm = () => {
                 <CButton color="secondary" className="me-2" onClick={() => navigate('/tasks')}>
                   Annuler
                 </CButton>
-                <CButton type="submit" color="primary">
+                <CButton type="submit" color="primary" disabled={loading}>
                   {isEditMode ? 'Modifier' : 'Créer'}
                 </CButton>
               </div>

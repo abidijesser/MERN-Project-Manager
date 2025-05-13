@@ -16,13 +16,24 @@ import {
   CAlert,
   CPagination,
   CPaginationItem,
+  CDropdown,
+  CDropdownToggle,
+  CDropdownMenu,
+  CDropdownItem,
+  CFormCheck,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilX } from '@coreui/icons'
+import { cilX, cilCalendar, cilOptions, cilPencil, cilTrash, cilBell } from '@coreui/icons'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../../utils/axios'
 import { toast } from 'react-toastify'
 import { getUserTasks } from '../../services/taskService'
+import {
+  syncTaskWithGoogleCalendar,
+  checkGoogleCalendarAuth,
+  getGoogleCalendarAuthUrl,
+} from '../../services/calendarService'
+import '../../styles/ActionDropdown.css'
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([])
@@ -32,19 +43,33 @@ const TaskList = () => {
   const [error, setError] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
+  const [syncingCalendar, setSyncingCalendar] = useState(false)
+  const [syncingTaskId, setSyncingTaskId] = useState(null)
+  const [showMyTasksOnly, setShowMyTasksOnly] = useState(false) // New state for checkbox
   const navigate = useNavigate()
 
   useEffect(() => {
     fetchTasks()
   }, [])
 
-  // Filter tasks based on search query
+  // Filter tasks based on search query and "my tasks only" checkbox
   useEffect(() => {
+    const userId = localStorage.getItem('userId')
+    let filtered = tasks
+
+    // Apply "my tasks only" filter if checkbox is checked
+    if (showMyTasksOnly && userId) {
+      filtered = tasks.filter(
+        (task) => task.assignedTo && task.assignedTo._id === userId,
+      )
+    }
+
+    // Apply search query filter
     if (!searchQuery.trim()) {
-      setFilteredTasks(tasks)
+      setFilteredTasks(filtered)
     } else {
       const lowercasedQuery = searchQuery.toLowerCase()
-      const filtered = tasks.filter(
+      filtered = filtered.filter(
         (task) =>
           (task.title && task.title.toLowerCase().includes(lowercasedQuery)) ||
           (task.project &&
@@ -58,9 +83,9 @@ const TaskList = () => {
       )
       setFilteredTasks(filtered)
     }
-    // Reset to first page when search query changes
+    // Reset to first page when filters change
     setCurrentPage(1)
-  }, [searchQuery, tasks])
+  }, [searchQuery, tasks, showMyTasksOnly])
 
   // Get current tasks for pagination
   const indexOfLastTask = currentPage * itemsPerPage
@@ -96,7 +121,6 @@ const TaskList = () => {
   }
 
   const handleDelete = async (id) => {
-    // Récupérer la tâche pour vérifier si l'utilisateur est le propriétaire du projet
     try {
       const token = localStorage.getItem('token')
       if (!token) {
@@ -104,15 +128,12 @@ const TaskList = () => {
         return
       }
 
-      // Vérifier le rôle de l'utilisateur
       const userRole = localStorage.getItem('userRole')
       const userId = localStorage.getItem('userId')
       console.log('TaskList - User role:', userRole)
       console.log('TaskList - User ID:', userId)
 
-      // Récupérer les détails de la tâche pour vérifier le propriétaire du projet
       const taskResponse = await axios.get(`/api/tasks/${id}`)
-
       const task = taskResponse.data.task
       const isAdmin = userRole === 'Admin'
       const isProjectOwner = task.project && task.project.owner && task.project.owner._id === userId
@@ -120,7 +141,6 @@ const TaskList = () => {
       console.log('TaskList - Is admin:', isAdmin)
       console.log('TaskList - Is project owner:', isProjectOwner)
 
-      // Seuls les administrateurs ou les propriétaires du projet peuvent supprimer des tâches
       if (!isAdmin && !isProjectOwner) {
         toast.error(
           'Seuls les administrateurs ou le propriétaire du projet peuvent supprimer cette tâche',
@@ -157,6 +177,40 @@ const TaskList = () => {
     return <CBadge color={priorityColors[priority] || 'secondary'}>{priority}</CBadge>
   }
 
+  const handleSyncWithGoogleCalendar = async (taskId) => {
+    try {
+      setSyncingCalendar(true)
+      setSyncingTaskId(taskId)
+
+      const authCheckResult = await checkGoogleCalendarAuth()
+
+      if (!authCheckResult.isAuthenticated) {
+        const authUrlResult = await getGoogleCalendarAuthUrl()
+        if (authUrlResult.success && authUrlResult.authUrl) {
+          localStorage.setItem('calendarRedirectUrl', window.location.href)
+          window.location.href = authUrlResult.authUrl
+          return
+        } else {
+          throw new Error('Failed to get Google Calendar authentication URL')
+        }
+      }
+
+      const result = await syncTaskWithGoogleCalendar(taskId)
+
+      if (result.success) {
+        toast.success('Tâche synchronisée avec Google Calendar avec succès!')
+      } else {
+        throw new Error(result.error || 'Failed to sync task with Google Calendar')
+      }
+    } catch (error) {
+      console.error('Error syncing task with Google Calendar:', error)
+      toast.error(error.message || 'Erreur lors de la synchronisation avec Google Calendar')
+    } finally {
+      setSyncingCalendar(false)
+      setSyncingTaskId(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
@@ -173,7 +227,16 @@ const TaskList = () => {
     <CCard>
       <CCardHeader>
         <div className="d-flex justify-content-between align-items-center">
-          <h5>Liste des tâches</h5>
+          <div>
+            <h5>Liste des tâches</h5>
+            <CFormCheck
+              id="showMyTasksOnly"
+              label="Afficher uniquement mes tâches"
+              checked={showMyTasksOnly}
+              onChange={(e) => setShowMyTasksOnly(e.target.checked)}
+              className="mt-2"
+            />
+          </div>
           <div className="d-flex align-items-center">
             <div className="position-relative me-2" style={{ width: '300px' }}>
               <CFormInput
@@ -223,6 +286,8 @@ const TaskList = () => {
                 <CTableDataCell colSpan="7" className="text-center">
                   {searchQuery
                     ? 'Aucune tâche ne correspond à votre recherche'
+                    : showMyTasksOnly
+                    ? 'Vous n\'avez aucune tâche assignée'
                     : 'Aucune tâche trouvée'}
                 </CTableDataCell>
               </CTableRow>
@@ -238,82 +303,116 @@ const TaskList = () => {
                     {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Non définie'}
                   </CTableDataCell>
                   <CTableDataCell>
-                    <CButton
-                      color="info"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => navigate(`/tasks/${task._id}`)}
-                    >
-                      Détails
-                    </CButton>
-
-                    {/* Buttons for project owners */}
-                    <CButton
-                      color="primary"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => navigate(`/tasks/edit/${task._id}`)}
-                      disabled={
-                        !(
-                          task.project &&
-                          task.project.owner &&
-                          task.project.owner._id === localStorage.getItem('userId')
-                        )
-                      }
-                      title={
-                        task.project &&
-                        task.project.owner &&
-                        task.project.owner._id === localStorage.getItem('userId')
-                          ? 'Modifier la tâche'
-                          : 'Seul le propriétaire du projet peut modifier la tâche'
-                      }
-                    >
-                      Modifier
-                    </CButton>
-                    <CButton
-                      color="danger"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => handleDelete(task._id)}
-                      disabled={
-                        !(
-                          localStorage.getItem('userRole') === 'Admin' ||
-                          (task.project &&
+                    <CDropdown alignment="end" className="action-dropdown">
+                      <CDropdownToggle color="light" size="sm" caret={false}>
+                        <CIcon icon={cilOptions} size="lg" />
+                      </CDropdownToggle>
+                      <CDropdownMenu className="action-dropdown-menu">
+                        <CDropdownItem onClick={() => navigate(`/tasks/${task._id}`)}>
+                          <CIcon icon={cilPencil} className="me-2 text-info" />
+                          Détails
+                        </CDropdownItem>
+                        <CDropdownItem
+                          onClick={() => navigate(`/tasks/edit/${task._id}`)}
+                          disabled={
+                            !(
+                              task.project &&
+                              task.project.owner &&
+                              task.project.owner._id === localStorage.getItem('userId')
+                            )
+                          }
+                          title={
+                            task.project &&
                             task.project.owner &&
-                            task.project.owner._id === localStorage.getItem('userId'))
-                        )
-                      }
-                      title={
-                        localStorage.getItem('userRole') === 'Admin' ||
-                        (task.project &&
-                          task.project.owner &&
-                          task.project.owner._id === localStorage.getItem('userId'))
-                          ? 'Supprimer la tâche'
-                          : 'Seuls les administrateurs ou le propriétaire du projet peuvent supprimer cette tâche'
-                      }
-                    >
-                      Supprimer
-                    </CButton>
-
-                    {/* Status modification button for assigned users */}
-                    {task.assignedTo && task.assignedTo._id === localStorage.getItem('userId') ? (
-                      <CButton
-                        color="warning"
-                        size="sm"
-                        onClick={() => navigate(`/tasks/status/${task._id}`)}
-                      >
-                        Modifier statut
-                      </CButton>
-                    ) : (
-                      <CButton
-                        color="warning"
-                        size="sm"
-                        disabled
-                        title="Seul l'utilisateur assigné peut modifier le statut"
-                      >
-                        Modifier statut
-                      </CButton>
-                    )}
+                            task.project.owner._id === localStorage.getItem('userId')
+                              ? 'Modifier la tâche'
+                              : 'Seul le propriétaire du projet peut modifier la tâche'
+                          }
+                        >
+                          <CIcon icon={cilPencil} className="me-2 text-primary" />
+                          Modifier
+                        </CDropdownItem>
+                        <CDropdownItem
+                          onClick={() => handleDelete(task._id)}
+                          disabled={
+                            !(
+                              localStorage.getItem('userRole') === 'Admin' ||
+                              (task.project &&
+                                task.project.owner &&
+                                task.project.owner._id === localStorage.getItem('userId'))
+                            )
+                          }
+                          title={
+                            localStorage.getItem('userRole') === 'Admin' ||
+                            (task.project &&
+                              task.project.owner &&
+                              task.project.owner._id === localStorage.getItem('userId'))
+                              ? 'Supprimer la tâche'
+                              : 'Seuls les administrateurs ou le propriétaire du projet peuvent supprimer cette tâche'
+                          }
+                        >
+                          <CIcon icon={cilTrash} className="me-2 text-danger" />
+                          Supprimer
+                        </CDropdownItem>
+                        <CDropdownItem
+                          onClick={() => navigate(`/tasks/status/${task._id}`)}
+                          disabled={
+                            !(
+                              task.assignedTo &&
+                              task.assignedTo._id === localStorage.getItem('userId')
+                            )
+                          }
+                          title={
+                            task.assignedTo &&
+                            task.assignedTo._id === localStorage.getItem('userId')
+                              ? 'Modifier le statut de la tâche'
+                              : "Seul l'utilisateur assigné peut modifier le statut"
+                          }
+                        >
+                          <CIcon icon={cilBell} className="me-2 text-warning" />
+                          Modifier statut
+                        </CDropdownItem>
+                        <CDropdownItem
+                          onClick={() => handleSyncWithGoogleCalendar(task._id)}
+                          disabled={
+                            (syncingCalendar && syncingTaskId === task._id) ||
+                            !task.dueDate ||
+                            !(
+                              (task.project &&
+                                task.project.owner &&
+                                task.project.owner._id === localStorage.getItem('userId')) ||
+                              (task.assignedTo &&
+                                task.assignedTo._id === localStorage.getItem('userId'))
+                            )
+                          }
+                          title={
+                            !task.dueDate
+                              ? "Cette tâche n'a pas de date d'échéance"
+                              : !(
+                                    (task.project &&
+                                      task.project.owner &&
+                                      task.project.owner._id === localStorage.getItem('userId')) ||
+                                    (task.assignedTo &&
+                                      task.assignedTo._id === localStorage.getItem('userId'))
+                                  )
+                                ? "Seul le propriétaire du projet ou l'utilisateur assigné peut ajouter cette tâche à Google Calendar"
+                                : 'Ajouter cette tâche à Google Calendar'
+                          }
+                        >
+                          {syncingCalendar && syncingTaskId === task._id ? (
+                            <>
+                              <CSpinner size="sm" className="me-2" />
+                              Synchronisation...
+                            </>
+                          ) : (
+                            <>
+                              <CIcon icon={cilCalendar} className="me-2 text-primary" />
+                              Ajouter à Google Calendar
+                            </>
+                          )}
+                        </CDropdownItem>
+                      </CDropdownMenu>
+                    </CDropdown>
                   </CTableDataCell>
                 </CTableRow>
               ))
@@ -329,9 +428,8 @@ const TaskList = () => {
               disabled={currentPage === 1}
               onClick={() => handlePageChange(currentPage - 1)}
             >
-              <span aria-hidden="true">&laquo;</span>
+              <span aria-hidden="true">«</span>
             </CPaginationItem>
-
             {[...Array(Math.ceil(filteredTasks.length / itemsPerPage)).keys()].map((number) => (
               <CPaginationItem
                 key={number + 1}
@@ -341,13 +439,12 @@ const TaskList = () => {
                 {number + 1}
               </CPaginationItem>
             ))}
-
             <CPaginationItem
               aria-label="Suivant"
               disabled={currentPage === Math.ceil(filteredTasks.length / itemsPerPage)}
               onClick={() => handlePageChange(currentPage + 1)}
             >
-              <span aria-hidden="true">&raquo;</span>
+              <span aria-hidden="true">»</span>
             </CPaginationItem>
           </CPagination>
         )}

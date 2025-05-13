@@ -94,6 +94,9 @@ router.get("/", auth, async (req, res) => {
   }
 });
 
+// GET projects for the connected user (where user is a member or owner)
+router.get("/user-projects", auth, projectController.getUserProjects);
+
 // GET a single project by ID
 router.get("/:id", auth, projectController.getProjectById);
 
