@@ -24,8 +24,8 @@ pipeline {
         registryCredentials = "nexus"
         registry = "192.168.33.10:8083"
         serverImage = "nodemongoapp"
-        clientImage = "clientapp"
-        adminImage = "adminapp"
+        clientImage = "client"
+        adminImage = "admin"
         imageTag = "6.0"
     }
 
