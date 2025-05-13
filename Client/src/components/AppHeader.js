@@ -63,7 +63,7 @@ const AppHeader = () => {
         return
       }
 
-      const response = await axios.get('http://localhost:3001/api/notifications', {
+      const response = await axios.get('http://192.168.33.10:3001/api/notifications', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -89,7 +89,7 @@ const AppHeader = () => {
       const token = localStorage.getItem('token')
       if (!token) return
 
-      await axios.put(`http://localhost:3001/api/notifications/${notificationId}/read`, {}, {
+      await axios.put(`http://192.168.33.10:3001/api/notifications/${notificationId}/read`, {}, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

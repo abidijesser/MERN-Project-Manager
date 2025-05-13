@@ -118,7 +118,7 @@ const MediaList = ({ media, onDelete, onEdit, page, totalPages, onPageChange }) 
                   <div className="media-card-preview">
                     {item.fileType === 'image' ? (
                       <img
-                        src={`http://localhost:3001/${item.filePath}`}
+                        src={`http://192.168.33.10:3001/${item.filePath}`}
                         alt={item.title}
                         className="img-fluid media-preview-img"
                       />

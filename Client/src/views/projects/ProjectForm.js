@@ -75,14 +75,14 @@ const ProjectForm = () => {
       }
 
       if (isEditMode) {
-        await axios.put(`http://localhost:3001/api/projects/${id}`, project, {
+        await axios.put(`http://192.168.33.10:3001/api/projects/${id}`, project, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         })
         toast.success('Projet mis à jour avec succès')
       } else {
-        await axios.post('http://localhost:3001/api/projects', project, {
+        await axios.post('http://192.168.33.10:3001/api/projects', project, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

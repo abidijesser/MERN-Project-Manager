@@ -51,7 +51,7 @@ const Notifications = ({ socket }) => {
         return
       }
 
-      const response = await axios.get('http://localhost:3001/api/notifications', {
+      const response = await axios.get('http://192.168.33.10:3001/api/notifications', {
         headers: {
           Authorization: `Bearer ${token}`,
         },

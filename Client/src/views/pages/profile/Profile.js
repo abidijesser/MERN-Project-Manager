@@ -66,7 +66,7 @@ const Profile = () => {
       console.log('Profile - Token exists:', !!localStorage.getItem('token'))
 
       // Log the full URL being called
-      const url = 'http://localhost:3001/api/auth/generate-2fa'
+      const url = 'http://192.168.33.10:3001/api/auth/generate-2fa'
       console.log('Profile - Calling URL:', url)
 
       // Use fetch instead of axios for debugging
@@ -113,7 +113,7 @@ const Profile = () => {
 
       // Utiliser fetch pour plus de détails sur la réponse
       const token = localStorage.getItem('token')
-      const url = 'http://localhost:3001/api/auth/verify-2fa'
+      const url = 'http://192.168.33.10:3001/api/auth/verify-2fa'
       console.log('Profile - Calling URL:', url)
 
       const response = await fetch(url, {
@@ -171,7 +171,7 @@ const Profile = () => {
 
       // Utiliser fetch pour plus de détails sur la réponse
       const token = localStorage.getItem('token')
-      const url = 'http://localhost:3001/api/auth/disable-2fa'
+      const url = 'http://192.168.33.10:3001/api/auth/disable-2fa'
       console.log('Profile - Calling URL:', url)
 
       const response = await fetch(url, {
@@ -314,7 +314,7 @@ const Profile = () => {
                 >
                   {user.profilePicture ? (
                     <img
-                      src={`http://localhost:3001/${user.profilePicture}`}
+                      src={`http://192.168.33.10:3001/${user.profilePicture}`}
                       alt="Profile"
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />

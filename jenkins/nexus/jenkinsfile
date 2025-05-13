@@ -16,7 +16,7 @@ pipeline {
 
         GOOGLE_CALENDAR_CLIENT_ID = credentials('GOOGLE_CALENDAR_CLIENT_ID')
         GOOGLE_CALENDAR_CLIENT_SECRET = credentials('GOOGLE_CALENDAR_CLIENT_SECRET')
-        GOOGLE_CALENDAR_REDIRECT_URI = "http://localhost:3001/api/calendar/callback"
+        GOOGLE_CALENDAR_REDIRECT_URI = "http://192.168.33.10:3001/api/calendar/callback"
 
         GEMINI_API_KEY = credentials('GEMINI_API_KEY')
         VITE_API_URL = "http://back:5000"

@@ -65,7 +65,7 @@ const TaskList = () => {
         return
       }
 
-      const response = await axios.get('http://localhost:3001/api/tasks', {
+      const response = await axios.get('http://192.168.33.10:3001/api/tasks', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -101,7 +101,7 @@ const TaskList = () => {
       console.log('TaskList - User ID:', userId)
 
       // Récupérer les détails de la tâche pour vérifier le propriétaire du projet
-      const taskResponse = await axios.get(`http://localhost:3001/api/tasks/${id}`, {
+      const taskResponse = await axios.get(`http://192.168.33.10:3001/api/tasks/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -123,7 +123,7 @@ const TaskList = () => {
       }
 
       if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
-        await axios.delete(`http://localhost:3001/api/tasks/${id}`, {
+        await axios.delete(`http://192.168.33.10:3001/api/tasks/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

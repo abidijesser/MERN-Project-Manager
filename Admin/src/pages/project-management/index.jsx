@@ -134,7 +134,7 @@ const ProjectManagement = ({ dashboardView = false }) => {
       setLoading(true);
       // Try to get projects from the admin endpoint first
       try {
-        const adminResponse = await axios.get('http://localhost:3001/admin/projects', {
+        const adminResponse = await axios.get('http://192.168.33.10:3001/admin/projects', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
@@ -294,7 +294,7 @@ const ProjectManagement = ({ dashboardView = false }) => {
       // Try to get more detailed project information
       try {
         // First try the admin endpoint
-        const adminResponse = await axios.get(`http://localhost:3001/admin/projects/${project._id}`, {
+        const adminResponse = await axios.get(`http://192.168.33.10:3001/admin/projects/${project._id}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'

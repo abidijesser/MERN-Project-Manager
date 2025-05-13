@@ -155,12 +155,12 @@ EMAIL_USERNAME=votre_email@gmail.com
 EMAIL_PASSWORD=votre_mot_de_passe_app
 
 # Configuration des liens de partage
-CLIENT_URL=http://localhost:3000  # URL de votre application client
+CLIENT_URL=http://192.168.33.10:3000  # URL de votre application client
 ```
 
 Et dans votre fichier `.env` côté client :
 ```
-VITE_API_URL=http://localhost:3001  # URL de votre API
+VITE_API_URL=http://192.168.33.10:3001  # URL de votre API
 ```
 
 ## FAQ

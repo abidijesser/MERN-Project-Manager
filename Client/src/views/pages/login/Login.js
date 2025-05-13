@@ -228,14 +228,14 @@ const Login = () => {
     // Clear any existing tokens
     localStorage.removeItem('token')
     // Use the full URL for Google auth with explicit scope
-    window.location.href = 'http://localhost:3001/auth/google?scope=profile%20email'
+    window.location.href = 'http://192.168.33.10:3001/auth/google?scope=profile%20email'
   }
 
   const handleFacebookLogin = () => {
     // Clear any existing tokens
     localStorage.removeItem('token')
     // Use the full URL for Facebook auth
-    window.location.href = 'http://localhost:3001/api/auth/facebook'
+    window.location.href = 'http://192.168.33.10:3001/api/auth/facebook'
   }
 
   return (

@@ -18,7 +18,7 @@ const UserDetails = () => {
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:3001/admin/users/${id}`);
+        const response = await axios.get(`http://192.168.33.10:3001/admin/users/${id}`);
         setUser(response.data);
       } catch (error) {
         console.error('Erreur lors du chargement des détails:', error);

@@ -174,7 +174,7 @@ export default function Profile() {
               {user ? user.name : 'Loading...'}
             </Typography>
             {profilePicture ? (
-              <Avatar alt="profile user" src={`http://localhost:3001/${profilePicture}`} size="sm" />
+              <Avatar alt="profile user" src={`http://192.168.33.10:3001/${profilePicture}`} size="sm" />
             ) : (
               <Avatar alt="profile user" src={avatar1} size="sm" />
             )}
@@ -208,7 +208,7 @@ export default function Profile() {
                         <Grid>
                           <Stack direction="row" sx={{ gap: 1.25, alignItems: 'center' }}>
                             {profilePicture ? (
-                              <Avatar alt="profile user" src={`http://localhost:3001/${profilePicture}`} sx={{ width: 32, height: 32 }} />
+                              <Avatar alt="profile user" src={`http://192.168.33.10:3001/${profilePicture}`} sx={{ width: 32, height: 32 }} />
                             ) : (
                               <Avatar alt="profile user" src={avatar1} sx={{ width: 32, height: 32 }} />
                             )}

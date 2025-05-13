@@ -9,7 +9,7 @@ export function UserContextProvider({ children }) {
 
     useEffect(() => {
         if (!user) {
-            axios.get('http://localhost:3001/profile')
+            axios.get('http://192.168.33.10:3001/profile')
             .then((data) => {
                 setUser(data.data);
             })

@@ -10,7 +10,7 @@ const MediaList = ({ taskId }) => {
   const fetchMedias = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(`http://localhost:3001/api/media/task/${taskId}`)
+      const response = await axios.get(`http://192.168.33.10:3001/api/media/task/${taskId}`)
       setMedias(response.data.medias)
     } catch (error) {
       message.error('Erreur lors du chargement des médias')
@@ -25,7 +25,7 @@ const MediaList = ({ taskId }) => {
 
   const handleDelete = async (mediaId) => {
     try {
-      await axios.delete(`http://localhost:3001/api/media/${mediaId}`)
+      await axios.delete(`http://192.168.33.10:3001/api/media/${mediaId}`)
       message.success('Média supprimé avec succès')
       fetchMedias()
     } catch (error) {

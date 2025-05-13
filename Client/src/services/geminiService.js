@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getAllGeminiData } from './geminiDataService';
 
-const API_URL = 'http://localhost:3001/api/gemini'; // URL for our Gemini API endpoint
+const API_URL = 'http://192.168.33.10:3001/api/gemini'; // URL for our Gemini API endpoint
 
 /**
  * Test the connection to the Gemini API

@@ -45,7 +45,7 @@ const TaskStatusForm = () => {
       }
 
       // Récupérer la tâche
-      const taskRes = await axios.get(`http://localhost:3001/api/tasks/${id}`, {
+      const taskRes = await axios.get(`http://192.168.33.10:3001/api/tasks/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -105,7 +105,7 @@ const TaskStatusForm = () => {
       console.log('TaskStatusForm - Request data:', requestData)
 
       // URL de l'API
-      const apiUrl = `http://localhost:3001/api/tasks/${id}/status`
+      const apiUrl = `http://192.168.33.10:3001/api/tasks/${id}/status`
       console.log('TaskStatusForm - API URL:', apiUrl)
 
       // Configuration de la requête

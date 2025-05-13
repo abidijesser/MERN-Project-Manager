@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_URL = 'http://localhost:3001/api/media'
+const API_URL = 'http://192.168.33.10:3001/api/media'
 
 // Create axios instance with auth token
 const getAuthAxios = () => {

@@ -48,7 +48,7 @@ const MediaEdit = ({ media, onSuccess, onCancel }) => {
     const fetchProjects = async () => {
       try {
         const token = localStorage.getItem('token')
-        const response = await axios.get('http://localhost:3001/api/projects', {
+        const response = await axios.get('http://192.168.33.10:3001/api/projects', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -92,7 +92,7 @@ const MediaEdit = ({ media, onSuccess, onCancel }) => {
         console.log('Fetching tasks for project ID:', formData.project)
 
         // Make a direct API call to get tasks with a query parameter for the project
-        const tasksResponse = await axios.get(`http://localhost:3001/api/tasks`, {
+        const tasksResponse = await axios.get(`http://192.168.33.10:3001/api/tasks`, {
           params: {
             project: formData.project,
           },

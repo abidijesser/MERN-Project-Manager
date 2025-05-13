@@ -43,7 +43,7 @@ const EditTask = () => {
         return
       }
 
-      const response = await axios.get(`http://localhost:3001/api/tasks/${id}`, {
+      const response = await axios.get(`http://192.168.33.10:3001/api/tasks/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -70,12 +70,12 @@ const EditTask = () => {
       }
 
       const [projectsRes, usersRes] = await Promise.all([
-        axios.get('http://localhost:3001/api/projects', {
+        axios.get('http://192.168.33.10:3001/api/projects', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }),
-        axios.get('http://localhost:3001/api/auth/users', {
+        axios.get('http://192.168.33.10:3001/api/auth/users', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -105,7 +105,7 @@ const EditTask = () => {
         return
       }
 
-      await axios.put(`http://localhost:3001/api/tasks/${id}`, task, {
+      await axios.put(`http://192.168.33.10:3001/api/tasks/${id}`, task, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

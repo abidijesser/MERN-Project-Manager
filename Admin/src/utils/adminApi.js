@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create an axios instance with default config for admin routes
 const adminApi = axios.create({
-  baseURL: 'http://localhost:3001/admin',
+  baseURL: 'http://192.168.33.10:3001/admin',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json'

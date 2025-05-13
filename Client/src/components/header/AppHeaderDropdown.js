@@ -126,7 +126,7 @@ const AppHeaderDropdown = () => {
       if (token) {
         try {
           console.log('Logout - Calling server logout endpoint')
-          await fetch('http://localhost:3001/api/auth/logout', {
+          await fetch('http://192.168.33.10:3001/api/auth/logout', {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -182,7 +182,7 @@ const AppHeaderDropdown = () => {
           <CAvatar
             size="md"
             className="border border-2 border-white"
-            src={`http://localhost:3001/${profilePicture}`}
+            src={`http://192.168.33.10:3001/${profilePicture}`}
           />
         ) : (
           <CAvatar color="light" size="md" className="text-primary border border-2 border-white">
@@ -196,7 +196,7 @@ const AppHeaderDropdown = () => {
             <CAvatar
               size="lg"
               className="mb-2 border border-2 border-white"
-              src={`http://localhost:3001/${profilePicture}`}
+              src={`http://192.168.33.10:3001/${profilePicture}`}
             />
           ) : (
             <CAvatar

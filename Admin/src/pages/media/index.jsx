@@ -599,7 +599,7 @@ const MediaManagement = () => {
   const renderFilePreview = () => {
     if (!selectedMedia) return null;
 
-    const fileUrl = `http://localhost:3001/${selectedMedia.filePath}`;
+    const fileUrl = `http://192.168.33.10:3001/${selectedMedia.filePath}`;
 
     if (selectedMedia.fileType === 'image') {
       return (
@@ -958,7 +958,7 @@ const MediaManagement = () => {
               <Button
                 variant="outlined"
                 color="primary"
-                href={`http://localhost:3001/${selectedMedia.filePath}`}
+                href={`http://192.168.33.10:3001/${selectedMedia.filePath}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >

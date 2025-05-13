@@ -158,7 +158,7 @@ Configuration de Multer pour gérer les téléchargements :
 ### Téléchargement
 
 Les fichiers sont servis directement depuis le serveur via une URL :
-- Format : `http://localhost:3001/{filePath}`
+- Format : `http://192.168.33.10:3001/{filePath}`
 - Pas de vérification d'authentification pour le téléchargement direct (à améliorer)
 
 ## 6. Système de permissions

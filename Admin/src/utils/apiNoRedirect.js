@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create an axios instance with default config that doesn't redirect on 401
 const apiNoRedirect = axios.create({
-  baseURL: 'http://localhost:3001/api',
+  baseURL: 'http://192.168.33.10:3001/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json'

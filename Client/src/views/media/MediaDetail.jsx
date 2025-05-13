@@ -64,7 +64,7 @@ const MediaDetail = ({ media }) => {
   }
 
   const renderMediaPreview = () => {
-    const fileUrl = `http://localhost:3001/${fullMedia.filePath}`
+    const fileUrl = `http://192.168.33.10:3001/${fullMedia.filePath}`
 
     switch (fullMedia.fileType) {
       case 'image':

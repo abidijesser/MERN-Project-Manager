@@ -7,7 +7,7 @@ import ChatBox from '../../components/ChatBox'
 import { FaComments, FaBell, FaCalendarAlt } from 'react-icons/fa'
 import './Collaboration.css'
 
-const socket = io('http://localhost:3001') // Updated to match your server port
+const socket = io('http://192.168.33.10:3001') // Updated to match your server port
 
 const Collaboration = () => {
   const location = useLocation()

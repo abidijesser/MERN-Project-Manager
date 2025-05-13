@@ -53,7 +53,7 @@ const TaskForm = () => {
       console.log('Fetching members for project ID:', projectId)
 
       // First, get the project details to set selectedProject
-      const projectResponse = await axios.get(`http://localhost:3001/api/projects/${projectId}`, {
+      const projectResponse = await axios.get(`http://192.168.33.10:3001/api/projects/${projectId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -65,7 +65,7 @@ const TaskForm = () => {
 
       // Now directly fetch the project members using the dedicated endpoint
       const membersResponse = await axios.get(
-        `http://localhost:3001/api/projects/${projectId}/members`,
+        `http://192.168.33.10:3001/api/projects/${projectId}/members`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -112,7 +112,7 @@ const TaskForm = () => {
       console.log('TaskForm - User role:', userRole)
 
       // Récupérer les projets
-      const projectsRes = await axios.get('http://localhost:3001/api/projects', {
+      const projectsRes = await axios.get('http://192.168.33.10:3001/api/projects', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -123,7 +123,7 @@ const TaskForm = () => {
 
       try {
         // Récupérer tous les utilisateurs
-        usersRes = await axios.get('http://localhost:3001/api/auth/users', {
+        usersRes = await axios.get('http://192.168.33.10:3001/api/auth/users', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -133,7 +133,7 @@ const TaskForm = () => {
         // Si on ne peut pas récupérer tous les utilisateurs, utiliser uniquement l'utilisateur actuel
         try {
           console.log('Falling back to current user only')
-          const profileRes = await axios.get('http://localhost:3001/api/auth/profile', {
+          const profileRes = await axios.get('http://192.168.33.10:3001/api/auth/profile', {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -161,7 +161,7 @@ const TaskForm = () => {
 
       // Si en mode édition, récupérer la tâche
       if (isEditMode) {
-        const taskRes = await axios.get(`http://localhost:3001/api/tasks/${id}`, {
+        const taskRes = await axios.get(`http://192.168.33.10:3001/api/tasks/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -218,8 +218,8 @@ const TaskForm = () => {
       }
 
       const url = isEditMode
-        ? `http://localhost:3001/api/tasks/${id}`
-        : 'http://localhost:3001/api/tasks'
+        ? `http://192.168.33.10:3001/api/tasks/${id}`
+        : 'http://192.168.33.10:3001/api/tasks'
 
       const method = isEditMode ? 'put' : 'post'
 

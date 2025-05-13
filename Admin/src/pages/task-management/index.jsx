@@ -369,7 +369,7 @@ const TaskManagement = ({ dashboardView = false }) => {
       // Direct fetch using fetch API as a backup method
       try {
         const token = localStorage.getItem('token');
-        const fetchResponse = await fetch(`http://localhost:3001/api/tasks/${taskIdStr}`, {
+        const fetchResponse = await fetch(`http://192.168.33.10:3001/api/tasks/${taskIdStr}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

@@ -51,7 +51,7 @@ const DocumentVersions = ({ document, onVersionRestore }) => {
     try {
       // Create a link to download the file
       const link = window.document.createElement('a')
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://192.168.33.10:3001'
       link.href = `${baseUrl}/${version.filePath}`
 
       // Utiliser le nom du document actuel pour toutes les versions

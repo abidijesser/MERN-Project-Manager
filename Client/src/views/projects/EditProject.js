@@ -52,7 +52,7 @@ const EditProject = () => {
           return
         }
 
-        const response = await axios.get('http://localhost:3001/api/auth/users', {
+        const response = await axios.get('http://192.168.33.10:3001/api/auth/users', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -89,7 +89,7 @@ const EditProject = () => {
         return
       }
 
-      const response = await axios.get(`http://localhost:3001/api/projects/${id}`, {
+      const response = await axios.get(`http://192.168.33.10:3001/api/projects/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -173,7 +173,7 @@ const EditProject = () => {
         members: selectedMembers,
       }
 
-      const response = await axios.put(`http://localhost:3001/api/projects/${id}`, projectData, {
+      const response = await axios.put(`http://192.168.33.10:3001/api/projects/${id}`, projectData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

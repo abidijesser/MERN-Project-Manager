@@ -31,7 +31,7 @@ const EditMediaForm = ({ media, onSuccess }) => {
       formData.append('type', media.type)
       formData.append('name', values.name)
 
-      await axios.put(`http://localhost:3001/api/media/${media._id}`, formData, {
+      await axios.put(`http://192.168.33.10:3001/api/media/${media._id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
 

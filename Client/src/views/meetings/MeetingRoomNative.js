@@ -98,7 +98,7 @@ const MeetingRoomNative = () => {
         const token = localStorage.getItem('token')
         if (!token) return
 
-        const response = await fetch(`http://localhost:3001/api/messages/room/meeting-${id}`, {
+        const response = await fetch(`http://192.168.33.10:3001/api/messages/room/meeting-${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -120,7 +120,7 @@ const MeetingRoomNative = () => {
     fetchPreviousMessages()
 
     // Set up socket connection
-    const socket = io(process.env.REACT_APP_API_URL || 'http://localhost:3001')
+    const socket = io(process.env.REACT_APP_API_URL || 'http://192.168.33.10:3001')
     socketRef.current = socket
 
     // Join meeting room

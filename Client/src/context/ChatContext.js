@@ -3,7 +3,7 @@ import io from 'socket.io-client';
 
 const ChatContext = createContext();
 
-const socket = io('http://localhost:3001'); // URL du serveur WebSocket
+const socket = io('http://192.168.33.10:3001'); // URL du serveur WebSocket
 
 export const ChatProvider = ({ children }) => {
   const [messages, setMessages] = useState([]);

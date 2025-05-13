@@ -371,7 +371,7 @@ const ProfilePage = () => {
               <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
                 <Box sx={{ position: 'relative' }}>
                   <Avatar
-                    src={profilePicture ? `http://localhost:3001/${profilePicture}` : ''}
+                    src={profilePicture ? `http://192.168.33.10:3001/${profilePicture}` : ''}
                     sx={{
                       width: 100,
                       height: 100,

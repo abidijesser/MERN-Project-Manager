@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = 'http://192.168.33.10:3001/api';
 
 // Récupérer les données de performance
 export const getPerformanceData = async () => {

@@ -37,7 +37,7 @@ const ResetPassword = () => {
 
     try {
       console.log('Envoi de la requête de réinitialisation...')
-      const response = await axios.post('http://localhost:3001/api/auth/reset-password', {
+      const response = await axios.post('http://192.168.33.10:3001/api/auth/reset-password', {
         token,
         newPassword,
       })

@@ -21,7 +21,7 @@ const ForgotPassword = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/forgot-password', { email })
+      const response = await axios.post('http://192.168.33.10:3001/api/auth/forgot-password', { email })
 
       if (response.data.success) {
         // Always show a generic success message for security reasons

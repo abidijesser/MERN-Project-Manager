@@ -69,7 +69,7 @@ const ProjectDocuments = ({ projectId }) => {
     try {
       // Create a link to download the file
       const link = document.createElement('a')
-      link.href = `http://localhost:3001/${doc.filePath}`
+      link.href = `http://192.168.33.10:3001/${doc.filePath}`
       link.setAttribute('download', doc.name)
       document.body.appendChild(link)
       link.click()

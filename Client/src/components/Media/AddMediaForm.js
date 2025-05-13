@@ -24,7 +24,7 @@ const AddMediaForm = ({ taskId, onSuccess }) => {
         formData.append('file', fileList[0].originFileObj)
       }
 
-      await axios.post('http://localhost:3001/api/media', formData, {
+      await axios.post('http://192.168.33.10:3001/api/media', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
 

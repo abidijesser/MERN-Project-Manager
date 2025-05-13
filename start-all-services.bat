@@ -11,8 +11,8 @@ echo Starting Admin on port 5173...
 start cmd /k "cd Admin\mantis-free-react-admin-template-master && npm run start"
 
 echo All services started!
-echo Server: http://localhost:3001
-echo Client: http://localhost:3000
-echo Admin: http://localhost:5173
+echo Server: http://192.168.33.10:3001
+echo Client: http://192.168.33.10:3000
+echo Admin: http://192.168.33.10:5173
 
 pause
