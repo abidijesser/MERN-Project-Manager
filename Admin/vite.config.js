@@ -10,7 +10,7 @@ export default defineConfig({
     open: true
   },
   build: {
-    outDir: 'build',
+    outDir: 'dist',
     sourcemap: process.env.NODE_ENV !== 'production'
   }
 });
