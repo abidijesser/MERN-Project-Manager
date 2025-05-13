@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
 import autoprefixer from 'autoprefixer'
-import polyfills from 'vite-plugin-node-polyfills'
+import stdLibBrowser from 'vite-plugin-node-stdlib-browser'
 
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
@@ -27,14 +27,11 @@ export default defineConfig(() => ({
         global: 'globalThis',
       },
     },
+    include: ['buffer', 'process'],
   },
   plugins: [
     react(),
-    polyfills({
-      crypto: true,
-      buffer: true,
-      process: true,
-    }),
+    stdLibBrowser(),
   ],
   resolve: {
     alias: [
@@ -42,6 +39,8 @@ export default defineConfig(() => ({
         find: 'src/',
         replacement: `${path.resolve('src')}/`,
       },
+      { find: 'buffer', replacement: 'buffer' },
+      { find: 'process', replacement: 'process/browser' },
     ],
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.scss'],
   },
@@ -49,6 +48,6 @@ export default defineConfig(() => ({
     port: 3000,
     proxy: {
         // https://vitejs.dev/config/server-options.html
-      },
+    },
   },
 }))
