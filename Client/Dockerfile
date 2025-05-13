@@ -14,7 +14,7 @@ RUN npm install --legacy-peer-deps
 COPY ./Client .
 
 # Ensure crypto polyfill is available
-RUN npm install crypto --save
+RUN npm install crypto-browserify --save --legacy-peer-deps
 
 # Build the Vite app
 RUN npm run build
