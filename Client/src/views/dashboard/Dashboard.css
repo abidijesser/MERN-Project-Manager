@@ -152,22 +152,40 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-md);
-  padding-bottom: var(--spacing-xs);
+  padding-bottom: var(--spacing-sm);
   border-bottom: 2px solid var(--border-color);
+  position: relative;
+}
+
+.section-header::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 80px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary-color), var(--info-color));
 }
 
 .section-title {
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: 1.6rem;
+  font-weight: 700;
   color: var(--dark-color);
   margin: 0;
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .section-title .icon {
-  margin-right: 10px;
+  margin-right: 12px;
   color: var(--primary-color);
+  background-color: rgba(50, 31, 219, 0.08);
+  padding: 8px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Style pour les activités récentes */
@@ -259,8 +277,27 @@
 
 /* Style pour les sections du tableau de bord */
 .dashboard-section {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
   padding: var(--spacing-md) 0;
+  position: relative;
+}
+
+.dashboard-section::after {
+  content: '';
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 0, 0, 0.05) 20%,
+    rgba(0, 0, 0, 0.1) 50%,
+    rgba(0, 0, 0, 0.05) 80%,
+    transparent
+  );
 }
 
 /* Animation pour les barres de progression */
@@ -286,32 +323,62 @@
 
 /* Style pour les badges arrondis */
 .badge.rounded-pill {
-  font-weight: 500;
-  letter-spacing: 0.3px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
   padding: 0.5rem 1rem;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  border: none;
 }
 
 /* Styles pour les boutons */
 .btn-dashboard {
-  padding: 0.5rem 1.25rem;
+  padding: 0.6rem 1.5rem;
   border-radius: 30px;
-  font-weight: 500;
-  transition: all var(--transition-speed) ease;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  letter-spacing: 0.3px;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.btn-dashboard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: -1;
 }
 
 .btn-dashboard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-dashboard:hover::before {
+  transform: translateX(0);
+}
+
+.btn-dashboard:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .btn-dashboard.btn-primary {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
+  color: white;
 }
 
 .btn-dashboard.btn-primary:hover {
@@ -322,6 +389,20 @@
 .btn-dashboard.btn-success {
   background-color: var(--success-color);
   border-color: var(--success-color);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-dashboard.btn-success::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: translateX(-100%);
 }
 
 .btn-dashboard.btn-success:hover {
@@ -329,19 +410,39 @@
   border-color: var(--success-hover);
 }
 
+.btn-dashboard.btn-success:hover::after {
+  animation: shine 1.5s ease-in-out;
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  20%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .btn-dashboard.btn-outline {
-  background-color: transparent;
+  background-color: white;
   color: var(--dark-color);
   border: 1px solid var(--border-color);
 }
 
 .btn-dashboard.btn-outline:hover {
-  background-color: var(--light-color);
-  border-color: var(--border-color);
+  background-color: #f8f9fa;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .btn-dashboard .icon {
   margin-right: 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+.btn-dashboard:hover .icon {
+  transform: translateX(2px);
 }
 
 /* Style pour l'état vide */
@@ -363,17 +464,35 @@
   flex-direction: column;
   background-color: #fff;
   transition: all var(--transition-speed) ease;
-  border-radius: var(--border-radius);
-  box-shadow: var(--card-shadow);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
   border: 1px solid var(--border-color);
   height: 100%;
   padding: var(--spacing-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.project-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), var(--info-color));
+  opacity: 0;
+  transition: opacity var(--transition-speed) ease;
 }
 
 .project-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--card-shadow-hover);
+  transform: translateY(-8px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   border-color: rgba(50, 31, 219, 0.3);
+}
+
+.project-card:hover::before {
+  opacity: 1;
 }
 
 .project-card-header {
@@ -381,30 +500,42 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
 }
 
 .project-card-title {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--dark-color);
   margin: 0;
   display: flex;
   align-items: center;
+  font-size: 1.1rem;
+  max-width: 70%;
 }
 
 .project-card-title .icon {
-  margin-right: 8px;
+  margin-right: 10px;
   color: var(--primary-color);
+  background-color: rgba(50, 31, 219, 0.1);
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .project-card-content {
   flex: 1;
   margin-bottom: var(--spacing-sm);
+  padding: var(--spacing-xs) 0;
 }
 
 .project-card-footer {
-  border-top: 1px solid var(--border-color);
+  border-top: 1px dashed rgba(0, 0, 0, 0.08);
   padding-top: var(--spacing-sm);
   text-align: center;
+  margin-top: auto;
 }
 
 /* Style pour les statistiques de projet */
@@ -456,26 +587,53 @@
 /* Style pour les barres de progression */
 .progress-container {
   position: relative;
-  margin-top: var(--spacing-xs);
-  margin-bottom: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  background-color: #f5f7fa;
+  border-radius: 10px;
+  padding: 2px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
 }
 
 .progress-bar {
-  height: 12px;
-  border-radius: 6px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  height: 14px;
+  border-radius: 8px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+  background-size: 30px 30px !important;
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%,
+    transparent
+  ) !important;
+  animation: progress-animation 1.5s linear infinite;
+}
+
+@keyframes progress-animation {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 30px 0;
+  }
 }
 
 .progress-label {
   position: absolute;
-  top: -10px;
+  top: -12px;
   right: 0;
   color: white;
-  padding: 2px 8px;
-  border-radius: 10px;
+  padding: 3px 10px;
+  border-radius: 12px;
   font-size: 0.75rem;
   font-weight: bold;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  letter-spacing: 0.5px;
 }
 
 /* Style pour les titres de projet tronqués */
@@ -565,9 +723,15 @@
 }
 
 /* Responsive design pour les petits écrans */
+/* Ajout d'espace entre les cartes de projet */
+.mb-4 {
+  margin-bottom: 1.5rem !important;
+}
+
+/* Responsive design pour les petits écrans */
 @media (max-width: 768px) {
   .project-card {
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
   }
 
   .section-header {

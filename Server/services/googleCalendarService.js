@@ -6,13 +6,18 @@ const SCOPES = ["https://www.googleapis.com/auth/calendar"];
 const calendar = google.calendar("v3");
 
 // Create a new OAuth2 client
-const createOAuth2Client = (credentials) => {
+const createOAuth2Client = (credentials, forceRedirectUri = null) => {
   const { client_id, client_secret, redirect_uris } =
     credentials.web || credentials.installed;
+
+  // Use the specified redirect URI or the first one from credentials
+  const redirectUri = forceRedirectUri || redirect_uris[0];
+  console.log("Using redirect URI:", redirectUri);
+
   const oAuth2Client = new google.auth.OAuth2(
     client_id,
     client_secret,
-    redirect_uris[0]
+    redirectUri
   );
   return oAuth2Client;
 };
@@ -79,15 +84,30 @@ const refreshToken = async (credentials, token) => {
 };
 
 // Generate authorization URL
-const getAuthUrl = (credentials) => {
+const getAuthUrl = (credentials, userId = null) => {
   try {
-    const oAuth2Client = createOAuth2Client(credentials);
+    // Force the calendar callback URL
+    const calendarCallbackUrl = "http://localhost:3001/api/calendar/callback";
+    const oAuth2Client = createOAuth2Client(credentials, calendarCallbackUrl);
+
+    // Create state parameter with userId if provided
+    let state = null;
+    if (userId) {
+      state = encodeURIComponent(JSON.stringify({ userId }));
+    }
+
     const authUrl = oAuth2Client.generateAuthUrl({
       access_type: "offline",
       scope: SCOPES,
       prompt: "consent",
+      state: state,
+      redirect_uri: calendarCallbackUrl, // Explicitly set the redirect URI
     });
-    console.log("Generated auth URL:", authUrl);
+
+    console.log("Generated Calendar auth URL:", authUrl);
+    console.log("With redirect URI:", calendarCallbackUrl);
+    if (userId) console.log("With state (userId):", userId);
+
     return authUrl;
   } catch (error) {
     console.error("Error generating auth URL:", error);
@@ -99,12 +119,24 @@ const getAuthUrl = (credentials) => {
 const getToken = async (credentials, code) => {
   try {
     console.log("Exchanging code for token...");
-    const oAuth2Client = createOAuth2Client(credentials);
-    const { tokens } = await oAuth2Client.getToken(code);
+
+    // Force the calendar callback URL
+    const calendarCallbackUrl = "http://localhost:3001/api/calendar/callback";
+    const oAuth2Client = createOAuth2Client(credentials, calendarCallbackUrl);
+
+    // Set the redirect_uri explicitly for the token exchange
+    const options = {
+      code: code,
+      redirect_uri: calendarCallbackUrl,
+    };
+
+    console.log("Token exchange options:", options);
+    const { tokens } = await oAuth2Client.getToken(options);
     console.log("Token obtained successfully");
     return tokens;
   } catch (error) {
     console.error("Error getting token:", error);
+    console.error("Error details:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -348,17 +380,19 @@ const generateMeetLink = async (auth, date) => {
         timeZone: "UTC",
       },
       end: {
-        dateTime: new Date(new Date(date || Date.now()).getTime() + 30 * 60 * 1000).toISOString(), // 30 minutes after start
+        dateTime: new Date(
+          new Date(date || Date.now()).getTime() + 30 * 60 * 1000
+        ).toISOString(), // 30 minutes after start
         timeZone: "UTC",
       },
       conferenceData: {
         createRequest: {
           requestId: `meet-${Date.now()}`,
           conferenceSolutionKey: {
-            type: "hangoutsMeet"
-          }
-        }
-      }
+            type: "hangoutsMeet",
+          },
+        },
+      },
     };
 
     // Insert the temporary event
@@ -373,7 +407,7 @@ const generateMeetLink = async (auth, date) => {
 
     // Extract the Meet link
     const meetLink = response.data.conferenceData?.entryPoints?.find(
-      ep => ep.entryPointType === "video"
+      (ep) => ep.entryPointType === "video"
     )?.uri;
 
     if (!meetLink) {
