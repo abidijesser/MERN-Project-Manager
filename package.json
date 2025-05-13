@@ -5,7 +5,8 @@
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "qrcode": "^1.5.4",
-    "speakeasy": "^2.0.0"
+    "speakeasy": "^2.0.0",
+    "vite-plugin-node-polyfills": "^0.23.0"
   },
   "devDependencies": {
     "husky": "^9.1.7"
