@@ -25,15 +25,19 @@ import { toast } from 'react-toastify'
 import axios from '../../utils/axios'
 
 const CreateProject = () => {
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0]
+
   const [project, setProject] = useState({
     projectName: '',
     description: '',
     status: 'Active',
-    startDate: '',
+    startDate: today, // Default to today
     endDate: '',
     tasks: [],
     members: [],
   })
+  const [validationErrors, setValidationErrors] = useState({})
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(false)
   const [selectedMembers, setSelectedMembers] = useState([])
@@ -50,6 +54,89 @@ const CreateProject = () => {
     'Resource Usage Ratio': '',
   })
   const navigate = useNavigate()
+
+  // Validation function for individual fields
+  const validateField = (name, value, projectData = project) => {
+    let error = ''
+
+    switch (name) {
+      case 'projectName':
+        if (!value) {
+          error = 'Le nom du projet est requis'
+        } else if (value.length < 3) {
+          error = 'Le nom du projet doit contenir au moins 3 caractères'
+        } else if (value.length > 100) {
+          error = 'Le nom du projet ne peut pas dépasser 100 caractères'
+        } else if (!/^[a-zA-Z0-9\s\-]+$/.test(value)) {
+          error = 'Le nom ne peut contenir que des lettres, chiffres, espaces ou tirets'
+        }
+        break
+      case 'description':
+        if (!value) {
+          error = 'La description est requise'
+        } else if (value.length < 10) {
+          error = 'La description doit contenir au moins 10 caractères'
+        } else if (value.length > 500) {
+          error = 'La description ne peut pas dépasser 500 caractères'
+        }
+        break
+      case 'status':
+        if (!['Active', 'Completed', 'Archived'].includes(value)) {
+          error = 'Veuillez sélectionner un statut valide'
+        }
+        break
+      case 'startDate':
+        if (!value) {
+          error = 'La date de début est requise'
+        } else {
+          const selectedDate = new Date(value)
+          const todayDate = new Date()
+          todayDate.setHours(0, 0, 0, 0) // Reset time to midnight
+          if (selectedDate < todayDate) {
+            error = 'La date de début ne peut pas être dans le passé'
+          }
+        }
+        break
+      case 'endDate':
+        if (!value) {
+          error = 'La date de fin est requise'
+        } else {
+          const selectedDate = new Date(value)
+          const todayDate = new Date()
+          todayDate.setHours(0, 0, 0, 0)
+          const startDate = new Date(projectData.startDate)
+          if (selectedDate < todayDate) {
+            error = 'La date de fin ne peut pas être dans le passé'
+          } else if (projectData.startDate && selectedDate <= startDate) {
+            error = 'La date de fin doit être postérieure à la date de début'
+          }
+        }
+        break
+      case 'members':
+        
+        break
+      default:
+        break
+    }
+
+    return error
+  }
+
+  // Validate the entire form before submission
+  const validateForm = () => {
+    const errors = {}
+    const fields = ['projectName', 'description', 'status', 'startDate', 'endDate', 'members']
+    fields.forEach((key) => {
+      const value = key === 'members' ? selectedMembers : project[key]
+      const error = validateField(key, value)
+      if (error) {
+        errors[key] = error
+      }
+    })
+
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
 
   // Fetch client users for member selection
   useEffect(() => {
@@ -69,7 +156,6 @@ const CreateProject = () => {
         })
 
         if (response.data.success) {
-          // Filter only client users
           const clientUsers = response.data.users.filter((user) => user.role === 'Client')
           setUsers(clientUsers)
         } else {
@@ -92,6 +178,13 @@ const CreateProject = () => {
       ...prev,
       [name]: value,
     }))
+
+    // Validate the changed field
+    const error = validateField(name, value)
+    setValidationErrors((prev) => ({
+      ...prev,
+      [name]: error,
+    }))
   }
 
   // Handle prediction form changes
@@ -112,28 +205,25 @@ const CreateProject = () => {
         return [...prevSelected, userId]
       }
     })
+
+    // Validate members
+    const error = validateField('members', selectedMembers)
+    setValidationErrors((prev) => ({
+      ...prev,
+      members: error,
+    }))
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    // Validation des dates
-    const startDate = new Date(project.startDate)
-    const endDate = new Date(project.endDate)
-
-    if (startDate > endDate) {
-      toast.error('La date de début doit être antérieure à la date de fin')
-      return
-    }
-
-    // Validate that at least 5 members are selected
-    if (selectedMembers.length < 5) {
-      toast.error('Vous devez sélectionner au moins 5 membres pour le projet')
+    // Validate the form
+    if (!validateForm()) {
+      toast.error('Veuillez corriger les erreurs dans le formulaire')
       return
     }
 
     try {
-      // Create a copy of the project with the selected members
       const projectData = {
         ...project,
         members: selectedMembers,
@@ -152,7 +242,6 @@ const CreateProject = () => {
     } catch (error) {
       console.error('Erreur lors de la création du projet :', error)
       if (error.response?.data?.details) {
-        // Afficher les détails de l'erreur de validation
         if (Array.isArray(error.response.data.details)) {
           error.response.data.details.forEach((detail) => {
             toast.error(detail)
@@ -172,7 +261,6 @@ const CreateProject = () => {
 
   // Handle prediction API call
   const handlePredict = async () => {
-    // Validate form data
     if (
       !predictionData['Actual Cost'] ||
       !predictionData.Progress ||
@@ -183,7 +271,6 @@ const CreateProject = () => {
       return
     }
 
-    // Convert numeric fields to numbers
     const dataToSend = {
       'Actual Cost': Number(predictionData['Actual Cost']),
       Progress: Number(predictionData.Progress),
@@ -229,12 +316,12 @@ const CreateProject = () => {
                 className="me-2 text-white"
                 onClick={() => setModalVisible(true)}
               >
-                Predire
+                Predire le budget
               </CButton>
             </div>
           </CCardHeader>
           <CCardBody>
-            <CForm onSubmit={handleSubmit}>
+            <CForm onSubmit={handleSubmit} noValidate>
               <CRow className="mb-3">
                 <CCol>
                   <CFormInput
@@ -243,7 +330,11 @@ const CreateProject = () => {
                     value={project.projectName}
                     onChange={handleChange}
                     required
+                    invalid={!!validationErrors.projectName}
                   />
+                  {validationErrors.projectName && (
+                    <div className="invalid-feedback">{validationErrors.projectName}</div>
+                  )}
                 </CCol>
               </CRow>
               <CRow className="mb-3">
@@ -254,7 +345,11 @@ const CreateProject = () => {
                     value={project.description}
                     onChange={handleChange}
                     required
+                    invalid={!!validationErrors.description}
                   />
+                  {validationErrors.description && (
+                    <div className="invalid-feedback">{validationErrors.description}</div>
+                  )}
                 </CCol>
               </CRow>
               <CRow className="mb-3">
@@ -264,11 +359,15 @@ const CreateProject = () => {
                     name="status"
                     value={project.status}
                     onChange={handleChange}
+                    invalid={!!validationErrors.status}
                   >
                     <option value="Active">Active</option>
                     <option value="Completed">Completed</option>
                     <option value="Archived">Archived</option>
                   </CFormSelect>
+                  {validationErrors.status && (
+                    <div className="invalid-feedback">{validationErrors.status}</div>
+                  )}
                 </CCol>
               </CRow>
               <CRow className="mb-3">
@@ -280,7 +379,12 @@ const CreateProject = () => {
                     value={project.startDate}
                     onChange={handleChange}
                     required
+                    min={today} // Prevent past dates
+                    invalid={!!validationErrors.startDate}
                   />
+                  {validationErrors.startDate && (
+                    <div className="invalid-feedback">{validationErrors.startDate}</div>
+                  )}
                 </CCol>
                 <CCol>
                   <CFormInput
@@ -290,12 +394,17 @@ const CreateProject = () => {
                     value={project.endDate}
                     onChange={handleChange}
                     required
+                    min={today} // Prevent past dates
+                    invalid={!!validationErrors.endDate}
                   />
+                  {validationErrors.endDate && (
+                    <div className="invalid-feedback">{validationErrors.endDate}</div>
+                  )}
                 </CCol>
               </CRow>
               <CRow className="mb-3">
                 <CCol>
-                  <CFormLabel>Membres du projet (sélectionnez au moins 5 membres)</CFormLabel>
+                  <CFormLabel>Membres du projet</CFormLabel>
                   <div
                     className="border rounded p-3"
                     style={{ maxHeight: '200px', overflowY: 'auto' }}
@@ -323,14 +432,16 @@ const CreateProject = () => {
                     )}
                   </div>
                   <div className="text-muted mt-1">
-                    {selectedMembers.length} membre(s) sélectionné(s){' '}
-                    {selectedMembers.length < 5 && '(minimum 5 requis)'}
+                    {selectedMembers.length} membre(s) sélectionné(s)
                   </div>
+                  {validationErrors.members && (
+                    <div className="invalid-feedback d-block">{validationErrors.members}</div>
+                  )}
                 </CCol>
               </CRow>
               <CRow>
                 <CCol>
-                  <CButton type="submit" color="primary">
+                  <CButton type="submit" color="primary" disabled={loading}>
                     Créer
                   </CButton>
                   <CButton
@@ -361,7 +472,7 @@ const CreateProject = () => {
               <CRow className="mb-3">
                 <CCol>
                   <CFormInput
-                    label="Coût réel"
+                    label="Coût attendu"
                     name="Actual Cost"
                     type="number"
                     value={predictionData['Actual Cost']}

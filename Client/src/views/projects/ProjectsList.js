@@ -25,6 +25,7 @@ import {
   CDropdownToggle,
   CDropdownMenu,
   CDropdownItem,
+  CFormCheck,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilX, cilCalendar, cilOptions, cilPencil, cilTrash, cilChart } from '@coreui/icons'
@@ -51,6 +52,7 @@ const ProjectsList = () => {
   const [predictionResult, setPredictionResult] = useState(null)
   const [syncingCalendar, setSyncingCalendar] = useState(false)
   const [syncingProjectId, setSyncingProjectId] = useState(null)
+  const [showMyProjectsOnly, setShowMyProjectsOnly] = useState(false) // New state for checkbox
   const [predictionData, setPredictionData] = useState({
     budget: '',
     actualCost: '',
@@ -69,11 +71,22 @@ const ProjectsList = () => {
   }, [])
 
   useEffect(() => {
+    const userId = localStorage.getItem('userId')
+    let filtered = projects
+
+    // Apply "my projects only" filter if checkbox is checked
+    if (showMyProjectsOnly && userId) {
+      filtered = projects.filter(
+        (project) => project.owner && project.owner._id === userId,
+      )
+    }
+
+    // Apply search query filter
     if (!searchQuery.trim()) {
-      setFilteredProjects(projects)
+      setFilteredProjects(filtered)
     } else {
       const lowercasedQuery = searchQuery.toLowerCase()
-      const filtered = projects.filter(
+      filtered = filtered.filter(
         (project) =>
           (project.projectName && project.projectName.toLowerCase().includes(lowercasedQuery)) ||
           (project.description && project.description.toLowerCase().includes(lowercasedQuery)) ||
@@ -81,9 +94,10 @@ const ProjectsList = () => {
       )
       setFilteredProjects(filtered)
     }
-    // Reset to first page when search query changes
+
+    // Reset to first page when filters change
     setCurrentPage(1)
-  }, [searchQuery, projects])
+  }, [searchQuery, projects, showMyProjectsOnly])
 
   // Get current projects for pagination
   const indexOfLastProject = currentPage * itemsPerPage
@@ -98,7 +112,6 @@ const ProjectsList = () => {
   const fetchProjects = async () => {
     setLoading(true)
     try {
-      // Récupération des projets depuis l'API backend
       const response = await axios.get('/api/projects')
 
       if (response.data.success && response.data.projects) {
@@ -152,7 +165,6 @@ const ProjectsList = () => {
   const handlePredictionSubmit = async () => {
     setPredictionLoading(true)
     try {
-      // Prepare the data with the exact field names expected by the API
       const dataToSend = {
         Budget: parseFloat(predictionData.budget) || 0,
         'Actual Cost': parseFloat(predictionData.actualCost) || 0,
@@ -165,7 +177,6 @@ const ProjectsList = () => {
         'Resource Usage Ratio': parseFloat(predictionData.resourceUsageRatio) || 0,
       }
 
-      // Send the data to the prediction API
       const response = await fetch('http://127.0.0.1:5000/predict-duration', {
         method: 'POST',
         headers: {
@@ -191,20 +202,16 @@ const ProjectsList = () => {
     }
   }
 
-  // Function to handle syncing a project with Google Calendar
   const handleSyncWithGoogleCalendar = async (projectId) => {
     try {
       setSyncingCalendar(true)
       setSyncingProjectId(projectId)
 
-      // Check if user is authenticated with Google Calendar
       const authCheckResult = await checkGoogleCalendarAuth()
 
       if (!authCheckResult.isAuthenticated) {
-        // Get auth URL and redirect user to authenticate
         const authUrlResult = await getGoogleCalendarAuthUrl()
         if (authUrlResult.success && authUrlResult.authUrl) {
-          // Store the current URL to redirect back after authentication
           localStorage.setItem('calendarRedirectUrl', window.location.href)
           window.location.href = authUrlResult.authUrl
           return
@@ -213,7 +220,6 @@ const ProjectsList = () => {
         }
       }
 
-      // User is authenticated, sync the project
       const result = await syncProjectWithGoogleCalendar(projectId)
 
       if (result.success) {
@@ -241,7 +247,16 @@ const ProjectsList = () => {
   return (
     <CCard>
       <CCardHeader className="d-flex justify-content-between align-items-center">
-        <h5>Liste des projets</h5>
+        <div>
+          <h5>Liste des projets</h5>
+          <CFormCheck
+            id="showMyProjectsOnly"
+            label="Afficher uniquement mes projets"
+            checked={showMyProjectsOnly}
+            onChange={(e) => setShowMyProjectsOnly(e.target.checked)}
+            className="mt-2"
+          />
+        </div>
         <div className="d-flex align-items-center">
           <div className="position-relative me-2" style={{ width: '300px' }}>
             <CFormInput
@@ -284,6 +299,8 @@ const ProjectsList = () => {
                 <CTableDataCell colSpan="6" className="text-center">
                   {searchQuery
                     ? 'Aucun projet ne correspond à votre recherche'
+                    : showMyProjectsOnly
+                    ? 'Vous n\'avez aucun projet'
                     : 'Aucun projet trouvé'}
                 </CTableDataCell>
               </CTableRow>
@@ -315,7 +332,6 @@ const ProjectsList = () => {
                           <CIcon icon={cilPencil} className="me-2 text-info" />
                           Détails
                         </CDropdownItem>
-
                         <CDropdownItem
                           onClick={() => navigate(`/projects/edit/${project._id}`)}
                           disabled={!canEditProject(project)}
@@ -323,7 +339,6 @@ const ProjectsList = () => {
                           <CIcon icon={cilPencil} className="me-2 text-warning" />
                           Modifier
                         </CDropdownItem>
-
                         <CDropdownItem
                           onClick={() => handleDelete(project._id)}
                           disabled={!canEditProject(project)}
@@ -331,7 +346,6 @@ const ProjectsList = () => {
                           <CIcon icon={cilTrash} className="me-2 text-danger" />
                           Supprimer
                         </CDropdownItem>
-
                         <CDropdownItem
                           onClick={() => setModalVisible(true)}
                           disabled={!canEditProject(project)}
@@ -339,8 +353,6 @@ const ProjectsList = () => {
                           <CIcon icon={cilChart} className="me-2 text-success" />
                           Prédire
                         </CDropdownItem>
-
-                        {/* Google Calendar sync option - only for project owners */}
                         <CDropdownItem
                           onClick={() => handleSyncWithGoogleCalendar(project._id)}
                           disabled={
@@ -382,9 +394,8 @@ const ProjectsList = () => {
               disabled={currentPage === 1}
               onClick={() => handlePageChange(currentPage - 1)}
             >
-              <span aria-hidden="true">&laquo;</span>
+              <span aria-hidden="true">«</span>
             </CPaginationItem>
-
             {[...Array(Math.ceil(filteredProjects.length / itemsPerPage)).keys()].map((number) => (
               <CPaginationItem
                 key={number + 1}
@@ -394,13 +405,12 @@ const ProjectsList = () => {
                 {number + 1}
               </CPaginationItem>
             ))}
-
             <CPaginationItem
               aria-label="Suivant"
               disabled={currentPage === Math.ceil(filteredProjects.length / itemsPerPage)}
               onClick={() => handlePageChange(currentPage + 1)}
             >
-              <span aria-hidden="true">&raquo;</span>
+              <span aria-hidden="true">»</span>
             </CPaginationItem>
           </CPagination>
         )}

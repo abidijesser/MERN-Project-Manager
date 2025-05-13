@@ -179,6 +179,7 @@
   height: calc(100vh - 64px);
   background-color: #f8f9fa;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: hidden;
 }
 
 .collaboration-header {
@@ -239,103 +240,29 @@
 
 .collaboration-content {
   flex: 1;
-  overflow: auto;
+  display: flex;
   padding: 1.5rem;
   background-color: #f8f9fa;
+  overflow: hidden;
 }
 
 /* Chat Tab Styles */
 .collaboration-chat-container {
   display: flex;
-  height: 100%;
-  background-color: white;
-}
-
-.chat-sidebar {
-  width: 300px;
-  border-right: 1px solid #e9ecef;
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-header {
-  padding: 1rem;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.sidebar-header h2 {
-  margin: 0 0 1rem 0;
-  color: #212529;
-  font-size: 1.2rem;
-}
-
-.search-input {
-  width: 100%;
-  padding: 0.8rem;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  font-size: 0.9rem;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
-.chat-list {
   flex: 1;
-  overflow-y: auto;
-  padding: 1rem;
-}
-
-.chat-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.8rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.chat-item:hover {
-  background-color: #f8f9fa;
-}
-
-.chat-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 100%;
+  background-color: white;
   overflow: hidden;
 }
 
-.chat-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.chat-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.chat-name {
-  font-weight: 500;
-  color: #212529;
-}
-
-.chat-status {
-  font-size: 0.8rem;
-  color: #28a745;
-}
+/* Styles de chat principal */
 
 .chat-main {
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  width: 100%;
 }
 
 /* Team Tab Styles */
@@ -432,15 +359,10 @@
     flex-direction: column;
   }
 
-  .chat-sidebar {
-    width: 100%;
-    height: 200px;
-    border-right: none;
-    border-bottom: 1px solid #e9ecef;
-  }
-
   .chat-main {
-    height: calc(100vh - 300px);
+    flex: 1;
+    overflow: hidden;
+    width: 100%;
   }
 
   .team-members-list {
