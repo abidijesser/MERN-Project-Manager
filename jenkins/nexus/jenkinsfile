@@ -19,7 +19,7 @@ pipeline {
         GOOGLE_CALENDAR_REDIRECT_URI = "http://localhost:3001/api/calendar/callback"
 
         GEMINI_API_KEY = credentials('GEMINI_API_KEY')
-        VITE_API_URL = "http://localhost:3000"
+        VITE_API_URL = "http://back:5000"
 
         registryCredentials = "nexus"
         registry = "192.168.33.10:8083"

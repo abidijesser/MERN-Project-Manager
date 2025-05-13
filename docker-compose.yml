@@ -38,7 +38,7 @@ services:
       GOOGLE_CALENDAR_CLIENT_ID: ${GOOGLE_CALENDAR_CLIENT_ID}
       GOOGLE_CALENDAR_CLIENT_SECRET: ${GOOGLE_CALENDAR_CLIENT_SECRET}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
-      VITE_API_URL: http://client:3000
+      VITE_API_URL: http://back:5000
     depends_on:
       - db
     networks:
