@@ -54,7 +54,7 @@ services:
     ports:
       - '3000:80'
     environment:
-      VITE_API_URL: http://localhost:5000
+      VITE_API_URL: http://192.168.33.10:5000
     networks:
       - app-network
 
@@ -69,7 +69,7 @@ services:
     ports:
       - '4000:80'
     environment:
-      VITE_API_URL: http://localhost:5000
+      VITE_API_URL: http://192.168.33.10:5000
     networks:
       - app-network
 
