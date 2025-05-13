@@ -39,6 +39,7 @@ export default defineConfig(() => ({
         find: 'src/',
         replacement: `${path.resolve('src')}/`,
       },
+      // Explicitly define buffer and process polyfills
       { find: 'buffer', replacement: 'buffer' },
       { find: 'process', replacement: 'process/browser' },
     ],
