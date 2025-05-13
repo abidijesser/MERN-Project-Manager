@@ -117,7 +117,7 @@ const WidgetsDropdown = (props) => {
       {/* Deuxième rangée - Statistiques détaillées */}
       <CRow className="mb-4">
         {/* Progression des projets */}
-        <CCol md={6} xl={3}>
+        <CCol md={6} xl={4}>
           <CCard className="mb-4 h-100 shadow-sm">
             <CCardBody>
               <div className="d-flex justify-content-between align-items-center mb-3">
@@ -164,7 +164,7 @@ const WidgetsDropdown = (props) => {
         </CCol>
 
         {/* Statut des tâches */}
-        <CCol md={6} xl={3}>
+        <CCol md={6} xl={4}>
           <CCard className="mb-4 h-100 shadow-sm">
             <CCardBody>
               <div className="d-flex justify-content-between align-items-center mb-3">
@@ -211,7 +211,7 @@ const WidgetsDropdown = (props) => {
         </CCol>
 
         {/* Efficacité de l'équipe */}
-        <CCol md={6} xl={3}>
+        <CCol md={6} xl={4}>
           <CCard className="mb-4 h-100 shadow-sm">
             <CCardBody>
               <div className="d-flex justify-content-between align-items-center mb-3">
@@ -260,62 +260,7 @@ const WidgetsDropdown = (props) => {
           </CCard>
         </CCol>
 
-        {/* Charge de travail */}
-        <CCol md={6} xl={3}>
-          <CCard className="mb-4 h-100 shadow-sm">
-            <CCardBody>
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <h4 className="card-title mb-0 fs-5">Charge de travail</h4>
-                <CTooltip content="Répartition des tâches par membre de l'équipe">
-                  <CIcon icon={cilInfo} className="text-muted" size="sm" />
-                </CTooltip>
-              </div>
-              <div className="chart-container" style={{ height: '180px' }}>
-                <CChartBar
-                  data={{
-                    labels: ['Sophie', 'Thomas', 'Emma', 'Lucas', 'Julie'],
-                    datasets: [
-                      {
-                        label: 'Tâches assignées',
-                        backgroundColor: '#321fdb',
-                        data: [8, 12, 6, 5, 9],
-                        barPercentage: 0.6,
-                        borderRadius: 4,
-                      },
-                    ],
-                  }}
-                  options={{
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        display: false,
-                      },
-                    },
-                    scales: {
-                      x: {
-                        grid: {
-                          display: false,
-                        },
-                      },
-                      y: {
-                        beginAtZero: true,
-                        max: 15,
-                        ticks: {
-                          stepSize: 5,
-                        },
-                      },
-                    },
-                  }}
-                />
-              </div>
-              <div className="text-center mt-3">
-                <Link to="#" className="btn btn-sm btn-outline-primary">
-                  Voir l'équipe
-                </Link>
-              </div>
-            </CCardBody>
-          </CCard>
-        </CCol>
+
       </CRow>
     </div>
   )

@@ -47,10 +47,7 @@ Le tableau de bord de performance offre les fonctionnalités suivantes :
 - Recommandations pour améliorer l'efficacité
 - Mise en évidence des bonnes pratiques des projets performants
 
-### 6. Export de données
 
-- **Export PDF** : Génération d'un rapport PDF avec toutes les métriques de performance
-- **Export CSV** : Export des données brutes au format CSV pour analyse externe
 
 ## Formules et calculs
 
