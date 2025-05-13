@@ -47,8 +47,8 @@ services:
   # Client (CoreUI React)
   client:
     build:
-      context: ./Client
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./Client/Dockerfile
     image: 192.168.33.10:8083/client:latest
     container_name: client
     restart: always
@@ -62,8 +62,8 @@ services:
   # Admin (Mantis React)
   admin:
     build:
-      context: ./Admin
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./Admin/Dockerfile
     image: 192.168.33.10:8083/admin:latest
     container_name: admin
     restart: always
