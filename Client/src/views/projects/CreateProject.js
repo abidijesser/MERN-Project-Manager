@@ -205,11 +205,13 @@ const CreateProject = () => {
         setPredictedBudget(response.data.predicted_budget)
         toast.success('Prédiction réussie !')
       } else {
-        throw new Error('Réponse inattendue de l\'API: predicted_budget manquant')
+        throw new Error("Réponse inattendue de l'API: predicted_budget manquant")
       }
     } catch (error) {
       console.error('Error during prediction:', error, 'Response:', error.response?.data)
-      setPredictionError(error.response?.data?.error || error.message || 'Erreur lors de la prédiction')
+      setPredictionError(
+        error.response?.data?.error || error.message || 'Erreur lors de la prédiction',
+      )
       toast.error(error.response?.data?.error || error.message || 'Erreur lors de la prédiction')
     } finally {
       setPredictionLoading(false)
@@ -268,6 +270,7 @@ const CreateProject = () => {
                     <option value="Active">Active</option>
                     <option value="Completed">Completed</option>
                     <option value="Archived">Archived</option>
+                    <option value="En retard">En retard</option>
                   </CFormSelect>
                 </CCol>
               </CRow>
@@ -443,24 +446,18 @@ const CreateProject = () => {
                   ) : predictionError ? (
                     <div className="text-danger">Erreur: {predictionError}</div>
                   ) : predictedBudget !== null ? (
-                    <CFormInput
-                      label="Budget estimé"
-                      value={predictedBudget}
-                      readOnly
-                    />
+                    <CFormInput label="Budget estimé" value={predictedBudget} readOnly />
                   ) : (
-                    <div className="text-center">Remplissez le formulaire et cliquez sur Prédire</div>
+                    <div className="text-center">
+                      Remplissez le formulaire et cliquez sur Prédire
+                    </div>
                   )}
                 </CCol>
               </CRow>
             </CForm>
           </CModalBody>
           <CModalFooter>
-            <CButton
-              color="primary"
-              onClick={handlePredict}
-              disabled={predictionLoading}
-            >
+            <CButton color="primary" onClick={handlePredict} disabled={predictionLoading}>
               {predictionLoading ? 'Prédiction en cours...' : 'Prédire'}
             </CButton>
             <CButton color="secondary" onClick={() => setModalVisible(false)}>

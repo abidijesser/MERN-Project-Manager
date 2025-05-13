@@ -122,6 +122,7 @@ const TaskDetail = () => {
       'To Do': 'warning',
       'In Progress': 'info',
       Done: 'success',
+      'En retard': 'danger',
     }
     return <CBadge color={statusColors[status] || 'secondary'}>{status}</CBadge>
   }

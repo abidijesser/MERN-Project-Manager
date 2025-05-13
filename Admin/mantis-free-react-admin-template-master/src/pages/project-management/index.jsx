@@ -521,6 +521,8 @@ const ProjectManagement = ({ dashboardView = false }) => {
         return 'success';
       case 'Archived':
         return 'default';
+      case 'En retard':
+        return 'error';
       default:
         return 'primary';
     }
@@ -663,6 +665,7 @@ const ProjectManagement = ({ dashboardView = false }) => {
                   <MenuItem value="Active">Active</MenuItem>
                   <MenuItem value="Completed">Completed</MenuItem>
                   <MenuItem value="Archived">Archived</MenuItem>
+                  <MenuItem value="En retard">En retard</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -749,6 +752,7 @@ const ProjectManagement = ({ dashboardView = false }) => {
                     <MenuItem value="Active">Active</MenuItem>
                     <MenuItem value="Completed">Completed</MenuItem>
                     <MenuItem value="Archived">Archived</MenuItem>
+                    <MenuItem value="En retard">En retard</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>

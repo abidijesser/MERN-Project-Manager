@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import CIcon from '@coreui/icons-react'
+import { CTooltip } from '@coreui/react'
+import {
+  cilCheck,
+  cilBell,
+  cilUser,
+  cilNotes,
+  cilFile,
+  cilWarning,
+  cilClipboard as cilTaskCreated,
+  cilPencil as cilTaskUpdated,
+  cilCheckCircle as cilCheckAlt,
+  cilShareAll as cilShareAlt,
+} from '@coreui/icons'
 import './Notifications.css' // Assurez-vous de créer ce fichier CSS pour les styles
 
 const Notifications = ({ socket }) => {
@@ -43,7 +57,7 @@ const Notifications = ({ socket }) => {
       setLoading(true)
       setError(null)
       console.log('Récupération des notifications...')
-      
+
       const token = localStorage.getItem('token')
       if (!token) {
         setError('No authentication token found')
@@ -110,15 +124,23 @@ const Notifications = ({ socket }) => {
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'task_created':
-        return '📝'
+        return <CIcon icon={cilTaskCreated} className="text-primary" />
       case 'task_updated':
-        return '🔄'
+        return <CIcon icon={cilTaskUpdated} className="text-info" />
       case 'task_assigned':
-        return '👤'
+        return <CIcon icon={cilUser} className="text-warning" />
       case 'task_completed':
-        return '✅'
+        return <CIcon icon={cilCheckAlt} className="text-success" />
+      case 'document_uploaded':
+        return <CIcon icon={cilFile} className="text-primary" />
+      case 'document_updated':
+        return <CIcon icon={cilNotes} className="text-info" />
+      case 'document_shared':
+        return <CIcon icon={cilShareAlt} className="text-warning" />
+      case 'project_overdue':
+        return <CIcon icon={cilWarning} className="text-danger" />
       default:
-        return '📌'
+        return <CIcon icon={cilBell} className="text-secondary" />
     }
   }
 
@@ -156,6 +178,9 @@ const Notifications = ({ socket }) => {
                 <p className="notification-message">{notification.message}</p>
                 <span className="notification-time">
                   {new Date(notification.createdAt).toLocaleString()}
+                  {notification.read && (
+                    <CIcon icon={cilCheck} size="sm" className="text-success ms-2" />
+                  )}
                 </span>
               </div>
             </li>

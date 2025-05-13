@@ -15,7 +15,7 @@ const decodeJWT = (token) => {
       atob(base64)
         .split('')
         .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
+        .join(''),
     )
 
     return JSON.parse(jsonPayload)
@@ -80,8 +80,8 @@ const EditProject = () => {
         const response = await axios.get('http://localhost:3001/api/auth/users', {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            'Content-Type': 'application/json',
+          },
         })
 
         if (response.data.success) {
@@ -141,13 +141,15 @@ const EditProject = () => {
       const response = await axios.get(`http://localhost:3001/api/projects/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       })
 
       // Vérifier si la réponse est du HTML (indiquant une redirection)
       if (typeof response.data === 'string' && response.data.includes('<!DOCTYPE html>')) {
-        console.error('Received HTML response instead of JSON. This indicates a redirection or authentication issue.')
+        console.error(
+          'Received HTML response instead of JSON. This indicates a redirection or authentication issue.',
+        )
         console.log('Response data (HTML):', response.data.substring(0, 200) + '...')
         throw new Error('Received HTML response instead of JSON. Please check your authentication.')
       }
@@ -230,10 +232,12 @@ const EditProject = () => {
       if (error.response) {
         // La requête a été faite et le serveur a répondu avec un code d'état
         // qui n'est pas dans la plage 2xx
-        console.error('Détails de l\'erreur:', error.response.data)
+        console.error("Détails de l'erreur:", error.response.data)
         console.error('Status:', error.response.status)
         console.error('Headers:', error.response.headers)
-        setError(`Erreur ${error.response.status}: ${error.response?.data?.error || 'Erreur lors de la récupération du projet.'}`)
+        setError(
+          `Erreur ${error.response.status}: ${error.response?.data?.error || 'Erreur lors de la récupération du projet.'}`,
+        )
       } else if (error.request) {
         // La requête a été faite mais aucune réponse n'a été reçue
         console.error('Pas de réponse du serveur:', error.request)
@@ -293,8 +297,8 @@ const EditProject = () => {
       const response = await axios.put(`http://localhost:3001/api/projects/${id}`, projectData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       })
 
       if (response.data.success) {
@@ -370,6 +374,7 @@ const EditProject = () => {
                     <option value="Active">Active</option>
                     <option value="Completed">Completed</option>
                     <option value="Archived">Archived</option>
+                    <option value="En retard">En retard</option>
                   </CFormSelect>
                 </CCol>
               </CRow>

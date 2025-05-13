@@ -115,4 +115,11 @@ router.delete("/:id", auth, projectController.deleteProject);
 // GET project members
 router.get("/:id/members", projectController.getProjectMembers);
 
+// POST force check for overdue projects
+router.post(
+  "/check-overdue",
+  auth,
+  projectController.forceCheckOverdueProjects
+);
+
 module.exports = router;

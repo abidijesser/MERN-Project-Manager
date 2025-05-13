@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const ProjectStatusEnum = ["Active", "Completed", "Archived"];
+const ProjectStatusEnum = ["Active", "Completed", "Archived", "En retard"];
 
 const ProjectSchema = new Schema({
   projectName: {

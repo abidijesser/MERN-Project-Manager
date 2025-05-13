@@ -31,6 +31,8 @@ const Message = require("./models/Message");
 const Meeting = require("./models/Meeting");
 const notificationService = require("./services/notificationService");
 const meetingService = require("./services/meetingService");
+const taskController = require("./controllers/taskController");
+const projectController = require("./controllers/projectController");
 require("./config/passportConfig");
 require("./config/facebookStrategy");
 
@@ -122,6 +124,7 @@ app.get("/api/task-counts", async (req, res) => {
       status: "In Progress",
     });
     const doneTasks = await Task.countDocuments({ status: "Done" });
+    const overdueTasks = await Task.countDocuments({ status: "En retard" });
 
     res.json({
       success: true,
@@ -131,7 +134,8 @@ app.get("/api/task-counts", async (req, res) => {
           todo: todoTasks,
           inProgress: inProgressTasks,
           done: doneTasks,
-          statusTotal: todoTasks + inProgressTasks + doneTasks,
+          overdue: overdueTasks,
+          statusTotal: todoTasks + inProgressTasks + doneTasks + overdueTasks,
         },
       },
     });
@@ -439,8 +443,41 @@ io.on("connection", (socket) => {
   });
 });
 
+// Schedule task to check for overdue tasks and projects
+const scheduleOverdueChecks = () => {
+  // Run immediately on startup
+  Promise.all([
+    taskController.checkOverdueTasks(),
+    projectController.checkOverdueProjects(),
+  ])
+    .then(([taskCount, projectCount]) => {
+      console.log(
+        `Initial overdue check: ${taskCount} tasks and ${projectCount} projects updated to 'En retard'`
+      );
+    })
+    .catch((err) => {
+      console.error("Error in initial overdue check:", err);
+    });
+
+  // Schedule to run daily at midnight
+  setInterval(async () => {
+    try {
+      const taskCount = await taskController.checkOverdueTasks();
+      const projectCount = await projectController.checkOverdueProjects();
+      console.log(
+        `Daily overdue check: ${taskCount} tasks and ${projectCount} projects updated to 'En retard'`
+      );
+    } catch (err) {
+      console.error("Error in scheduled overdue check:", err);
+    }
+  }, 24 * 60 * 60 * 1000); // 24 hours
+};
+
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+
+  // Start the scheduled task after server is running
+  scheduleOverdueChecks();
 });
 
 module.exports = app;

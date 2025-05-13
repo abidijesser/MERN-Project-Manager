@@ -1,5 +1,6 @@
 const Task = require("../models/Task");
 const Project = require("../models/Project");
+const User = require("../models/User");
 const ActivityLog = require("../models/ActivityLog");
 const mongoose = require("mongoose");
 const notificationService = require("../services/notificationService");
@@ -688,7 +689,7 @@ const updateTaskStatus = async (req, res) => {
     }
 
     // Liste des statuts valides
-    const validStatuses = ["To Do", "In Progress", "Done"];
+    const validStatuses = ["To Do", "In Progress", "Done", "En retard"];
     console.log("updateTaskStatus - Valid statuses:", validStatuses);
 
     // Vérifier si le statut est valide
@@ -796,6 +797,79 @@ const updateTaskStatus = async (req, res) => {
   }
 };
 
+// Fonction pour vérifier et mettre à jour les tâches en retard
+const checkOverdueTasks = async () => {
+  try {
+    console.log("checkOverdueTasks - Checking for overdue tasks");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Trouver toutes les tâches dont la date d'échéance est passée et qui ne sont pas terminées ou déjà marquées en retard
+    const overdueTasks = await Task.find({
+      dueDate: { $lt: today },
+      status: { $nin: ["Done", "En retard"] },
+    });
+
+    console.log(
+      `checkOverdueTasks - Found ${overdueTasks.length} overdue tasks`
+    );
+
+    // Mettre à jour le statut de chaque tâche en retard
+    for (const task of overdueTasks) {
+      const oldStatus = task.status;
+      task.status = "En retard";
+      await task.save();
+
+      console.log(
+        `checkOverdueTasks - Updated task ${task._id} from ${oldStatus} to En retard`
+      );
+
+      // Créer une entrée dans le journal d'activité
+      try {
+        const activityLog = new ActivityLog({
+          user: null, // Système
+          action: "STATUS_CHANGE",
+          entityType: "TASK",
+          entityId: task._id,
+          task: task._id,
+          project: task.project || null,
+          details: {
+            title: task.title,
+            oldStatus: oldStatus,
+            newStatus: "En retard",
+            system: true,
+          },
+        });
+        await activityLog.save();
+      } catch (activityError) {
+        console.error(
+          "checkOverdueTasks - Error creating activity log:",
+          activityError
+        );
+      }
+
+      // Créer une notification
+      try {
+        await notificationService.createTaskNotification(
+          task,
+          "task_overdue",
+          null // Système
+        );
+      } catch (notificationError) {
+        console.error(
+          "checkOverdueTasks - Error creating notification:",
+          notificationError
+        );
+      }
+    }
+
+    return overdueTasks.length;
+  } catch (error) {
+    console.error("Error checking overdue tasks:", error);
+    return 0;
+  }
+};
+
 module.exports = {
   createTask,
   getAllTasks,
@@ -803,4 +877,5 @@ module.exports = {
   updateTask,
   deleteTask,
   updateTaskStatus,
+  checkOverdueTasks,
 };

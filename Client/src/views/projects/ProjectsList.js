@@ -51,6 +51,7 @@ const ProjectsList = () => {
   const [predictionResult, setPredictionResult] = useState(null)
   const [syncingCalendar, setSyncingCalendar] = useState(false)
   const [syncingProjectId, setSyncingProjectId] = useState(null)
+  const [checkingOverdue, setCheckingOverdue] = useState(false)
   const [predictionData, setPredictionData] = useState({
     budget: '',
     actualCost: '',
@@ -140,6 +141,7 @@ const ProjectsList = () => {
       Active: 'primary',
       Completed: 'success',
       Archived: 'secondary',
+      'En retard': 'danger',
     }
     return <CBadge color={statusColors[status] || 'info'}>{status}</CBadge>
   }
@@ -188,6 +190,43 @@ const ProjectsList = () => {
       toast.error('Erreur lors de la prédiction')
     } finally {
       setPredictionLoading(false)
+    }
+  }
+
+  // Function to manually check for overdue projects
+  const handleCheckOverdueProjects = async () => {
+    try {
+      setCheckingOverdue(true)
+      const response = await axios.post('/api/projects/check-overdue')
+
+      if (response.data.success) {
+        // Display a more informative toast message
+        if (response.data.totalOverdueCount > 0) {
+          toast.success(
+            <div>
+              <strong>{response.data.message}</strong>
+              <div>
+                {response.data.updatedCount === 0
+                  ? 'Aucun nouveau projet en retard détecté.'
+                  : `${response.data.updatedCount} projets mis à jour.`}
+              </div>
+              <div>Total: {response.data.totalOverdueCount} projets en retard.</div>
+            </div>,
+          )
+        } else {
+          toast.success('Aucun projet en retard détecté.')
+        }
+
+        // Refresh the projects list to show updated statuses
+        fetchProjects()
+      } else {
+        throw new Error(response.data.error || 'Failed to check for overdue projects')
+      }
+    } catch (error) {
+      console.error('Error checking for overdue projects:', error)
+      toast.error(error.message || 'Erreur lors de la vérification des projets en retard')
+    } finally {
+      setCheckingOverdue(false)
     }
   }
 
@@ -261,6 +300,21 @@ const ProjectsList = () => {
               </CButton>
             )}
           </div>
+          <CButton
+            color="warning"
+            className="me-2"
+            onClick={handleCheckOverdueProjects}
+            disabled={checkingOverdue}
+          >
+            {checkingOverdue ? (
+              <>
+                <CSpinner size="sm" className="me-1" />
+                Vérification...
+              </>
+            ) : (
+              'Vérifier projets en retard'
+            )}
+          </CButton>
           <CButton color="primary" onClick={() => navigate('/projects/new')}>
             Nouveau projet
           </CButton>

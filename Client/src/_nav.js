@@ -74,12 +74,6 @@ const _nav = [
     to: '/activity',
     icon: <CIcon icon={cilList} customClassName="nav-icon" />,
   },
-  {
-    component: CNavItem,
-    name: 'Paramètres',
-    to: '/settings',
-    icon: <CIcon icon={cilCalculator} customClassName="nav-icon" />,
-  },
 ]
 
 export default _nav
