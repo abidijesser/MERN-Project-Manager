@@ -9,6 +9,20 @@ const User = require("../models/User");
 const getAuthUrl = async (req, res) => {
   try {
     console.log("Getting auth URL...");
+
+    // Get user ID from query parameter or from authenticated user
+    const userId = req.query.userId || (req.user && req.user.id);
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error:
+          "User ID is required. Please provide it as a query parameter: ?userId=your_user_id",
+      });
+    }
+
+    console.log(`Generating Google Calendar auth URL for user ID: ${userId}`);
+
     // Load client secrets from a local file
     const credentialsPath = path.join(__dirname, "../config/credentials.json");
     console.log("Credentials path:", credentialsPath);
@@ -16,8 +30,8 @@ const getAuthUrl = async (req, res) => {
     const credentials = JSON.parse(content);
     console.log("Credentials loaded successfully");
 
-    // Generate auth URL
-    const authUrl = googleCalendarService.getAuthUrl(credentials);
+    // Generate auth URL with user ID
+    const authUrl = googleCalendarService.getAuthUrl(credentials, userId);
 
     console.log("Auth URL generated successfully");
     res.status(200).json({
@@ -653,7 +667,8 @@ const generateMeetLink = async (req, res) => {
         console.log("Token refresh failed - reauthorization required");
         return res.status(401).json({
           success: false,
-          error: "Google Calendar authorization expired. Please reconnect your account.",
+          error:
+            "Google Calendar authorization expired. Please reconnect your account.",
           code: "REAUTHORIZATION_REQUIRED",
           details: refreshResult.error,
           errorCode: refreshResult.errorCode,

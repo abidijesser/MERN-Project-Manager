@@ -41,6 +41,10 @@ const UserSchema = new Schema({
     type: Object,
     default: null,
   },
+  googleDriveToken: {
+    type: Object,
+    default: null,
+  },
   lastLogin: {
     type: Date,
     default: Date.now,

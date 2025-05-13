@@ -20,12 +20,23 @@ import {
   CModalFooter,
   CPagination,
   CPaginationItem,
+  CTooltip,
+  CDropdown,
+  CDropdownToggle,
+  CDropdownMenu,
+  CDropdownItem,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilX } from '@coreui/icons'
+import { cilX, cilCalendar, cilOptions, cilPencil, cilTrash, cilChart } from '@coreui/icons'
 import { useNavigate } from 'react-router-dom'
 import axios from '../../utils/axios'
 import { toast } from 'react-toastify'
+import {
+  syncProjectWithGoogleCalendar,
+  checkGoogleCalendarAuth,
+  getGoogleCalendarAuthUrl,
+} from '../../services/calendarService'
+import '../../styles/ActionDropdown.css'
 
 const ProjectsList = () => {
   const [projects, setProjects] = useState([])
@@ -38,6 +49,8 @@ const ProjectsList = () => {
   const [modalVisible, setModalVisible] = useState(false)
   const [predictionLoading, setPredictionLoading] = useState(false)
   const [predictionResult, setPredictionResult] = useState(null)
+  const [syncingCalendar, setSyncingCalendar] = useState(false)
+  const [syncingProjectId, setSyncingProjectId] = useState(null)
   const [predictionData, setPredictionData] = useState({
     budget: '',
     actualCost: '',
@@ -141,17 +154,17 @@ const ProjectsList = () => {
     try {
       // Prepare the data with the exact field names expected by the API
       const dataToSend = {
-        'Budget': parseFloat(predictionData.budget) || 0,
+        Budget: parseFloat(predictionData.budget) || 0,
         'Actual Cost': parseFloat(predictionData.actualCost) || 0,
-        'Progress': parseFloat(predictionData.progress) || 0,
-        'Delay': parseFloat(predictionData.delay) || 0,
+        Progress: parseFloat(predictionData.progress) || 0,
+        Delay: parseFloat(predictionData.delay) || 0,
         'Budget Deviation': parseFloat(predictionData.budgetDeviation) || 0,
         'Project Type': predictionData.projectType,
-        'Priority': predictionData.priority,
+        Priority: predictionData.priority,
         'Task Status': predictionData.taskStatus,
         'Resource Usage Ratio': parseFloat(predictionData.resourceUsageRatio) || 0,
       }
-  
+
       // Send the data to the prediction API
       const response = await fetch('http://127.0.0.1:5000/predict-duration', {
         method: 'POST',
@@ -160,14 +173,14 @@ const ProjectsList = () => {
         },
         body: JSON.stringify(dataToSend),
       })
-  
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-  
+
       const result = await response.json()
       setPredictionResult({
-        prediction: result.estimated_duration
+        prediction: result.estimated_duration,
       })
       toast.success(`Prédiction réussie: ${result.estimated_duration} jours`)
     } catch (error) {
@@ -175,6 +188,45 @@ const ProjectsList = () => {
       toast.error('Erreur lors de la prédiction')
     } finally {
       setPredictionLoading(false)
+    }
+  }
+
+  // Function to handle syncing a project with Google Calendar
+  const handleSyncWithGoogleCalendar = async (projectId) => {
+    try {
+      setSyncingCalendar(true)
+      setSyncingProjectId(projectId)
+
+      // Check if user is authenticated with Google Calendar
+      const authCheckResult = await checkGoogleCalendarAuth()
+
+      if (!authCheckResult.isAuthenticated) {
+        // Get auth URL and redirect user to authenticate
+        const authUrlResult = await getGoogleCalendarAuthUrl()
+        if (authUrlResult.success && authUrlResult.authUrl) {
+          // Store the current URL to redirect back after authentication
+          localStorage.setItem('calendarRedirectUrl', window.location.href)
+          window.location.href = authUrlResult.authUrl
+          return
+        } else {
+          throw new Error('Failed to get Google Calendar authentication URL')
+        }
+      }
+
+      // User is authenticated, sync the project
+      const result = await syncProjectWithGoogleCalendar(projectId)
+
+      if (result.success) {
+        toast.success('Projet synchronisé avec Google Calendar avec succès!')
+      } else {
+        throw new Error(result.error || 'Failed to sync project with Google Calendar')
+      }
+    } catch (error) {
+      console.error('Error syncing project with Google Calendar:', error)
+      toast.error(error.message || 'Erreur lors de la synchronisation avec Google Calendar')
+    } finally {
+      setSyncingCalendar(false)
+      setSyncingProjectId(null)
     }
   }
 
@@ -254,42 +306,67 @@ const ProjectsList = () => {
                       : 'Non définie'}
                   </CTableDataCell>
                   <CTableDataCell>
-                    <CButton
-                      color="info text-white"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => navigate(`/projects/${project._id}`)}
-                    >
-                      Détails
-                    </CButton>
-                    <CButton
-                      color="warning"
-                      size="sm"
-                      className="me-2 text-white"
-                      onClick={() => navigate(`/projects/edit/${project._id}`)}
-                      disabled={!canEditProject(project)}
-                    >
-                      Modifier
-                    </CButton>
-                    <CButton
-                      color="danger"
-                      size="sm"
-                      className="me-2 text-white"
-                      onClick={() => handleDelete(project._id)}
-                      disabled={!canEditProject(project)}
-                    >
-                      Supprimer
-                    </CButton>
+                    <CDropdown alignment="end" className="action-dropdown">
+                      <CDropdownToggle color="light" size="sm" caret={false}>
+                        <CIcon icon={cilOptions} size="lg" />
+                      </CDropdownToggle>
+                      <CDropdownMenu className="action-dropdown-menu">
+                        <CDropdownItem onClick={() => navigate(`/projects/${project._id}`)}>
+                          <CIcon icon={cilPencil} className="me-2 text-info" />
+                          Détails
+                        </CDropdownItem>
 
-                    <CButton
-                      color="success"
-                      size="sm"
-                      className="me-2 text-white"
-                      onClick={() => setModalVisible(true)}
-                      disabled={!canEditProject(project)}
-                    >
-                      Predire
-                    </CButton>
+                        <CDropdownItem
+                          onClick={() => navigate(`/projects/edit/${project._id}`)}
+                          disabled={!canEditProject(project)}
+                        >
+                          <CIcon icon={cilPencil} className="me-2 text-warning" />
+                          Modifier
+                        </CDropdownItem>
+
+                        <CDropdownItem
+                          onClick={() => handleDelete(project._id)}
+                          disabled={!canEditProject(project)}
+                        >
+                          <CIcon icon={cilTrash} className="me-2 text-danger" />
+                          Supprimer
+                        </CDropdownItem>
+
+                        <CDropdownItem
+                          onClick={() => setModalVisible(true)}
+                          disabled={!canEditProject(project)}
+                        >
+                          <CIcon icon={cilChart} className="me-2 text-success" />
+                          Prédire
+                        </CDropdownItem>
+
+                        {/* Google Calendar sync option - only for project owners */}
+                        <CDropdownItem
+                          onClick={() => handleSyncWithGoogleCalendar(project._id)}
+                          disabled={
+                            (syncingCalendar && syncingProjectId === project._id) ||
+                            !canEditProject(project)
+                          }
+                          title={
+                            !canEditProject(project)
+                              ? 'Seul le propriétaire du projet peut ajouter ce projet à Google Calendar'
+                              : 'Ajouter ce projet à Google Calendar'
+                          }
+                        >
+                          {syncingCalendar && syncingProjectId === project._id ? (
+                            <>
+                              <CSpinner size="sm" className="me-2" />
+                              Synchronisation...
+                            </>
+                          ) : (
+                            <>
+                              <CIcon icon={cilCalendar} className="me-2 text-primary" />
+                              Ajouter à Google Calendar
+                            </>
+                          )}
+                        </CDropdownItem>
+                      </CDropdownMenu>
+                    </CDropdown>
                   </CTableDataCell>
                 </CTableRow>
               ))
@@ -364,12 +441,16 @@ const ProjectsList = () => {
               type="number"
               label="Budget Deviation"
               value={predictionData.budgetDeviation}
-              onChange={(e) => setPredictionData({ ...predictionData, budgetDeviation: e.target.value })}
+              onChange={(e) =>
+                setPredictionData({ ...predictionData, budgetDeviation: e.target.value })
+              }
             />
             <CFormInput
               label="Project Type"
               value={predictionData.projectType}
-              onChange={(e) => setPredictionData({ ...predictionData, projectType: e.target.value })}
+              onChange={(e) =>
+                setPredictionData({ ...predictionData, projectType: e.target.value })
+              }
             />
             <CFormInput
               label="Priority"
@@ -385,7 +466,9 @@ const ProjectsList = () => {
               type="number"
               label="Resource Usage Ratio"
               value={predictionData.resourceUsageRatio}
-              onChange={(e) => setPredictionData({ ...predictionData, resourceUsageRatio: e.target.value })}
+              onChange={(e) =>
+                setPredictionData({ ...predictionData, resourceUsageRatio: e.target.value })
+              }
             />
           </form>
           {predictionResult && (

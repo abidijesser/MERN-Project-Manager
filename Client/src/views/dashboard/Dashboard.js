@@ -27,7 +27,7 @@ import {
   cilPuzzle,
   cilGraph,
   cilBriefcase,
-  cilChatBubble
+  cilChatBubble,
 } from '@coreui/icons'
 
 import projectManagementImage from 'src/assets/images/gestion_projet.png'
@@ -52,6 +52,9 @@ const Dashboard = () => {
   const selectRandomProjects = () => {
     if (allProjects.length === 0) return
 
+    // Indiquer le chargement
+    setLoading(true)
+
     // Sélectionner 3 projets aléatoires pour l'affichage
     let randomProjects = [...allProjects]
 
@@ -65,6 +68,11 @@ const Dashboard = () => {
 
     // Mettre à jour l'affichage avec les projets aléatoires
     setDashboardProjects(randomProjects)
+
+    // Terminer le chargement après un court délai pour l'effet visuel
+    setTimeout(() => {
+      setLoading(false)
+    }, 300)
   }
 
   // Fonction pour récupérer les projets pour le tableau de bord
@@ -74,6 +82,16 @@ const Dashboard = () => {
 
       // Récupérer tous les projets pour la fonction aléatoire
       const allProjectsData = await getProjectsForDashboard(0) // 0 = tous les projets
+
+      console.log('Tous les projets récupérés:', allProjectsData.length)
+
+      if (allProjectsData.length === 0) {
+        console.log('Aucun projet trouvé')
+        setAllProjects([])
+        setDashboardProjects([])
+        return
+      }
+
       setAllProjects(allProjectsData)
 
       // Sélectionner 3 projets aléatoires pour l'affichage
@@ -85,16 +103,38 @@ const Dashboard = () => {
 
       console.log('Dashboard projects received:', displayProjects)
 
+      // Vérifier que chaque projet a les informations nécessaires
+      displayProjects = displayProjects.map((project) => {
+        // S'assurer que progress est un nombre
+        if (typeof project.progress !== 'number') {
+          project.progress = 0
+        }
+
+        // S'assurer que tasks et completedTasks sont définis
+        if (typeof project.tasks !== 'number') {
+          project.tasks = 0
+        }
+
+        if (typeof project.completedTasks !== 'number') {
+          project.completedTasks = 0
+        }
+
+        return project
+      })
+
       // Log task counts for each project
       displayProjects.forEach((project) => {
         console.log(
-          `Dashboard - Project ${project.title}: ${project.completedTasks}/${project.tasks} tasks`,
+          `Dashboard - Project ${project.title}: ${project.completedTasks}/${project.tasks} tasks, Progress: ${project.progress}%`,
         )
       })
 
       setDashboardProjects(displayProjects)
     } catch (error) {
       console.error('Erreur lors de la récupération des projets pour le tableau de bord:', error)
+      // En cas d'erreur, définir des tableaux vides
+      setAllProjects([])
+      setDashboardProjects([])
     } finally {
       setLoading(false)
     }
@@ -116,65 +156,82 @@ const Dashboard = () => {
   return (
     <>
       {/* Section Héro */}
-      <section className="hero-section text-center py-5 text-white"
+      <section
+        className="hero-section text-center py-5 text-white"
         style={{
           background: 'linear-gradient(135deg, #321fdb 0%, #1f67db 50%, #1f9adb 100%)',
           borderRadius: '15px',
           boxShadow: '0 10px 30px rgba(50, 31, 219, 0.25)',
           margin: '0 15px 30px',
           position: 'relative',
-          overflow: 'hidden'
-        }}>
+          overflow: 'hidden',
+        }}
+      >
         {/* Cercles décoratifs */}
-        <div className="circle-decoration" style={{
-          position: 'absolute',
-          top: '-50px',
-          right: '-50px',
-          width: '200px',
-          height: '200px',
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: 1
-        }}></div>
-        <div className="circle-decoration" style={{
-          position: 'absolute',
-          bottom: '-30px',
-          left: '-30px',
-          width: '150px',
-          height: '150px',
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: 1
-        }}></div>
+        <div
+          className="circle-decoration"
+          style={{
+            position: 'absolute',
+            top: '-50px',
+            right: '-50px',
+            width: '200px',
+            height: '200px',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.1)',
+            zIndex: 1,
+          }}
+        ></div>
+        <div
+          className="circle-decoration"
+          style={{
+            position: 'absolute',
+            bottom: '-30px',
+            left: '-30px',
+            width: '150px',
+            height: '150px',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.1)',
+            zIndex: 1,
+          }}
+        ></div>
 
         {/* Éléments décoratifs supplémentaires */}
-        <div className="circle-decoration" style={{
-          position: 'absolute',
-          top: '20%',
-          left: '10%',
-          width: '80px',
-          height: '80px',
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.05)',
-          zIndex: 1
-        }}></div>
-        <div className="circle-decoration" style={{
-          position: 'absolute',
-          bottom: '20%',
-          right: '10%',
-          width: '120px',
-          height: '120px',
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.05)',
-          zIndex: 1
-        }}></div>
+        <div
+          className="circle-decoration"
+          style={{
+            position: 'absolute',
+            top: '20%',
+            left: '10%',
+            width: '80px',
+            height: '80px',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.05)',
+            zIndex: 1,
+          }}
+        ></div>
+        <div
+          className="circle-decoration"
+          style={{
+            position: 'absolute',
+            bottom: '20%',
+            right: '10%',
+            width: '120px',
+            height: '120px',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.05)',
+            zIndex: 1,
+          }}
+        ></div>
 
         <div className="container" style={{ position: 'relative', zIndex: 2 }}>
           {/* Logo WorkTrack - Position centrée améliorée */}
-          <div className="mb-4" style={{
-            animation: 'fadeInUp 0.8s ease-out forwards',
-            marginBottom: '30px'
-          }}>
+          <div
+            className="mb-4"
+            style={{
+              animation: 'fadeInUp 0.8s ease-out forwards',
+              marginBottom: '30px',
+            }}
+          >
             <img
               src={worktrackLogo}
               alt="WorkTrack Logo"
@@ -182,69 +239,89 @@ const Dashboard = () => {
                 height: '130px',
                 filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))',
                 transition: 'transform 0.3s ease',
-                cursor: 'pointer'
+                cursor: 'pointer',
               }}
-              onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-              onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+              onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
             />
           </div>
 
-          <h1 className="display-4 fw-bold" style={{
-            textShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
-            letterSpacing: '0.5px',
-            marginBottom: '20px'
-          }}>
+          <h1
+            className="display-4 fw-bold"
+            style={{
+              textShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
+              letterSpacing: '0.5px',
+              marginBottom: '20px',
+            }}
+          >
             Optimisez vos projets, anticipez les risques, <br />
-            <span style={{ color: '#ffffff', background: 'rgba(0, 0, 0, 0.2)', padding: '0 15px', borderRadius: '5px' }}>
+            <span
+              style={{
+                color: '#ffffff',
+                background: 'rgba(0, 0, 0, 0.2)',
+                padding: '0 15px',
+                borderRadius: '5px',
+              }}
+            >
               réussissez en toute sérénité !
             </span>
           </h1>
-          <p className="lead mt-4 mb-5" style={{
-            maxWidth: '800px',
-            margin: '0 auto',
-            fontSize: '1.3rem',
-            lineHeight: '1.6',
-            textShadow: '0 1px 5px rgba(0, 0, 0, 0.15)'
-          }}>
-            Notre plateforme utilise l'<span style={{ fontWeight: 'bold', color: '#ffeb3b' }}>IA</span> pour vous aider à gérer vos projets de manière efficace,
-            en identifiant les risques et en optimisant vos ressources.
+          <p
+            className="lead mt-4 mb-5"
+            style={{
+              maxWidth: '800px',
+              margin: '0 auto',
+              fontSize: '1.3rem',
+              lineHeight: '1.6',
+              textShadow: '0 1px 5px rgba(0, 0, 0, 0.15)',
+            }}
+          >
+            Notre plateforme utilise l'
+            <span style={{ fontWeight: 'bold', color: '#ffeb3b' }}>IA</span> pour vous aider à gérer
+            vos projets de manière efficace, en identifiant les risques et en optimisant vos
+            ressources.
           </p>
 
-          <div className="position-relative" style={{
-            display: 'inline-block',
-            borderRadius: '15px',
-            overflow: 'hidden',
-            boxShadow: '0 15px 50px rgba(0, 0, 0, 0.3)',
-            transition: 'all 0.5s ease',
-            transform: 'perspective(1000px) rotateX(5deg)',
-            maxWidth: '85%'
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.transform = 'perspective(1000px) rotateX(0deg)';
-            e.currentTarget.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.4)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.transform = 'perspective(1000px) rotateX(5deg)';
-            e.currentTarget.style.boxShadow = '0 15px 50px rgba(0, 0, 0, 0.3)';
-          }}>
+          <div
+            className="position-relative"
+            style={{
+              display: 'inline-block',
+              borderRadius: '15px',
+              overflow: 'hidden',
+              boxShadow: '0 15px 50px rgba(0, 0, 0, 0.3)',
+              transition: 'all 0.5s ease',
+              transform: 'perspective(1000px) rotateX(5deg)',
+              maxWidth: '85%',
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'perspective(1000px) rotateX(0deg)'
+              e.currentTarget.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.4)'
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'perspective(1000px) rotateX(5deg)'
+              e.currentTarget.style.boxShadow = '0 15px 50px rgba(0, 0, 0, 0.3)'
+            }}
+          >
             <img
               src={projectManagementImage}
               alt="Illustration de gestion de projet"
               className="img-fluid"
               style={{
                 display: 'block',
-                borderRadius: '15px'
+                borderRadius: '15px',
               }}
             />
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'linear-gradient(to bottom, rgba(0,0,0,0) 80%, rgba(0,0,0,0.5) 100%)',
-              pointerEvents: 'none'
-            }}></div>
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0) 80%, rgba(0,0,0,0.5) 100%)',
+                pointerEvents: 'none',
+              }}
+            ></div>
           </div>
         </div>
       </section>
@@ -254,44 +331,51 @@ const Dashboard = () => {
         <div className="container">
           <div className="text-center mb-5">
             <h2 className="display-5 fw-bold">Fonctionnalités Clés</h2>
-            <p className="lead text-muted">Découvrez comment notre plateforme peut transformer votre gestion de projet</p>
+            <p className="lead text-muted">
+              Découvrez comment notre plateforme peut transformer votre gestion de projet
+            </p>
           </div>
           <CRow className="g-4">
             {[
               {
                 icon: cilSpeedometer,
                 title: 'Planification intelligente',
-                description: "Utilisez nos outils avancés de planification avec vues Gantt, Kanban et gestion de Sprints pour organiser efficacement vos projets.",
+                description:
+                  'Utilisez nos outils avancés de planification avec vues Gantt, Kanban et gestion de Sprints pour organiser efficacement vos projets.',
                 color: 'primary',
-                image: 'planning.svg'
+                image: 'planning.svg',
               },
               {
                 icon: cilTask,
                 title: 'Suivi des tâches et jalons',
-                description: "Suivez la progression de vos tâches en temps réel, définissez des jalons clés et recevez des notifications automatiques sur l'avancement.",
+                description:
+                  "Suivez la progression de vos tâches en temps réel, définissez des jalons clés et recevez des notifications automatiques sur l'avancement.",
                 color: 'success',
-                image: 'tasks.svg'
+                image: 'tasks.svg',
               },
               {
                 icon: cilLightbulb,
-                title: 'Prédiction des délais grâce à l\'IA',
-                description: "Notre intelligence artificielle analyse vos données historiques pour prédire les délais réalistes et identifier les risques potentiels.",
+                title: "Prédiction des délais grâce à l'IA",
+                description:
+                  'Notre intelligence artificielle analyse vos données historiques pour prédire les délais réalistes et identifier les risques potentiels.',
                 color: 'warning',
-                image: 'ai.svg'
+                image: 'ai.svg',
               },
               {
                 icon: cilSettings,
                 title: 'Optimisation des ressources',
-                description: "Gérez efficacement vos ressources humaines et matérielles, évitez la surcharge et maximisez la productivité de votre équipe.",
+                description:
+                  'Gérez efficacement vos ressources humaines et matérielles, évitez la surcharge et maximisez la productivité de votre équipe.',
                 color: 'danger',
-                image: 'resources.svg'
+                image: 'resources.svg',
               },
               {
                 icon: cilChatBubble,
                 title: 'Collaboration en équipe',
-                description: "Facilitez la communication avec messagerie intégrée, partage de documents et espaces de travail collaboratifs pour une meilleure synergie.",
+                description:
+                  'Facilitez la communication avec messagerie intégrée, partage de documents et espaces de travail collaboratifs pour une meilleure synergie.',
                 color: 'info',
-                image: 'collaboration.svg'
+                image: 'collaboration.svg',
               },
             ].map((feature, index) => (
               <CCol key={index} md={6} lg={4} className="mb-4">
@@ -300,7 +384,7 @@ const Dashboard = () => {
                   style={{
                     borderColor: `var(--cui-${feature.color})`,
                     backgroundColor: 'white',
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s ease',
                   }}
                 >
                   <div className="d-flex align-items-center mb-4">
@@ -308,11 +392,7 @@ const Dashboard = () => {
                       className={`feature-icon-container d-flex align-items-center justify-content-center rounded-circle bg-${feature.color} bg-opacity-10 p-3 me-3`}
                       style={{ width: '60px', height: '60px' }}
                     >
-                      <CIcon
-                        icon={feature.icon}
-                        size="xl"
-                        className={`text-${feature.color}`}
-                      />
+                      <CIcon icon={feature.icon} size="xl" className={`text-${feature.color}`} />
                     </div>
                     <h4 className="fw-bold mb-0">{feature.title}</h4>
                   </div>
@@ -324,7 +404,7 @@ const Dashboard = () => {
                       className="img-fluid feature-image mb-3"
                       style={{ maxHeight: '120px', opacity: '0.9' }}
                       onError={(e) => {
-                        e.target.style.display = 'none';
+                        e.target.style.display = 'none'
                       }}
                     />
                     <div>
@@ -346,7 +426,6 @@ const Dashboard = () => {
         </div>
       </section>
 
-
       {/* Section "Comment ça marche ?" */}
       <section className="how-it-works-section py-5 bg-light">
         <div className="container">
@@ -365,8 +444,6 @@ const Dashboard = () => {
           </CRow>
         </div>
       </section>
-
-
 
       {/* Dashboard Widgets */}
       <WidgetsDropdown className="mb-4" />
@@ -405,10 +482,7 @@ const Dashboard = () => {
             >
               Aléatoire
             </button>
-            <Link
-              to="/projects"
-              className="btn-dashboard btn-outline"
-            >
+            <Link to="/projects" className="btn-dashboard btn-outline">
               Tous les projets
               <CIcon icon={cilArrowRight} style={{ marginLeft: '6px' }} size="sm" />
             </Link>
@@ -449,23 +523,14 @@ const Dashboard = () => {
                     </CCol>
                   ) : (
                     dashboardProjects.map((project, index) => (
-                      <CCol
-                        xs={12}
-                        sm={6}
-                        lg={4}
-                        key={index}
-                        className="mb-4"
-                      >
+                      <CCol xs={12} sm={6} lg={4} key={index} className="mb-4">
                         <div className="project-card card-hover-effect">
                           <div className="project-card-header">
                             <h5 className="project-card-title text-truncate" title={project.title}>
                               <CIcon icon={cilFolder} className="icon" />
                               {project.title}
                             </h5>
-                            <CBadge
-                              color={project.statusColor}
-                              shape="rounded-pill"
-                            >
+                            <CBadge color={project.statusColor} shape="rounded-pill">
                               {project.status}
                             </CBadge>
                           </div>
@@ -477,11 +542,11 @@ const Dashboard = () => {
 
                             <div className="progress-container">
                               <CProgress
-                                value={project.progress}
+                                value={project.progress || 0}
                                 color={
-                                  project.progress > 75
+                                  (project.progress || 0) > 75
                                     ? 'success'
-                                    : project.progress > 40
+                                    : (project.progress || 0) > 40
                                       ? 'primary'
                                       : 'warning'
                                 }
@@ -492,14 +557,14 @@ const Dashboard = () => {
                                 className="progress-label"
                                 style={{
                                   backgroundColor:
-                                    project.progress > 75
+                                    (project.progress || 0) > 75
                                       ? 'var(--success-color)'
-                                      : project.progress > 40
+                                      : (project.progress || 0) > 40
                                         ? 'var(--primary-color)'
                                         : 'var(--warning-color)',
                                 }}
                               >
-                                {project.progress}%
+                                {project.progress || 0}%
                               </div>
                             </div>
 
@@ -604,8 +669,8 @@ const Dashboard = () => {
                 "Jusqu'à 5 utilisateurs",
                 'Fonctionnalités de base',
                 'Support communautaire',
-                'Mises à jour gratuites'
-              ]
+                'Mises à jour gratuites',
+              ],
             },
             {
               plan: 'Standard',
@@ -619,8 +684,8 @@ const Dashboard = () => {
                 'Fonctionnalités avancées',
                 'Support par email',
                 'Analyses de performance',
-                "Intégration avec d'autres outils"
-              ]
+                "Intégration avec d'autres outils",
+              ],
             },
             {
               plan: 'Premium',
@@ -635,15 +700,16 @@ const Dashboard = () => {
                 'Support prioritaire 24/7',
                 'Analyses avancées avec IA',
                 'API complète',
-                'Personnalisation avancée'
-              ]
+                'Personnalisation avancée',
+              ],
             },
           ].map((pricing, index) => (
             <CCol key={index} md={4} className="mb-4">
-              <div className={`project-card card-hover-effect ${pricing.popular ? 'border-primary' : ''}`}
+              <div
+                className={`project-card card-hover-effect ${pricing.popular ? 'border-primary' : ''}`}
                 style={{
                   transform: pricing.popular ? 'scale(1.05)' : 'scale(1)',
-                  zIndex: pricing.popular ? 1 : 0
+                  zIndex: pricing.popular ? 1 : 0,
                 }}
               >
                 {pricing.popular && (
@@ -658,11 +724,14 @@ const Dashboard = () => {
                   </div>
                 )}
 
-                <div className="project-card-header text-center" style={{
-                  backgroundColor: `var(--${pricing.color === 'dark' ? 'dark' : pricing.color === 'primary' ? 'primary' : 'info'}-color)`,
-                  color: 'white',
-                  padding: 'var(--spacing-sm)'
-                }}>
+                <div
+                  className="project-card-header text-center"
+                  style={{
+                    backgroundColor: `var(--${pricing.color === 'dark' ? 'dark' : pricing.color === 'primary' ? 'primary' : 'info'}-color)`,
+                    color: 'white',
+                    padding: 'var(--spacing-sm)',
+                  }}
+                >
                   <h4 className="fw-bold mb-0">{pricing.plan}</h4>
                 </div>
 
@@ -681,7 +750,7 @@ const Dashboard = () => {
                           style={{
                             width: '1rem',
                             height: '1rem',
-                            color: `var(--${pricing.color === 'dark' ? 'dark' : pricing.color === 'primary' ? 'primary' : 'info'}-color)`
+                            color: `var(--${pricing.color === 'dark' ? 'dark' : pricing.color === 'primary' ? 'primary' : 'info'}-color)`,
                           }}
                         />
                         <span>{feature}</span>
@@ -696,7 +765,11 @@ const Dashboard = () => {
                     className={`btn-dashboard ${pricing.popular ? 'btn-primary' : pricing.color === 'dark' ? 'btn-outline' : 'btn-outline'}`}
                     style={{ width: '100%' }}
                   >
-                    {pricing.popular ? 'Essai gratuit de 14 jours' : pricing.plan === 'Gratuit' ? 'Commencer gratuitement' : 'Contacter les ventes'}
+                    {pricing.popular
+                      ? 'Essai gratuit de 14 jours'
+                      : pricing.plan === 'Gratuit'
+                        ? 'Commencer gratuitement'
+                        : 'Contacter les ventes'}
                   </Link>
                 </div>
               </div>
@@ -705,7 +778,9 @@ const Dashboard = () => {
         </CRow>
 
         <div className="text-center mt-4">
-          <p className="text-muted mb-2">Besoin d'une solution personnalisée pour votre entreprise ?</p>
+          <p className="text-muted mb-2">
+            Besoin d'une solution personnalisée pour votre entreprise ?
+          </p>
           <Link to="/contact" className="btn-dashboard btn-outline">
             Contactez notre équipe commerciale
           </Link>

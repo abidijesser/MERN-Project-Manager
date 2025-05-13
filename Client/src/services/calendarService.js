@@ -1,13 +1,6 @@
-import axios from 'axios';
+import axios from '../utils/axios'
 
-const API_URL = 'http://localhost:3001/api/calendar';
-
-// Get auth headers
-const getAuthHeaders = () => ({
-  headers: {
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
-  },
-});
+// API endpoints are relative since we're using the configured axios instance
 
 /**
  * Get Google Calendar authentication URL
@@ -15,13 +8,13 @@ const getAuthHeaders = () => ({
  */
 export const getGoogleCalendarAuthUrl = async () => {
   try {
-    const response = await axios.get(`${API_URL}/auth-url`, getAuthHeaders());
-    return response.data;
+    const response = await axios.get('/api/calendar/auth-url')
+    return response.data
   } catch (error) {
-    console.error('Error getting Google Calendar auth URL:', error);
-    throw error;
+    console.error('Error getting Google Calendar auth URL:', error)
+    return { success: false, error: error.message }
   }
-};
+}
 
 /**
  * Check if user is authenticated with Google Calendar
@@ -29,13 +22,13 @@ export const getGoogleCalendarAuthUrl = async () => {
  */
 export const checkGoogleCalendarAuth = async () => {
   try {
-    const response = await axios.get(`${API_URL}/check-auth`, getAuthHeaders());
-    return response.data;
+    const response = await axios.get('/api/calendar/check-auth')
+    return response.data
   } catch (error) {
-    console.error('Error checking Google Calendar auth:', error);
-    throw error;
+    console.error('Error checking Google Calendar auth:', error)
+    return { success: false, isAuthenticated: false, error: error.message }
   }
-};
+}
 
 /**
  * Remove Google Calendar token
@@ -43,13 +36,13 @@ export const checkGoogleCalendarAuth = async () => {
  */
 export const removeGoogleCalendarToken = async () => {
   try {
-    const response = await axios.post(`${API_URL}/remove-token`, {}, getAuthHeaders());
-    return response.data;
+    const response = await axios.post('/api/calendar/remove-token', {})
+    return response.data
   } catch (error) {
-    console.error('Error removing Google Calendar token:', error);
-    throw error;
+    console.error('Error removing Google Calendar token:', error)
+    return { success: false, error: error.message }
   }
-};
+}
 
 /**
  * Sync tasks with Google Calendar
@@ -57,13 +50,13 @@ export const removeGoogleCalendarToken = async () => {
  */
 export const syncTasksWithGoogleCalendar = async () => {
   try {
-    const response = await axios.post(`${API_URL}/sync-tasks`, {}, getAuthHeaders());
-    return response.data;
+    const response = await axios.post('/api/calendar/sync-tasks', {})
+    return response.data
   } catch (error) {
-    console.error('Error syncing tasks with Google Calendar:', error);
-    throw error;
+    console.error('Error syncing tasks with Google Calendar:', error)
+    return { success: false, error: error.message }
   }
-};
+}
 
 /**
  * Sync projects with Google Calendar
@@ -71,13 +64,13 @@ export const syncTasksWithGoogleCalendar = async () => {
  */
 export const syncProjectsWithGoogleCalendar = async () => {
   try {
-    const response = await axios.post(`${API_URL}/sync-projects`, {}, getAuthHeaders());
-    return response.data;
+    const response = await axios.post('/api/calendar/sync-projects', {})
+    return response.data
   } catch (error) {
-    console.error('Error syncing projects with Google Calendar:', error);
-    throw error;
+    console.error('Error syncing projects with Google Calendar:', error)
+    return { success: false, error: error.message }
   }
-};
+}
 
 /**
  * Sync a specific task with Google Calendar
@@ -86,13 +79,13 @@ export const syncProjectsWithGoogleCalendar = async () => {
  */
 export const syncTaskWithGoogleCalendar = async (taskId) => {
   try {
-    const response = await axios.post(`${API_URL}/sync-task/${taskId}`, {}, getAuthHeaders());
-    return response.data;
+    const response = await axios.post(`/api/calendar/sync-task/${taskId}`, {})
+    return response.data
   } catch (error) {
-    console.error('Error syncing task with Google Calendar:', error);
-    throw error;
+    console.error('Error syncing task with Google Calendar:', error)
+    return { success: false, error: error.message }
   }
-};
+}
 
 /**
  * Sync a specific project with Google Calendar
@@ -101,13 +94,13 @@ export const syncTaskWithGoogleCalendar = async (taskId) => {
  */
 export const syncProjectWithGoogleCalendar = async (projectId) => {
   try {
-    const response = await axios.post(`${API_URL}/sync-project/${projectId}`, {}, getAuthHeaders());
-    return response.data;
+    const response = await axios.post(`/api/calendar/sync-project/${projectId}`, {})
+    return response.data
   } catch (error) {
-    console.error('Error syncing project with Google Calendar:', error);
-    throw error;
+    console.error('Error syncing project with Google Calendar:', error)
+    return { success: false, error: error.message }
   }
-};
+}
 
 /**
  * Format events for calendar display
@@ -116,24 +109,25 @@ export const syncProjectWithGoogleCalendar = async (projectId) => {
  * @returns {Array} Formatted events
  */
 export const formatCalendarEvents = (projects = [], tasks = []) => {
-  const projectEvents = projects.map(project => ({
+  const projectEvents = projects.map((project) => ({
     id: project._id,
     title: project.projectName,
     startDate: new Date(project.startDate),
     endDate: new Date(project.endDate),
     type: 'project',
     color: '#4f5d73', // Dark blue
-    data: project
-  }));
-  
-  const taskEvents = tasks.map(task => ({
+    data: project,
+  }))
+
+  const taskEvents = tasks.map((task) => ({
     id: task._id,
     title: task.title,
     date: new Date(task.dueDate),
     type: 'task',
-    color: task.priority === 'High' ? '#e55353' : task.priority === 'Medium' ? '#f9b115' : '#2eb85c',
-    data: task
-  }));
-  
-  return [...projectEvents, ...taskEvents];
-};
+    color:
+      task.priority === 'High' ? '#e55353' : task.priority === 'Medium' ? '#f9b115' : '#2eb85c',
+    data: task,
+  }))
+
+  return [...projectEvents, ...taskEvents]
+}

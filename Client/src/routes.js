@@ -15,6 +15,9 @@ import MediaPage from './views/media/MediaPage'
 import Resources from './views/resources/Resources'
 import CalendarPage from './views/calendar/CalendarPage'
 import Activity from './views/activity/Activity'
+import DrivePage from './pages/Drive/DrivePage'
+import DriveAuthSuccess from './pages/Drive/DriveAuthSuccess'
+import DriveAuthError from './pages/Drive/DriveAuthError'
 
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
 const Login = React.lazy(() => import('./views/pages/login/Login'))
@@ -63,6 +66,9 @@ const routes = [
   { path: '/resources', name: 'Ressources', element: Resources },
   { path: '/calendar', name: 'Calendrier', element: CalendarPage },
   { path: '/activity', name: 'Activités', element: Activity },
+  { path: '/drive', name: 'Google Drive', element: DrivePage },
+  { path: '/drive-auth-success', name: 'Google Drive Auth Success', element: DriveAuthSuccess },
+  { path: '/drive-auth-error', name: 'Google Drive Auth Error', element: DriveAuthError },
 ]
 
 export default routes

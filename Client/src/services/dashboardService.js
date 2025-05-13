@@ -13,10 +13,15 @@ export const getProjectsForDashboard = async (limit = 3) => {
       throw new Error('No authentication token found')
     }
 
+    // Utiliser l'endpoint spécifique pour le tableau de bord qui inclut les tâches
     const response = await axios.get('http://localhost:3001/api/projects', {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
+      },
+      params: {
+        includeTasks: true, // Demander explicitement d'inclure les tâches
+        populate: 'tasks', // Demander de peupler les tâches
       },
     })
     console.log('API Response:', response.data)
@@ -50,14 +55,38 @@ export const getProjectsForDashboard = async (limit = 3) => {
     const projectsWithStats = projects.map((project) => {
       console.log('Project:', project.projectName, 'Tasks:', project.tasks)
 
+      // Vérifier si les tâches sont correctement récupérées
+      if (!project.tasks) {
+        console.warn(`Le projet ${project.projectName} n'a pas de tâches définies`)
+      } else if (!Array.isArray(project.tasks)) {
+        console.warn(
+          `Les tâches du projet ${project.projectName} ne sont pas un tableau:`,
+          project.tasks,
+        )
+      } else {
+        console.log(`Le projet ${project.projectName} a ${project.tasks.length} tâches`)
+        // Log the first task to see its structure
+        if (project.tasks.length > 0) {
+          console.log('Première tâche:', project.tasks[0])
+        }
+      }
+
       // Ensure tasks is an array
       const tasks = Array.isArray(project.tasks) ? project.tasks : []
 
       // Compter les tâches terminées
-      const completedTasks = tasks.filter((task) => task && task.status === 'Done').length
+      // Vérifier si le statut est 'Done' ou 'Terminé' pour prendre en compte les différentes valeurs possibles
+      const completedTasks = tasks.filter((task) => {
+        if (!task) return false
+        const status = task.status ? task.status.toLowerCase() : ''
+        return status === 'done' || status === 'terminé' || status === 'terminée'
+      }).length
+
+      console.log(`Tâches terminées pour ${project.projectName}: ${completedTasks}/${tasks.length}`)
 
       // Calculer le pourcentage de progression
       const progress = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0
+      console.log(`Progression pour ${project.projectName}: ${progress}%`)
 
       // Déterminer le statut du projet
       let status = 'En cours'
