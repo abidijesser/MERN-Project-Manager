@@ -2,7 +2,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 import autoprefixer from 'autoprefixer';
-import { NodeGlobalsPolyfillPlugin } from 'vite-plugin-node-polyfills';
+import polyfills from 'vite-plugin-node-polyfills';
+
 
 
 // https://vitejs.dev/config/
@@ -34,7 +35,7 @@ export default defineConfig(() => {
     },
     plugins: [
       react(),
-      NodeGlobalsPolyfillPlugin({
+      polyfills({
         // Enables the polyfill for `crypto` and other necessary modules
         buffer: true, 
         crypto: true,
