@@ -83,7 +83,7 @@ const ProtectedRoute = ({ children }) => {
     console.log('Admin Dashboard - ProtectedRoute - Not authenticated, redirecting to client login page');
     // Use setTimeout to ensure logs are visible before redirect
     setTimeout(() => {
-      window.location.href = 'http://localhost:3000/#/login';
+      window.location.href = 'http://192.168.33.10:3000/#/login';
     }, 500);
     return <div>Redirecting to login...</div>;
   }

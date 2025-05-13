@@ -532,10 +532,10 @@ const forgotPassword = async (req, res) => {
     let resetUrl;
     if (user.role === "Admin") {
       // Admin users get the admin application reset URL
-      resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+      resetUrl = `http://192.168.33.10:5173/reset-password/${resetToken}`;
     } else {
       // Regular users get the client application reset URL
-      resetUrl = `http://localhost:3000/#/reset-password/${resetToken}`;
+      resetUrl = `http://192.168.33.10:3000/#/reset-password/${resetToken}`;
     }
 
     // Email content

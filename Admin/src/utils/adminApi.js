@@ -45,7 +45,7 @@ adminApi.interceptors.response.use(
       localStorage.removeItem('token');
       localStorage.removeItem('userRole');
       // Redirect to client login page instead of admin login
-      window.location.href = 'http://localhost:3000/#/login';
+      window.location.href = 'http://192.168.33.10:3000/#/login';
     }
     return Promise.reject(error);
   }

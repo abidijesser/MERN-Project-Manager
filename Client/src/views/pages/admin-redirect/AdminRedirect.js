@@ -20,7 +20,7 @@ const AdminRedirect = () => {
         const encodedToken = encodeURIComponent(token)
 
         // Redirect to admin dashboard with token and role as query parameters
-        const adminUrl = `http://localhost:5173/dashboard/default?token=${encodedToken}&role=${userRole}`
+        const adminUrl = `http://192.168.33.10:5173/dashboard/default?token=${encodedToken}&role=${userRole}`
         console.log('AdminRedirect - Redirecting to:', adminUrl)
 
         // Use direct redirect

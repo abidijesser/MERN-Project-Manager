@@ -48,7 +48,7 @@ export const ChatProvider = ({ children }) => {
     const loadInitialMessages = async () => {
       try {
         // Vous pouvez implémenter un appel API pour charger les messages précédents
-        // const response = await fetch('http://localhost:3000/api/chat');
+        // const response = await fetch('http://192.168.33.10:3000/api/chat');
         // const data = await response.json();
         // setMessages(data);
       } catch (error) {

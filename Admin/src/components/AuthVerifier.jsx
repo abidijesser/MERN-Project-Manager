@@ -39,7 +39,7 @@ const AuthVerifier = ({ children }) => {
           console.log('AuthVerifier - Not authenticated, will redirect to login');
           // Redirect to client login page
           setTimeout(() => {
-            window.location.href = 'http://localhost:3000/#/login';
+            window.location.href = 'http://192.168.33.10:3000/#/login';
           }, 500);
           return;
         }
@@ -89,7 +89,7 @@ const AuthVerifier = ({ children }) => {
           console.error('AuthVerifier - Error checking admin role:', roleError);
           // Redirect to login on error
           setTimeout(() => {
-            window.location.href = 'http://localhost:3000/#/login';
+            window.location.href = 'http://192.168.33.10:3000/#/login';
           }, 500);
           return;
         }
@@ -101,7 +101,7 @@ const AuthVerifier = ({ children }) => {
         console.error('AuthVerifier - Error verifying authentication:', error);
         // Redirect to login on error
         setTimeout(() => {
-          window.location.href = 'http://localhost:3000/#/login';
+          window.location.href = 'http://192.168.33.10:3000/#/login';
         }, 500);
       } finally {
         setLoading(false);
@@ -119,7 +119,7 @@ const AuthVerifier = ({ children }) => {
 
         if (!authenticated) {
           console.log('AuthVerifier - Periodic check - Not authenticated, will redirect');
-          window.location.href = 'http://localhost:3000/#/login';
+          window.location.href = 'http://192.168.33.10:3000/#/login';
           return;
         }
 

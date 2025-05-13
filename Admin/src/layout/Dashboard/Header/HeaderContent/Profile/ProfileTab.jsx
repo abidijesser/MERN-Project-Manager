@@ -46,7 +46,7 @@ export default function ProfileTab({ handleClose }) {
 
         // Redirect to client login page after a short delay
         setTimeout(() => {
-          window.location.href = 'http://localhost:3000/#/login';
+          window.location.href = 'http://192.168.33.10:3000/#/login';
         }, 1500);
       } else {
         // Show error message

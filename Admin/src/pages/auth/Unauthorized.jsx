@@ -31,7 +31,7 @@ export default function Unauthorized() {
                   sx={{ mt: 3 }}
                   onClick={() => {
                     // Redirect to client login page
-                    window.location.href = 'http://localhost:3000/#/login';
+                    window.location.href = 'http://192.168.33.10:3000/#/login';
                   }}
                 >
                   Back to Login

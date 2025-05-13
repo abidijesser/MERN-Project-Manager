@@ -47,7 +47,7 @@ const LoginRedirect = () => {
       // Add a delay to ensure logs are visible
       setTimeout(() => {
         console.log('LoginRedirect - Executing redirect to client login page now');
-        window.location.href = 'http://localhost:3000/#/login';
+        window.location.href = 'http://192.168.33.10:3000/#/login';
       }, 500);
     }
   }, [navigate]);

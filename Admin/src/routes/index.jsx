@@ -43,7 +43,7 @@ const RootRedirect = () => {
         if (!token) {
           console.log('Root redirect - No token found, will redirect to client login');
           setTimeout(() => {
-            window.location.href = 'http://localhost:3000/#/login';
+            window.location.href = 'http://192.168.33.10:3000/#/login';
           }, 500);
           return;
         }
@@ -72,19 +72,19 @@ const RootRedirect = () => {
               localStorage.setItem('userRole', response.data.user.role);
             }
             setTimeout(() => {
-              window.location.href = 'http://localhost:3000/#/login';
+              window.location.href = 'http://192.168.33.10:3000/#/login';
             }, 500);
           }
         } catch (apiError) {
           console.error('Root redirect - Error fetching profile:', apiError);
           setTimeout(() => {
-            window.location.href = 'http://localhost:3000/#/login';
+            window.location.href = 'http://192.168.33.10:3000/#/login';
           }, 500);
         }
       } catch (error) {
         console.error('Root redirect - Error checking authentication:', error);
         setTimeout(() => {
-          window.location.href = 'http://localhost:3000/#/login';
+          window.location.href = 'http://192.168.33.10:3000/#/login';
         }, 500);
       } finally {
         setLoading(false);

@@ -64,7 +64,7 @@ export default function AuthLogin({ isDemo = false }) {
         } else {
           // Non-admin users are redirected to the client dashboard
           console.log('Redirecting to client dashboard (2FA)');
-          window.location.href = 'http://localhost:3000/#/dashboard';
+          window.location.href = 'http://192.168.33.10:3000/#/dashboard';
         }
       } else {
         setLoginError(result.error || 'Invalid 2FA code');
@@ -139,7 +139,7 @@ export default function AuthLogin({ isDemo = false }) {
                 } else {
                   // Non-admin users are redirected to the client dashboard
                   console.log('Redirecting to client dashboard');
-                  window.location.href = 'http://localhost:3000/#/dashboard';
+                  window.location.href = 'http://192.168.33.10:3000/#/dashboard';
                 }
               } else if (result.requires2FA) {
                 setShowTwoFactorInput(true);

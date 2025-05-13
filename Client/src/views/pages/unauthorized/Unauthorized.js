@@ -14,7 +14,7 @@ const Unauthorized = () => {
 
   const handleAdminRedirect = () => {
     console.log('Redirecting to admin dashboard')
-    window.location.href = 'http://localhost:5173/dashboard/default'
+    window.location.href = 'http://192.168.33.10:5173/dashboard/default'
   }
 
   return (

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000/api/chat'; // Remplacez par l'URL de votre API
+const API_URL = 'http://192.168.33.10:3000/api/chat'; // Remplacez par l'URL de votre API
 
 export const fetchMessages = async () => {
   try {

@@ -63,7 +63,7 @@ export default function DashboardDefault() {
 
     if (!token) {
       console.log('Dashboard - No token found, will redirect');
-      window.location.href = 'http://localhost:3000/#/login';
+      window.location.href = 'http://192.168.33.10:3000/#/login';
       return;
     }
 

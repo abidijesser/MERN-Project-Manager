@@ -103,13 +103,13 @@ const handleCallback = async (req, res) => {
     // Redirect to the calendar sync page with success message
     console.log("Redirecting to calendar sync page with success message");
     // Make sure we're using the correct URL format
-    const redirectUrl = "http://localhost:5173/calendar-sync?success=true";
+    const redirectUrl = "http://192.168.33.10:5173/calendar-sync?success=true";
     console.log("Redirect URL:", redirectUrl);
     res.redirect(redirectUrl);
   } catch (error) {
     console.error("Error handling callback:", error);
     // Redirect to the calendar sync page with error message
-    const errorUrl = `http://localhost:5173/calendar-sync?error=${encodeURIComponent(
+    const errorUrl = `http://192.168.33.10:5173/calendar-sync?error=${encodeURIComponent(
       error.message
     )}`;
     console.log("Error redirect URL:", errorUrl);

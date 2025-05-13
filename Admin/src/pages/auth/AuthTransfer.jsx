@@ -34,7 +34,7 @@ const AuthTransfer = () => {
           
           // Redirect to login page after a delay
           setTimeout(() => {
-            window.location.href = 'http://localhost:3000/#/login';
+            window.location.href = 'http://192.168.33.10:3000/#/login';
           }, 3000);
         }
       } catch (error) {
@@ -43,7 +43,7 @@ const AuthTransfer = () => {
         
         // Redirect to login page after a delay
         setTimeout(() => {
-          window.location.href = 'http://localhost:3000/#/login';
+          window.location.href = 'http://192.168.33.10:3000/#/login';
         }, 3000);
       }
     };
