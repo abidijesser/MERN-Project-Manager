@@ -1,5 +1,5 @@
-# Base image for Node.js
-FROM node:16-alpine AS builder
+# Base image for Node.js (use a more recent version)
+FROM node:18-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -11,7 +11,7 @@ COPY ./Client/package*.json ./
 RUN npm install --legacy-peer-deps
 
 # Copy the rest of the app
-COPY ./Client .
+COPY ./Client ./
 
 # Ensure crypto polyfill is available
 RUN npm install crypto-browserify --save --legacy-peer-deps
@@ -34,5 +34,4 @@ COPY ./Client/nginx.conf /etc/nginx/conf.d/default.conf
 # Expose port 80
 EXPOSE 80
 
-# Start Nginx server
-CMD ["nginx", "-g", "daemon off;"]
+# Start Ngi
