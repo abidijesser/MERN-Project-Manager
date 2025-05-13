@@ -1,7 +1,27 @@
 pipeline {
     agent any
 
-    environment { 
+    environment {
+        MONGO_URI = credentials('MONGO_URI')
+        JWT_SECRET = credentials('JWT_SECRET')
+
+        GOOGLE_CLIENT_ID = credentials('GOOGLE_CLIENT_ID')
+        GOOGLE_CLIENT_SECRET = credentials('GOOGLE_CLIENT_SECRET')
+
+        EMAIL_USERNAME = credentials('EMAIL_USERNAME')
+        EMAIL_PASSWORD = credentials('EMAIL_PASSWORD')
+
+        FACEBOOK_APP_ID = credentials('FACEBOOK_APP_ID')
+        FACEBOOK_APP_SECRET = credentials('FACEBOOK_APP_SECRET')
+
+        GOOGLE_CALENDAR_CLIENT_ID = credentials('GOOGLE_CALENDAR_CLIENT_ID')
+        GOOGLE_CALENDAR_CLIENT_SECRET = credentials('GOOGLE_CALENDAR_CLIENT_SECRET')
+        GOOGLE_CALENDAR_REDIRECT_URI = "http://localhost:3001/api/calendar/callback"
+
+        GEMINI_API_KEY = credentials('GEMINI_API_KEY')
+        VITE_API_URL = "http://localhost:3001"
+
+        
         registryCredentials = "nexus"
         registry = "192.168.33.10:8083"
         imageTag = "6.0"
