@@ -1,5 +1,5 @@
 # Base image for Node.js
-FROM node:16-alpine AS builder
+FROM node:18-alpine AS builder
 
 # Set working directory
 WORKDIR /app
