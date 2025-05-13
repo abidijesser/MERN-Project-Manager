@@ -1,11 +1,8 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import path from 'node:path';
-import autoprefixer from 'autoprefixer';
-import {
-  NodeGlobalsPolyfillPlugin,
-  NodeModulesPolyfillPlugin,
-} from 'vite-plugin-node-polyfills';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'node:path'
+import autoprefixer from 'autoprefixer'
+import polyfills from 'vite-plugin-node-polyfills'
 
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
@@ -15,22 +12,13 @@ export default defineConfig(() => ({
   },
   css: {
     postcss: {
-      plugins: [
-        autoprefixer({}),
-      ],
+      plugins: [autoprefixer({})],
     },
   },
   esbuild: {
     loader: 'jsx',
     include: /src\/.*\.jsx?$/,
     exclude: [],
-    plugins: [
-      NodeGlobalsPolyfillPlugin({
-        buffer: true,
-        process: true,
-      }),
-      NodeModulesPolyfillPlugin(),
-    ],
   },
   optimizeDeps: {
     force: true,
@@ -38,17 +26,15 @@ export default defineConfig(() => ({
       define: {
         global: 'globalThis',
       },
-      plugins: [
-        NodeGlobalsPolyfillPlugin({
-          buffer: true,
-          process: true,
-        }),
-        NodeModulesPolyfillPlugin(),
-      ],
     },
   },
   plugins: [
     react(),
+    polyfills({
+      crypto: true,
+      buffer: true,
+      process: true,
+    }),
   ],
   resolve: {
     alias: [
@@ -65,4 +51,4 @@ export default defineConfig(() => ({
         // https://vitejs.dev/config/server-options.html
       },
   },
-}));
+}))
