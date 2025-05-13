@@ -9,6 +9,20 @@ const User = require("../models/User");
 const getAuthUrl = async (req, res) => {
   try {
     console.log("Getting auth URL...");
+
+    // Get user ID from query parameter or from authenticated user
+    const userId = req.query.userId || (req.user && req.user.id);
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error:
+          "User ID is required. Please provide it as a query parameter: ?userId=your_user_id",
+      });
+    }
+
+    console.log(`Generating Google Calendar auth URL for user ID: ${userId}`);
+
     // Load client secrets from a local file
     const credentialsPath = path.join(__dirname, "../config/credentials.json");
     console.log("Credentials path:", credentialsPath);
@@ -16,8 +30,8 @@ const getAuthUrl = async (req, res) => {
     const credentials = JSON.parse(content);
     console.log("Credentials loaded successfully");
 
-    // Generate auth URL
-    const authUrl = googleCalendarService.getAuthUrl(credentials);
+    // Generate auth URL with user ID
+    const authUrl = googleCalendarService.getAuthUrl(credentials, userId);
 
     console.log("Auth URL generated successfully");
     res.status(200).json({
@@ -614,6 +628,100 @@ const removeToken = async (req, res) => {
   }
 };
 
+// Generate a Google Meet link
+const generateMeetLink = async (req, res) => {
+  try {
+    const { date } = req.body;
+
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        error: "Date is required",
+      });
+    }
+
+    // Get user
+    const user = await User.findById(req.user.id);
+    if (!user || !user.googleCalendarToken) {
+      return res.status(400).json({
+        success: false,
+        error: "User not authenticated with Google Calendar",
+        code: "NOT_AUTHENTICATED",
+      });
+    }
+
+    // Load client secrets from a local file
+    const credentialsPath = path.join(__dirname, "../config/credentials.json");
+    const content = await fs.readFile(credentialsPath);
+    const credentials = JSON.parse(content);
+
+    // Try to refresh token if needed
+    const refreshResult = await googleCalendarService.refreshToken(
+      credentials,
+      user.googleCalendarToken
+    );
+
+    if (!refreshResult.success) {
+      // If token refresh failed and requires reauthorization
+      if (refreshResult.requiresReauth) {
+        console.log("Token refresh failed - reauthorization required");
+        return res.status(401).json({
+          success: false,
+          error:
+            "Google Calendar authorization expired. Please reconnect your account.",
+          code: "REAUTHORIZATION_REQUIRED",
+          details: refreshResult.error,
+          errorCode: refreshResult.errorCode,
+        });
+      }
+
+      // Other token refresh errors
+      return res.status(500).json({
+        success: false,
+        error: "Failed to refresh Google Calendar token",
+        details: refreshResult.error,
+        code: refreshResult.errorCode,
+      });
+    }
+
+    // Update user's token if it was refreshed
+    if (refreshResult.token !== user.googleCalendarToken) {
+      user.googleCalendarToken = refreshResult.token;
+      await user.save();
+      console.log("Updated user's Google Calendar token");
+    }
+
+    // Get authorized client with the possibly refreshed token
+    const auth = googleCalendarService.getAuthorizedClient(
+      credentials,
+      user.googleCalendarToken
+    );
+
+    // Generate Meet link
+    const result = await googleCalendarService.generateMeetLink(auth, date);
+
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        error: "Failed to generate Google Meet link",
+        details: result.error,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      meetLink: result.meetLink,
+    });
+  } catch (error) {
+    console.error("Error generating Meet link:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to generate Google Meet link",
+      details: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAuthUrl,
   handleCallback,
@@ -623,4 +731,5 @@ module.exports = {
   syncProject,
   checkAuth,
   removeToken,
+  generateMeetLink,
 };

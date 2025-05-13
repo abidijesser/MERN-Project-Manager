@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import {
   FaCalendarAlt,
   FaUser,
+  FaUsers,
   FaLink,
   FaVideo,
   FaClock,
@@ -9,6 +10,7 @@ import {
   FaCheck,
   FaHourglassEnd,
 } from 'react-icons/fa'
+import axios from 'axios'
 import './MeetingScheduler.css'
 
 const MeetingScheduler = () => {
@@ -21,6 +23,11 @@ const MeetingScheduler = () => {
   })
   const [success, setSuccess] = useState(false)
   const [meetings, setMeetings] = useState([])
+  const [meetLink, setMeetLink] = useState('')
+  const [generatingMeet, setGeneratingMeet] = useState(false)
+  const [showUserList, setShowUserList] = useState(false)
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(false)
 
   // Charger les réunions depuis le localStorage au démarrage
   useEffect(() => {
@@ -39,14 +46,170 @@ const MeetingScheduler = () => {
         console.error('Erreur lors du chargement des réunions:', error)
       }
     }
+
+    // Charger la liste des utilisateurs
+    const fetchUsers = async () => {
+      try {
+        setLoading(true)
+        // Cette fonction est simulée pour l'exemple
+        // Dans une application réelle, vous feriez un appel API
+        setTimeout(() => {
+          const mockUsers = [
+            { _id: '1', name: 'Sophie Martin', email: 'sophie.martin@example.com' },
+            { _id: '2', name: 'Thomas Dubois', email: 'thomas.dubois@example.com' },
+            { _id: '3', name: 'Emma Petit', email: 'emma.petit@example.com' },
+            { _id: '4', name: 'Lucas Bernard', email: 'lucas.bernard@example.com' },
+            { _id: '5', name: 'Julie Moreau', email: 'julie.moreau@example.com' },
+          ]
+          setUsers(mockUsers)
+          setLoading(false)
+        }, 500)
+      } catch (error) {
+        console.error('Erreur lors du chargement des utilisateurs:', error)
+        setLoading(false)
+      }
+    }
+
+    fetchUsers()
   }, [])
+
+  // Fonctions pour l'API Google Calendar (simulées pour l'exemple)
+  const checkGoogleCalendarAuth = async () => {
+    // Dans une application réelle, vous feriez un appel API
+    console.log('Vérification de l\'authentification Google Calendar...')
+    return { isAuthenticated: false }
+  }
+
+  const getGoogleCalendarAuthUrl = async () => {
+    // Dans une application réelle, vous feriez un appel API
+    console.log('Obtention de l\'URL d\'authentification Google Calendar...')
+    return {
+      success: true,
+      authUrl: 'https://accounts.google.com/o/oauth2/auth?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&scope=https://www.googleapis.com/auth/calendar&response_type=code'
+    }
+  }
+
+  const generateMeetLink = async (date) => {
+    // Dans une application réelle, vous feriez un appel API
+    console.log('Génération d\'un lien Google Meet pour la date:', date)
+    return {
+      success: true,
+      meetLink: 'https://meet.google.com/abc-defg-hij'
+    }
+  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setMeetingDetails((prevDetails) => ({ ...prevDetails, [name]: value }))
   }
 
-  const handleCreateMeeting = () => {
+  // Toggle user list visibility
+  const toggleUserList = () => {
+    setShowUserList((prev) => !prev)
+  }
+
+  // Handle user selection
+  const handleUserSelect = (user) => {
+    const currentEmails = meetingDetails.participants ? meetingDetails.participants.split(',').map(email => email.trim()) : []
+    const userEmail = user.email.trim()
+
+    // Check if email is already in the list
+    if (!currentEmails.includes(userEmail)) {
+      const updatedEmails = [...currentEmails, userEmail].filter(Boolean).join(', ')
+      setMeetingDetails((prev) => ({ ...prev, participants: updatedEmails }))
+    }
+
+    // Hide the user list after selection
+    setShowUserList(false)
+  }
+
+  // Import all user emails
+  const importAllUserEmails = () => {
+    if (users.length > 0) {
+      const allEmails = users.map(user => user.email).join(', ')
+      setMeetingDetails((prev) => ({ ...prev, participants: allEmails }))
+      setShowUserList(false)
+    }
+  }
+
+  // Générer un lien Google Meet en utilisant l'API du serveur
+  const generateGoogleMeetLink = async () => {
+    if (!meetingDetails.date) {
+      alert('Veuillez sélectionner une date pour la réunion avant de générer un lien Meet')
+      return
+    }
+
+    try {
+      setGeneratingMeet(true)
+      console.log('Génération d\'un lien Google Meet via l\'API du serveur...')
+
+      // Vérifier si l'utilisateur est authentifié avec Google Calendar
+      const authCheck = await checkGoogleCalendarAuth()
+
+      // Si l'utilisateur n'est pas authentifié, rediriger vers l'authentification
+      if (!authCheck.isAuthenticated) {
+        console.log('Utilisateur non authentifié avec Google Calendar')
+        const authUrlResponse = await getGoogleCalendarAuthUrl()
+
+        if (authUrlResponse.success && authUrlResponse.authUrl) {
+          if (confirm('Vous devez vous connecter à Google Calendar pour générer un lien Meet. Voulez-vous vous connecter maintenant?')) {
+            // Ouvrir l'URL d'authentification dans une nouvelle fenêtre
+            window.open(authUrlResponse.authUrl, '_blank')
+            alert('Après vous être connecté à Google Calendar, revenez sur cette page et réessayez de générer un lien Meet.')
+          }
+        } else {
+          alert('Impossible d\'obtenir l\'URL d\'authentification Google Calendar.')
+        }
+
+        setGeneratingMeet(false)
+        return
+      }
+
+      // Générer le lien Meet
+      const result = await generateMeetLink(meetingDetails.date)
+
+      if (result.success && result.meetLink) {
+        setMeetLink(result.meetLink)
+        setMeetingDetails(prev => ({ ...prev, zoomLink: result.meetLink }))
+        console.log('Lien Google Meet généré avec succès:', result.meetLink)
+      } else if (result.needsAuth) {
+        // Si l'authentification a expiré, rediriger vers l'authentification
+        console.log('Authentification Google Calendar expirée')
+        const authUrlResponse = await getGoogleCalendarAuthUrl()
+
+        if (authUrlResponse.success && authUrlResponse.authUrl) {
+          if (confirm('Votre connexion à Google Calendar a expiré. Voulez-vous vous reconnecter maintenant?')) {
+            // Ouvrir l'URL d'authentification dans une nouvelle fenêtre
+            window.open(authUrlResponse.authUrl, '_blank')
+            alert('Après vous être reconnecté à Google Calendar, revenez sur cette page et réessayez de générer un lien Meet.')
+          }
+        } else {
+          alert('Impossible d\'obtenir l\'URL d\'authentification Google Calendar.')
+        }
+      } else {
+        // Autre erreur
+        console.error('Erreur lors de la génération du lien Google Meet:', result.error)
+        alert(`Erreur lors de la génération du lien Google Meet: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Erreur lors de la génération du lien Google Meet:', error)
+
+      // Message d'erreur plus détaillé
+      let errorMessage = 'Erreur lors de la génération du lien Google Meet. ';
+
+      if (error.response?.data?.error) {
+        errorMessage += error.response.data.error;
+      } else if (error.message) {
+        errorMessage += error.message;
+      }
+
+      alert(errorMessage)
+    } finally {
+      setGeneratingMeet(false)
+    }
+  }
+
+  const handleCreateMeeting = async () => {
     if (meetingDetails.date && meetingDetails.participants && meetingDetails.zoomLink) {
       // Calculer la date de début et de fin
       const startDate = new Date(meetingDetails.date)
@@ -221,6 +384,49 @@ const MeetingScheduler = () => {
             placeholder="Emails séparés par des virgules"
             className="input-field"
           />
+          <button
+            type="button"
+            className="import-users-btn"
+            onClick={toggleUserList}
+            title="Importer des utilisateurs"
+          >
+            <FaUsers />
+          </button>
+
+          {showUserList && (
+            <div className="user-dropdown">
+              <div className="user-dropdown-header">
+                <h4>Sélectionner des utilisateurs</h4>
+                <button
+                  className="select-all-btn"
+                  onClick={importAllUserEmails}
+                >
+                  Tout sélectionner
+                </button>
+              </div>
+
+              {loading ? (
+                <div className="loading-indicator">Chargement...</div>
+              ) : users.length > 0 ? (
+                <ul className="user-list">
+                  {users.map(user => (
+                    <li
+                      key={user._id}
+                      className="user-item"
+                      onClick={() => handleUserSelect(user)}
+                    >
+                      <div className="user-info">
+                        <div className="user-name">{user.name}</div>
+                        <div className="user-email">{user.email}</div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="no-users">Aucun utilisateur trouvé</div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="input-group">
@@ -230,9 +436,18 @@ const MeetingScheduler = () => {
             name="zoomLink"
             value={meetingDetails.zoomLink}
             onChange={handleInputChange}
-            placeholder="Lien Zoom/Meet"
+            placeholder="Lien de la réunion"
             className="input-field"
           />
+          <button
+            type="button"
+            className="generate-meet-btn"
+            onClick={generateGoogleMeetLink}
+            disabled={generatingMeet || !meetingDetails.date}
+            title="Générer un lien Google Meet"
+          >
+            {generatingMeet ? 'Génération...' : 'Générer Meet'}
+          </button>
         </div>
       </div>
 

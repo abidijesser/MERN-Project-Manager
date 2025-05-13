@@ -9,6 +9,7 @@ import {
   CContainer,
   CForm,
   CFormInput,
+  CFormCheck,
   CInputGroup,
   CInputGroupText,
   CRow,
@@ -18,10 +19,11 @@ import {
   CModalBody,
   CModalFooter,
 } from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { cilLockLocked, cilUser, cilShieldAlt } from '@coreui/icons'
+import { FaEye, FaEyeSlash, FaShieldAlt } from 'react-icons/fa'
 import axios from '../../../utils/axios'
 import { toast } from 'react-toastify'
+import projectBoardSvg from 'src/assets/images/project-board.svg'
+import './Login.css'
 
 const Login = () => {
   const [email, setEmail] = useState('')
@@ -31,6 +33,8 @@ const Login = () => {
   const [twoFactorCode, setTwoFactorCode] = useState('')
   const [twoFactorError, setTwoFactorError] = useState('')
   const [tempUserData, setTempUserData] = useState(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
   const navigate = useNavigate()
 
   async function handleSubmit(event) {
@@ -40,8 +44,8 @@ const Login = () => {
     console.log('Attempting to login with email:', email)
 
     try {
-      console.log('Sending login request to:', axios.defaults.baseURL + '/auth/login')
-      const response = await axios.post('/auth/login', {
+      console.log('Sending login request to:', axios.defaults.baseURL + '/api/auth/login')
+      const response = await axios.post('/api/auth/login', {
         email: email,
         password: password,
       })
@@ -135,7 +139,7 @@ const Login = () => {
       const cleanCode = twoFactorCode.toString().replace(/\s+/g, '')
       console.log('Cleaned 2FA code:', cleanCode)
 
-      const response = await axios.post('/auth/login', {
+      const response = await axios.post('/api/auth/login', {
         email: tempUserData.email,
         password: tempUserData.password,
         twoFactorCode: cleanCode,
@@ -239,111 +243,169 @@ const Login = () => {
   }
 
   return (
-    <div className="bg-light min-vh-100 d-flex flex-row align-items-center">
+    <div className="login-page">
       <CContainer>
         <CRow className="justify-content-center">
-          <CCol md={8}>
-            <CCardGroup>
-              <CCard className="p-4">
-                <CCardBody>
-                  <CForm onSubmit={handleSubmit}>
-                    <h1>Login</h1>
-                    <p className="text-muted">Sign In to your account</p>
-                    {error && <div className="alert alert-danger">{error}</div>}
-                    <CInputGroup className="mb-3">
-                      <CInputGroupText>
-                        <CIcon icon={cilUser} />
-                      </CInputGroupText>
-                      <CFormInput
-                        placeholder="Email"
-                        autoComplete="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                      />
-                    </CInputGroup>
-                    <CInputGroup className="mb-4">
-                      <CInputGroupText>
-                        <CIcon icon={cilLockLocked} />
-                      </CInputGroupText>
-                      <CFormInput
-                        type="password"
-                        placeholder="Password"
-                        autoComplete="current-password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                      />
-                    </CInputGroup>
-                    <CRow>
-                      <CCol xs={6}>
-                        <CButton color="primary" className="px-4" type="submit">
-                          Login
-                        </CButton>
-                      </CCol>
-                      <CCol xs={6} className="text-right">
-                        <Link to="/forgot-password">
-                          <CButton color="link" className="px-0">
+          <CCol md={10} lg={9} xl={8}>
+            <div className="text-center mb-4">
+              <h1 className="worktrack-logo">WorkTrack</h1>
+            </div>
+            <CCard className="login-card">
+              <CCardGroup>
+                <CCard className="login-form-container border-0">
+                  <CCardBody>
+                    <CForm onSubmit={handleSubmit}>
+                      <h2>Login</h2>
+                      <p className="text-muted mb-4">Sign in to your account</p>
+                      {error && <div className="alert alert-danger">{error}</div>}
+
+                      <div className="form-floating mb-3">
+                        <CFormInput
+                          id="floatingEmail"
+                          placeholder="Email"
+                          autoComplete="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
+                        <label htmlFor="floatingEmail">Email address</label>
+                      </div>
+
+                      <div className="form-floating mb-4 position-relative">
+                        <CFormInput
+                          id="floatingPassword"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Password"
+                          autoComplete="current-password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                        />
+                        <label htmlFor="floatingPassword">Password</label>
+                        <div
+                          className="password-toggle"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+                        </div>
+                      </div>
+
+                      <CRow className="mb-3">
+                        <CCol xs={6}>
+                          <CFormCheck
+                            id="rememberMe"
+                            label="Remember me"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                          />
+                        </CCol>
+                        <CCol xs={6} className="text-end">
+                          <Link to="/forgot-password" className="text-decoration-none">
                             Forgot password?
-                          </CButton>
-                        </Link>
-                      </CCol>
-                    </CRow>
-                  </CForm>
-                  <div className="mt-3">
-                    <CButton color="danger" className="w-100 mb-2" onClick={handleGoogleLogin}>
-                      Sign in with Google
-                    </CButton>
-                    <CButton color="primary" className="w-100" onClick={handleFacebookLogin}>
-                      Sign in with Facebook
-                    </CButton>
-                  </div>
-                </CCardBody>
-              </CCard>
-              <CCard className="text-white bg-primary py-5" style={{ width: '44%' }}>
-                <CCardBody className="text-center">
-                  <div>
-                    <h2>Sign up</h2>
-                    <p>
-                      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-                      tempor incididunt ut labore et dolore magna aliqua.
-                    </p>
-                    <Link to="/register">
-                      <CButton color="primary" className="mt-3" active tabIndex={-1}>
-                        Register Now!
+                          </Link>
+                        </CCol>
+                      </CRow>
+
+                      <CButton color="primary" className="login-button" type="submit">
+                        Login
                       </CButton>
-                    </Link>
-                  </div>
-                </CCardBody>
-              </CCard>
-            </CCardGroup>
+
+                      <div className="social-login-section">
+                        <div className="social-login-divider">
+                          <span>Or continue with</span>
+                        </div>
+
+                        <div className="social-login-buttons">
+                          <CButton className="social-login-button" onClick={handleGoogleLogin}>
+                            <div className="google-icon-wrapper">
+                              <svg className="google-icon" width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                              </svg>
+                            </div>
+                            Google
+                          </CButton>
+                          <CButton className="social-login-button" onClick={handleFacebookLogin}>
+                            <div className="facebook-icon-wrapper">
+                              <svg className="facebook-icon" width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                              </svg>
+                            </div>
+                            Facebook
+                          </CButton>
+                        </div>
+
+                        <div className="register-link">
+                          Don't have an account? <Link to="/register">Sign up</Link>
+                        </div>
+                      </div>
+                    </CForm>
+                  </CCardBody>
+                </CCard>
+
+                <CCard className="login-sidebar d-none d-md-block" style={{ width: '50%' }}>
+                  <CCardBody className="d-flex flex-column justify-content-center">
+                    <h3 className="login-sidebar-title">Check Your Project Progress</h3>
+                    <p className="text-muted mb-4">
+                      Track tasks, manage projects, and collaborate with your team efficiently.
+                    </p>
+
+                    <div className="project-illustration">
+                      <img
+                        src={projectBoardSvg}
+                        alt="Project Management"
+                        className="login-sidebar-image"
+                      />
+                    </div>
+
+                    <div className="login-sidebar-dots">
+                      <div className="login-sidebar-dot active"></div>
+                      <div className="login-sidebar-dot"></div>
+                      <div className="login-sidebar-dot"></div>
+                    </div>
+                  </CCardBody>
+                </CCard>
+              </CCardGroup>
+            </CCard>
           </CCol>
         </CRow>
       </CContainer>
 
       {/* Two-Factor Authentication Modal */}
-      <CModal visible={showTwoFactorModal} onClose={() => setShowTwoFactorModal(false)}>
-        <CModalHeader>
-          <CModalTitle>Two-Factor Authentication</CModalTitle>
+      <CModal visible={showTwoFactorModal} onClose={() => setShowTwoFactorModal(false)} alignment="center">
+        <CModalHeader className="border-bottom-0 pb-0">
+          <CModalTitle className="fw-bold">Two-Factor Authentication</CModalTitle>
         </CModalHeader>
-        <CModalBody>
-          <p>Please enter the verification code from your authenticator app:</p>
+        <CModalBody className="pt-0">
+          <div className="text-center mb-4">
+            <div className="two-factor-icon-container">
+              <FaShieldAlt size={24} className="text-primary" />
+            </div>
+            <p className="mb-1">Please enter the verification code from your authenticator app</p>
+            <p className="text-muted small">The code refreshes every 30 seconds</p>
+          </div>
+
           {twoFactorError && <div className="alert alert-danger">{twoFactorError}</div>}
-          <CInputGroup className="mb-3">
+
+          <CInputGroup className="mb-4">
             <CInputGroupText>
-              <CIcon icon={cilShieldAlt} />
+              <FaShieldAlt />
             </CInputGroupText>
             <CFormInput
               type="text"
-              placeholder="Verification Code"
+              placeholder="Enter 6-digit code"
               value={twoFactorCode}
               onChange={(e) => setTwoFactorCode(e.target.value)}
+              className="form-control-lg two-factor-input"
+              maxLength="6"
             />
           </CInputGroup>
         </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setShowTwoFactorModal(false)}>
+        <CModalFooter className="border-top-0 pt-0">
+          <CButton color="secondary" onClick={() => setShowTwoFactorModal(false)} className="px-4">
             Cancel
           </CButton>
-          <CButton color="primary" onClick={handleTwoFactorVerification}>
+          <CButton color="primary" onClick={handleTwoFactorVerification} className="login-button">
             Verify
           </CButton>
         </CModalFooter>

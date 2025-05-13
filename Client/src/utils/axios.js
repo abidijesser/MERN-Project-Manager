@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Create an axios instance with base configuration
 const instance = axios.create({
-  baseURL: 'http://localhost:3001/api',
+  baseURL: 'http://localhost:3001',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -35,7 +35,7 @@ instance.interceptors.request.use(
     console.error('Error details:', {
       message: error.message,
       code: error.code,
-      stack: error.stack
+      stack: error.stack,
     })
     return Promise.reject(error)
   },
@@ -60,12 +60,14 @@ instance.interceptors.response.use(
     if (error.message === 'Network Error') {
       console.error('Network error details:', {
         message: 'Unable to connect to the server. Please check if the server is running.',
-        config: error.config ? {
-          url: error.config.url,
-          baseURL: error.config.baseURL,
-          method: error.config.method,
-          timeout: error.config.timeout,
-        } : 'No config available',
+        config: error.config
+          ? {
+              url: error.config.url,
+              baseURL: error.config.baseURL,
+              method: error.config.method,
+              timeout: error.config.timeout,
+            }
+          : 'No config available',
       })
     }
 

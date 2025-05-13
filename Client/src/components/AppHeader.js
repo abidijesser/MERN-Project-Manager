@@ -33,7 +33,8 @@ import {
   cilDescription,
   cilCalculator,
   cilLibrary,
-  cilCheck
+  cilCheck,
+  cilCloud,
 } from '@coreui/icons'
 
 import { AppBreadcrumb } from './index'
@@ -57,7 +58,7 @@ const AppHeader = () => {
 
       const token = localStorage.getItem('token')
       if (!token) {
-        console.error('Aucun token d\'authentification trouvé')
+        console.error("Aucun token d'authentification trouvé")
         setNotificationError('Vous devez être connecté pour voir vos notifications')
         setLoadingNotifications(false)
         return
@@ -89,19 +90,21 @@ const AppHeader = () => {
       const token = localStorage.getItem('token')
       if (!token) return
 
-      await axios.put(`http://localhost:3001/api/notifications/${notificationId}/read`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      await axios.put(
+        `http://localhost:3001/api/notifications/${notificationId}/read`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      })
+      )
 
       // Mettre à jour l'état local
-      setNotifications(prevNotifications =>
-        prevNotifications.map(notification =>
-          notification._id === notificationId
-            ? { ...notification, read: true }
-            : notification
-        )
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) =>
+          notification._id === notificationId ? { ...notification, read: true } : notification,
+        ),
       )
     } catch (error) {
       console.error('Erreur lors du marquage de la notification comme lue:', error)
@@ -130,7 +133,7 @@ const AppHeader = () => {
         <div className="d-flex align-items-center justify-content-between w-100">
           <div className="d-flex align-items-center">
             <div className="app-logo me-4">
-              <span className="fw-bold fs-4 text-white">WebTrack</span>
+              <span className="fw-bold fs-4 text-white">worktrack</span>
             </div>
             <CHeaderToggler
               onClick={() => dispatch({ type: 'set', sidebarShow: !sidebarShow })}
@@ -169,6 +172,12 @@ const AppHeader = () => {
                   <span>Ressources</span>
                 </CNavLink>
               </CNavItem>
+              <CNavItem>
+                <CNavLink to="/drive" as={NavLink} className="nav-link-custom">
+                  <CIcon icon={cilCloud} className="nav-icon" />
+                  <span>Google Drive</span>
+                </CNavLink>
+              </CNavItem>
               <CDropdown variant="nav-item">
                 <CDropdownToggle caret className="nav-link-custom">
                   <CIcon icon={cilCursor} className="nav-icon" />
@@ -203,20 +212,21 @@ const AppHeader = () => {
                   <div className="icon-wrapper">
                     <CIcon icon={cilBell} size="lg" />
                     <CBadge color="danger" shape="rounded-pill" position="top-end" size="sm">
-                      {notifications.filter(notification => !notification.read).length}
+                      {notifications.filter((notification) => !notification.read).length}
                     </CBadge>
                   </div>
                 </CDropdownToggle>
                 <CDropdownMenu style={{ minWidth: '300px', maxHeight: '400px', overflowY: 'auto' }}>
-                  <CDropdownItem header="true" className="d-flex justify-content-between align-items-center">
+                  <CDropdownItem
+                    header="true"
+                    className="d-flex justify-content-between align-items-center"
+                  >
                     <span>Notifications</span>
                     {loadingNotifications && <CSpinner size="sm" />}
                   </CDropdownItem>
 
                   {notificationError && (
-                    <CDropdownItem className="text-danger">
-                      {notificationError}
-                    </CDropdownItem>
+                    <CDropdownItem className="text-danger">{notificationError}</CDropdownItem>
                   )}
 
                   {notifications.length > 0 ? (
@@ -228,7 +238,7 @@ const AppHeader = () => {
                           backgroundColor: notification.read ? 'transparent' : '#f0f9ff',
                           borderLeft: notification.read ? 'none' : '3px solid #1890ff',
                           padding: '10px 15px',
-                          margin: '2px 0'
+                          margin: '2px 0',
                         }}
                       >
                         <div>
@@ -270,7 +280,7 @@ const AppHeader = () => {
                         justifyContent: 'center',
                         color: 'white',
                         fontWeight: 'bold',
-                        fontSize: '16px'
+                        fontSize: '16px',
                       }}
                     >
                       G

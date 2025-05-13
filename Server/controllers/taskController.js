@@ -1,5 +1,6 @@
 const Task = require("../models/Task");
 const Project = require("../models/Project");
+const ActivityLog = require("../models/ActivityLog");
 const mongoose = require("mongoose");
 const notificationService = require("../services/notificationService");
 
@@ -83,6 +84,32 @@ const createTask = async (req, res) => {
     });
 
     await task.save();
+
+    // If the task is associated with a project, add it to the project's tasks array
+    if (project) {
+      await Project.findByIdAndUpdate(
+        project,
+        { $push: { tasks: task._id } },
+        { new: true }
+      );
+      console.log(`Added task ${task._id} to project ${project}`);
+    }
+
+    // Create activity log for task creation
+    const activityLog = new ActivityLog({
+      user: req.user.id,
+      action: "CREATE",
+      entityType: "TASK",
+      entityId: task._id,
+      task: task._id,
+      project: project || null,
+      details: {
+        title: task.title,
+        description: task.description ? task.description.substring(0, 100) : "",
+      },
+    });
+    await activityLog.save();
+    console.log("Activity log created for task creation");
 
     // Créer une notification pour la nouvelle tâche
     await notificationService.createTaskNotification(
@@ -363,6 +390,13 @@ const updateTask = async (req, res) => {
 
     console.log("updateTask - Updating task with data:", updateData);
 
+    // Get the original project ID before updating
+    const originalProjectId = taskWithProject.project
+      ? taskWithProject.project._id
+      : null;
+    const newProjectId = updateData.project;
+
+    // Update the task
     const task = await Task.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
@@ -379,6 +413,65 @@ const updateTask = async (req, res) => {
         error: "Tâche non trouvée",
       });
     }
+
+    // Handle project changes
+    if (newProjectId !== undefined) {
+      // If project has changed
+      if (
+        originalProjectId &&
+        newProjectId &&
+        originalProjectId.toString() !== newProjectId.toString()
+      ) {
+        // Remove task from old project
+        await Project.findByIdAndUpdate(originalProjectId, {
+          $pull: { tasks: req.params.id },
+        });
+
+        // Add task to new project
+        await Project.findByIdAndUpdate(newProjectId, {
+          $push: { tasks: req.params.id },
+        });
+
+        console.log(
+          `Moved task ${req.params.id} from project ${originalProjectId} to ${newProjectId}`
+        );
+      }
+      // If task didn't have a project before but now has one
+      else if (!originalProjectId && newProjectId) {
+        await Project.findByIdAndUpdate(newProjectId, {
+          $push: { tasks: req.params.id },
+        });
+
+        console.log(`Added task ${req.params.id} to project ${newProjectId}`);
+      }
+      // If task had a project before but now doesn't
+      else if (originalProjectId && !newProjectId) {
+        await Project.findByIdAndUpdate(originalProjectId, {
+          $pull: { tasks: req.params.id },
+        });
+
+        console.log(
+          `Removed task ${req.params.id} from project ${originalProjectId}`
+        );
+      }
+    }
+
+    // Create activity log for task update
+    const activityLog = new ActivityLog({
+      user: req.user.id,
+      action: "UPDATE",
+      entityType: "TASK",
+      entityId: task._id,
+      task: task._id,
+      project: task.project || null,
+      details: {
+        title: task.title,
+        description: task.description ? task.description.substring(0, 100) : "",
+        changes: Object.keys(updateData).join(", "),
+      },
+    });
+    await activityLog.save();
+    console.log("Activity log created for task update");
 
     // Créer une notification pour la mise à jour de la tâche
     await notificationService.createTaskNotification(
@@ -454,6 +547,31 @@ const deleteTask = async (req, res) => {
           "Seuls les administrateurs ou le propriétaire du projet peuvent supprimer cette tâche",
       });
     }
+
+    // If the task is associated with a project, remove it from the project's tasks array
+    if (task.project) {
+      await Project.findByIdAndUpdate(task.project._id, {
+        $pull: { tasks: req.params.id },
+      });
+      console.log(
+        `Removed task ${req.params.id} from project ${task.project._id}`
+      );
+    }
+
+    // Create activity log for task deletion
+    const activityLog = new ActivityLog({
+      user: req.user.id,
+      action: "DELETE",
+      entityType: "TASK",
+      entityId: req.params.id,
+      project: task.project ? task.project._id : null,
+      details: {
+        title: task.title,
+        description: task.description ? task.description.substring(0, 100) : "",
+      },
+    });
+    await activityLog.save();
+    console.log("Activity log created for task deletion");
 
     // Supprimer la tâche
     await Task.findByIdAndDelete(req.params.id);
@@ -619,6 +737,31 @@ const updateTaskStatus = async (req, res) => {
       );
       // Continuer même si la récupération échoue, car la mise à jour a déjà réussi
       updatedTask = existingTask;
+    }
+
+    // Create activity log for status change
+    try {
+      const activityLog = new ActivityLog({
+        user: req.user.id,
+        action: "STATUS_CHANGE",
+        entityType: "TASK",
+        entityId: updatedTask._id,
+        task: updatedTask._id,
+        project: updatedTask.project || null,
+        details: {
+          title: updatedTask.title,
+          oldStatus: existingTask.status,
+          newStatus: status,
+        },
+      });
+      await activityLog.save();
+      console.log("updateTaskStatus - Activity log created for status change");
+    } catch (activityError) {
+      console.error(
+        "updateTaskStatus - Error creating activity log:",
+        activityError
+      );
+      // Continue even if activity log creation fails
     }
 
     // Créer une notification (gérer les erreurs sans interrompre le processus)

@@ -62,7 +62,7 @@ const CreateProject = () => {
           return
         }
 
-        const response = await axios.get('/auth/users', {
+        const response = await axios.get('/api/auth/users', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -140,7 +140,7 @@ const CreateProject = () => {
       }
 
       console.log('Données envoyées :', projectData)
-      const response = await axios.post('/projects', projectData)
+      const response = await axios.post('/api/projects', projectData)
 
       if (response.data.message) {
         toast.success(response.data.message)

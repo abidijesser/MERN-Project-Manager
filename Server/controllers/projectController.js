@@ -1,5 +1,7 @@
 const Project = require("../models/Project");
 const User = require("../models/User");
+const Task = require("../models/Task");
+const ActivityLog = require("../models/ActivityLog");
 
 // GET all projects
 const getAllProjects = async (_req, res) => {
@@ -10,9 +12,48 @@ const getAllProjects = async (_req, res) => {
         path: "owner",
         select: "name email",
       })
-      .populate("tasks members");
+      .populate({
+        path: "tasks",
+        model: "Task",
+        select: "title description status priority dueDate assignedTo",
+      })
+      .populate("members");
 
     console.log(`Found ${projects.length} projects in total`);
+
+    // For each project, find all tasks that reference this project
+    for (let i = 0; i < projects.length; i++) {
+      const project = projects[i];
+
+      // If the project has no tasks or empty tasks array, find tasks that reference this project
+      if (!project.tasks || project.tasks.length === 0) {
+        console.log(
+          `Project ${project.projectName} has no tasks in its tasks array. Finding tasks that reference this project...`
+        );
+
+        const tasksForProject = await Task.find({
+          project: project._id,
+        }).select("title description status priority dueDate assignedTo");
+
+        console.log(
+          `Found ${tasksForProject.length} tasks for project ${project.projectName}`
+        );
+
+        // Update the project's tasks array with these tasks
+        if (tasksForProject.length > 0) {
+          await Project.findByIdAndUpdate(project._id, {
+            $set: { tasks: tasksForProject.map((task) => task._id) },
+          });
+
+          // Update the project in our results
+          project.tasks = tasksForProject;
+          console.log(
+            `Updated project ${project.projectName} with ${tasksForProject.length} tasks`
+          );
+        }
+      }
+    }
+
     res.status(200).json({ success: true, projects });
   } catch (error) {
     console.error("Erreur lors de la récupération des projets:", error);
@@ -32,7 +73,11 @@ const getProjectById = async (req, res) => {
         path: "owner",
         select: "name email",
       })
-      .populate("tasks")
+      .populate({
+        path: "tasks",
+        model: "Task",
+        select: "title description status priority dueDate assignedTo",
+      })
       .populate("members");
 
     if (!project) {
@@ -41,6 +86,35 @@ const getProjectById = async (req, res) => {
         error: "Projet non trouvé",
       });
     }
+
+    // If the project has no tasks or empty tasks array, find tasks that reference this project
+    if (!project.tasks || project.tasks.length === 0) {
+      console.log(
+        `Project ${project.projectName} has no tasks in its tasks array. Finding tasks that reference this project...`
+      );
+
+      const tasksForProject = await Task.find({ project: project._id }).select(
+        "title description status priority dueDate assignedTo"
+      );
+
+      console.log(
+        `Found ${tasksForProject.length} tasks for project ${project.projectName}`
+      );
+
+      // Update the project's tasks array with these tasks
+      if (tasksForProject.length > 0) {
+        await Project.findByIdAndUpdate(project._id, {
+          $set: { tasks: tasksForProject.map((task) => task._id) },
+        });
+
+        // Update the project in our results
+        project.tasks = tasksForProject;
+        console.log(
+          `Updated project ${project.projectName} with ${tasksForProject.length} tasks`
+        );
+      }
+    }
+
     res.status(200).json({ success: true, project: project });
   } catch (error) {
     console.error("Erreur lors de la récupération du projet:", error);
@@ -104,6 +178,24 @@ const createProject = async (req, res) => {
     });
 
     await project.save();
+
+    // Create activity log for project creation
+    const activityLog = new ActivityLog({
+      user: req.user.id,
+      action: "CREATE",
+      entityType: "PROJECT",
+      entityId: project._id,
+      project: project._id,
+      details: {
+        projectName: project.projectName,
+        description: project.description
+          ? project.description.substring(0, 100)
+          : "",
+      },
+    });
+    await activityLog.save();
+    console.log("Activity log created for project creation");
+
     res.status(201).json({
       success: true,
       message: "Projet créé avec succès",
@@ -193,6 +285,24 @@ const updateProject = async (req, res) => {
       }
     );
 
+    // Create activity log for project update
+    const activityLog = new ActivityLog({
+      user: req.user.id,
+      action: "UPDATE",
+      entityType: "PROJECT",
+      entityId: updatedProject._id,
+      project: updatedProject._id,
+      details: {
+        projectName: updatedProject.projectName,
+        description: updatedProject.description
+          ? updatedProject.description.substring(0, 100)
+          : "",
+        changes: Object.keys(req.body).join(", "),
+      },
+    });
+    await activityLog.save();
+    console.log("Activity log created for project update");
+
     res.status(200).json({
       success: true,
       project: updatedProject,
@@ -227,6 +337,22 @@ const deleteProject = async (req, res) => {
           "Vous n'êtes pas autorisé à supprimer ce projet. Seul le propriétaire peut le supprimer.",
       });
     }
+
+    // Create activity log for project deletion before deleting the project
+    const activityLog = new ActivityLog({
+      user: req.user.id,
+      action: "DELETE",
+      entityType: "PROJECT",
+      entityId: existingProject._id,
+      details: {
+        projectName: existingProject.projectName,
+        description: existingProject.description
+          ? existingProject.description.substring(0, 100)
+          : "",
+      },
+    });
+    await activityLog.save();
+    console.log("Activity log created for project deletion");
 
     // Delete the project
     await Project.findByIdAndDelete(req.params.id);

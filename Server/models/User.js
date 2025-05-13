@@ -23,6 +23,10 @@ const UserSchema = new Schema({
   role: { type: String, enum: RoleEnum, default: "Client" },
   projects: [{ type: Schema.Types.ObjectId, ref: "Project" }],
   tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
+  skills: {
+    type: [String],
+    default: [],
+  },
   resetPasswordToken: String,
   resetPasswordExpires: Date,
   twoFactorSecret: String,
@@ -34,6 +38,10 @@ const UserSchema = new Schema({
   verificationToken: String,
   verificationTokenExpires: Date,
   googleCalendarToken: {
+    type: Object,
+    default: null,
+  },
+  googleDriveToken: {
     type: Object,
     default: null,
   },

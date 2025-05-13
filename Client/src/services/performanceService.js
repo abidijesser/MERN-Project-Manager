@@ -52,13 +52,15 @@ export const getPerformanceData = async () => {
 // Calculer les KPIs à partir des tâches et des projets
 const calculateKPIs = (tasks, projects) => {
   // Taux d'avancement global (%)
-  const completedTasks = tasks.filter(task => task.status === 'Terminée').length;
+  const completedTasks = tasks.filter(task =>
+    task.status === 'Done' || task.status === 'Terminée'
+  ).length;
   const totalTasks = tasks.length;
   const progressRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   // Délai moyen de réalisation des tâches (en jours)
   const completedTasksWithDates = tasks.filter(task =>
-    task.status === 'Terminée' && task.createdAt && task.updatedAt
+    (task.status === 'Done' || task.status === 'Terminée') && task.createdAt && task.updatedAt
   );
 
   let averageTaskTime = 0;
@@ -67,13 +69,15 @@ const calculateKPIs = (tasks, projects) => {
       const createdDate = new Date(task.createdAt);
       const completedDate = new Date(task.updatedAt);
       const days = Math.round((completedDate - createdDate) / (1000 * 60 * 60 * 24));
-      return sum + days;
+      return sum + Math.max(days, 1); // Au moins 1 jour
     }, 0);
     averageTaskTime = Math.round(totalDays / completedTasksWithDates.length);
   }
 
   // Taux de respect des échéances (%)
-  const tasksWithDueDate = tasks.filter(task => task.dueDate && task.status === 'Terminée');
+  const tasksWithDueDate = tasks.filter(task =>
+    task.dueDate && (task.status === 'Done' || task.status === 'Terminée')
+  );
   let onTimeCount = 0;
 
   if (tasksWithDueDate.length > 0) {
@@ -89,13 +93,38 @@ const calculateKPIs = (tasks, projects) => {
     : 0;
 
   // Productivité par équipe (calculée à partir des tâches assignées)
-  // Ici, nous utilisons une valeur fictive car nous n'avons pas de données d'équipe
-  const teamProductivity = 85;
+  // Calculer la productivité réelle basée sur les projets
+  let teamProductivity = 0;
+  if (projects.length > 0) {
+    // Calculer le pourcentage moyen de tâches terminées par projet
+    const projectCompletionRates = projects.map(project => {
+      const projectTasks = tasks.filter(task =>
+        task.project && (typeof task.project === 'object' ?
+          task.project._id === project._id :
+          task.project === project._id)
+      );
+
+      if (projectTasks.length === 0) return 0;
+
+      const projectCompletedTasks = projectTasks.filter(task =>
+        task.status === 'Done' || task.status === 'Terminée'
+      ).length;
+
+      return projectCompletedTasks / projectTasks.length * 100;
+    });
+
+    // Moyenne des taux d'achèvement
+    teamProductivity = Math.round(
+      projectCompletionRates.reduce((sum, rate) => sum + rate, 0) / projects.length
+    );
+  } else {
+    teamProductivity = 85; // Valeur par défaut si aucun projet
+  }
 
   // Nombre de risques détectés
-  // Ici, nous considérons les tâches en retard comme des risques
+  // Considérer les tâches en retard comme des risques
   const lateTasks = tasks.filter(task => {
-    if (task.dueDate && task.status !== 'Terminée') {
+    if (task.dueDate && task.status !== 'Done' && task.status !== 'Terminée') {
       const dueDate = new Date(task.dueDate);
       const today = new Date();
       return dueDate < today;
@@ -153,9 +182,10 @@ const prepareChartData = (tasks, projects) => {
     if (createdDate.getFullYear() === currentYear) {
       const month = months[createdDate.getMonth()];
 
-      if (task.status === 'Terminée') {
+      // Mapping des statuts de tâches selon le modèle de données
+      if (task.status === 'Done' || task.status === 'Terminée') {
         taskStatusByMonth[month].completed += 1;
-      } else if (task.status === 'En cours') {
+      } else if (task.status === 'In Progress' || task.status === 'En cours') {
         taskStatusByMonth[month].inProgress += 1;
       }
 
@@ -174,18 +204,23 @@ const prepareChartData = (tasks, projects) => {
 
   // Données pour le diagramme des délais
   const delayData = projects.map(project => {
-    // Calculer le délai réel (en jours) entre la date de création et la dernière mise à jour
-    const createdDate = new Date(project.createdAt);
-    const updatedDate = new Date(project.updatedAt);
-    const actualDays = Math.round((updatedDate - createdDate) / (1000 * 60 * 60 * 24));
+    // Utiliser les dates réelles du projet pour les calculs
+    const startDate = new Date(project.startDate);
+    const endDate = new Date(project.endDate);
+    const today = new Date();
 
-    // Délai prévu (fictif pour cet exemple)
-    const plannedDays = actualDays * 0.8; // 80% du délai réel comme délai prévu (fictif)
+    // Calculer le délai prévu en jours
+    const plannedDays = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24));
+
+    // Calculer le délai réel en jours (jusqu'à aujourd'hui ou jusqu'à la fin si terminé)
+    const isCompleted = project.status === 'Completed' || project.status === 'Archived';
+    const actualEndDate = isCompleted ? endDate : today;
+    const actualDays = Math.round((actualEndDate - startDate) / (1000 * 60 * 60 * 24));
 
     return {
       name: project.projectName || `Projet ${project._id.substring(0, 5)}`,
       actual: actualDays > 0 ? actualDays : 1,
-      planned: Math.round(plannedDays) > 0 ? Math.round(plannedDays) : 1
+      planned: plannedDays > 0 ? plannedDays : 1
     };
   });
 
@@ -454,6 +489,7 @@ export const exportToExcel = () => {
 // Récupérer et analyser les performances des projets
 export const getProjectsPerformance = async (filters = {}) => {
   try {
+    console.log('Fetching performance data with filters:', filters);
     const token = localStorage.getItem('token');
     if (!token) {
       throw new Error('No authentication token found');
@@ -480,29 +516,83 @@ export const getProjectsPerformance = async (filters = {}) => {
     let projects = projectsResponse.data.projects;
     let tasks = tasksResponse.data.tasks;
 
+    console.log(`Fetched ${projects.length} projects and ${tasks.length} tasks`);
+
     // Appliquer les filtres si présents
     if (filters.projectId) {
+      console.log(`Filtering by project ID: ${filters.projectId}`);
       projects = projects.filter(project => project._id === filters.projectId);
+      console.log(`After project filter: ${projects.length} projects`);
     }
 
-    if (filters.dateRange && filters.dateRange.length === 2) {
-      const startDate = new Date(filters.dateRange[0]);
-      const endDate = new Date(filters.dateRange[1]);
+    if (filters.dateRange && filters.dateRange.length === 2 &&
+        filters.dateRange[0] && filters.dateRange[1]) {
+      // Convertir les objets dayjs en objets Date si nécessaire
+      const startDate = filters.dateRange[0].$d ? new Date(filters.dateRange[0].$d) : new Date(filters.dateRange[0]);
+      const endDate = filters.dateRange[1].$d ? new Date(filters.dateRange[1].$d) : new Date(filters.dateRange[1]);
+
+      // Régler l'heure de fin à 23:59:59 pour inclure toute la journée
+      endDate.setHours(23, 59, 59, 999);
+
+      console.log(`Filtering by date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
 
       // Filtrer les projets par date
       projects = projects.filter(project => {
+        if (!project.startDate || !project.endDate) return false;
+
+        // Normaliser les dates du projet
         const projectStartDate = new Date(project.startDate);
         const projectEndDate = new Date(project.endDate);
 
+        // Régler l'heure de fin du projet à 23:59:59
+        projectEndDate.setHours(23, 59, 59, 999);
+
         // Un projet est inclus si sa période chevauche la période de filtre
-        return (projectStartDate <= endDate && projectEndDate >= startDate);
+        // (début du projet <= fin de la période) ET (fin du projet >= début de la période)
+        const isIncluded = (projectStartDate <= endDate && projectEndDate >= startDate);
+
+        if (isIncluded) {
+          console.log(`Project included: ${project.projectName}, Start: ${projectStartDate.toISOString()}, End: ${projectEndDate.toISOString()}`);
+        }
+
+        return isIncluded;
       });
 
-      // Filtrer les tâches par date
+      console.log(`After date filter: ${projects.length} projects`);
+
+      // Filtrer les tâches par date et par projet
       tasks = tasks.filter(task => {
         // Ne garder que les tâches associées aux projets filtrés
-        return projects.some(project => task.project && task.project._id === project._id);
+        const isInFilteredProject = projects.some(project =>
+          task.project && (
+            (typeof task.project === 'object' && task.project._id === project._id) ||
+            task.project === project._id
+          )
+        );
+
+        if (!isInFilteredProject) return false;
+
+        // Si la tâche a une date d'échéance, vérifier si elle est dans la plage
+        if (task.dueDate) {
+          const dueDate = new Date(task.dueDate);
+          const isDueDateInRange = dueDate >= startDate && dueDate <= endDate;
+
+          if (isDueDateInRange) {
+            return true;
+          }
+        }
+
+        // Vérifier si la tâche a été créée ou mise à jour dans la période
+        const taskCreatedDate = task.createdAt ? new Date(task.createdAt) : null;
+        const taskUpdatedDate = task.updatedAt ? new Date(task.updatedAt) : null;
+
+        const createdInRange = taskCreatedDate && taskCreatedDate >= startDate && taskCreatedDate <= endDate;
+        const updatedInRange = taskUpdatedDate && taskUpdatedDate >= startDate && taskUpdatedDate <= endDate;
+
+        return createdInRange || updatedInRange;
       });
+
+      console.log(`After task filter: ${tasks.length} tasks`);
     }
 
     // Calculer les métriques de performance pour chaque projet

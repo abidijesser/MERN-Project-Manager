@@ -18,6 +18,8 @@ import {
   CModalTitle,
   CModalBody,
   CModalFooter,
+  CPagination,
+  CPaginationItem,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilX } from '@coreui/icons'
@@ -30,6 +32,8 @@ const ProjectsList = () => {
   const [filteredProjects, setFilteredProjects] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
   const [userRole, setUserRole] = useState(localStorage.getItem('userRole') || '')
   const [modalVisible, setModalVisible] = useState(false)
   const [predictionLoading, setPredictionLoading] = useState(false)
@@ -64,12 +68,26 @@ const ProjectsList = () => {
       )
       setFilteredProjects(filtered)
     }
+    // Reset to first page when search query changes
+    setCurrentPage(1)
   }, [searchQuery, projects])
+
+  // Get current projects for pagination
+  const indexOfLastProject = currentPage * itemsPerPage
+  const indexOfFirstProject = indexOfLastProject - itemsPerPage
+  const currentProjects = filteredProjects.slice(indexOfFirstProject, indexOfLastProject)
+
+  // Change page
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber)
+  }
 
   const fetchProjects = async () => {
     setLoading(true)
     try {
-      const response = await axios.get('/projects')
+      // Récupération des projets depuis l'API backend
+      const response = await axios.get('/api/projects')
+
       if (response.data.success && response.data.projects) {
         console.log(`Fetched ${response.data.projects.length} projects where user is a member`)
         setProjects(response.data.projects)
@@ -90,7 +108,7 @@ const ProjectsList = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
       try {
-        const response = await axios.delete(`/projects/${id}`)
+        const response = await axios.delete(`/api/projects/${id}`)
         if (response.data.success) {
           toast.success('Projet supprimé avec succès !')
           fetchProjects()
@@ -211,14 +229,14 @@ const ProjectsList = () => {
           <CTableBody>
             {filteredProjects.length === 0 ? (
               <CTableRow>
-                <CTableDataCell colSpan="5" className="text-center">
+                <CTableDataCell colSpan="6" className="text-center">
                   {searchQuery
                     ? 'Aucun projet ne correspond à votre recherche'
                     : 'Aucun projet trouvé'}
                 </CTableDataCell>
               </CTableRow>
             ) : (
-              filteredProjects.map((project) => (
+              currentProjects.map((project) => (
                 <CTableRow key={project._id}>
                   <CTableDataCell>{project.projectName}</CTableDataCell>
                   <CTableDataCell>
@@ -278,6 +296,37 @@ const ProjectsList = () => {
             )}
           </CTableBody>
         </CTable>
+
+        {/* Pagination */}
+        {filteredProjects.length > itemsPerPage && (
+          <CPagination className="mt-4 justify-content-center" aria-label="Pagination des projets">
+            <CPaginationItem
+              aria-label="Précédent"
+              disabled={currentPage === 1}
+              onClick={() => handlePageChange(currentPage - 1)}
+            >
+              <span aria-hidden="true">&laquo;</span>
+            </CPaginationItem>
+
+            {[...Array(Math.ceil(filteredProjects.length / itemsPerPage)).keys()].map((number) => (
+              <CPaginationItem
+                key={number + 1}
+                active={currentPage === number + 1}
+                onClick={() => handlePageChange(number + 1)}
+              >
+                {number + 1}
+              </CPaginationItem>
+            ))}
+
+            <CPaginationItem
+              aria-label="Suivant"
+              disabled={currentPage === Math.ceil(filteredProjects.length / itemsPerPage)}
+              onClick={() => handlePageChange(currentPage + 1)}
+            >
+              <span aria-hidden="true">&raquo;</span>
+            </CPaginationItem>
+          </CPagination>
+        )}
       </CCardBody>
 
       {/* Modal for Prediction */}

@@ -136,6 +136,12 @@ const DocumentVersions = ({ document, onVersionRestore }) => {
               <CTableRow className="table-primary">
                 <CTableDataCell>
                   <strong>Version actuelle</strong>
+                  {document.uniqueId && (
+                    <small className="ms-2 text-muted">({document.uniqueId.substring(0, 8)})</small>
+                  )}
+                  {document.displayId && !document.uniqueId && (
+                    <small className="ms-2 text-muted">({document.displayId})</small>
+                  )}
                 </CTableDataCell>
                 <CTableDataCell>{formatDate(document.uploadedDate)}</CTableDataCell>
                 <CTableDataCell>{formatFileSize(document.fileSize)}</CTableDataCell>
@@ -156,16 +162,26 @@ const DocumentVersions = ({ document, onVersionRestore }) => {
               </CTableRow>
 
               {/* Previous versions */}
-              {document.versions.map((version, index) => (
-                <CTableRow key={index}>
-                  <CTableDataCell>Version {document.versions.length - index}</CTableDataCell>
-                  <CTableDataCell>{formatDate(version.uploadedDate)}</CTableDataCell>
-                  <CTableDataCell>{formatFileSize(version.fileSize)}</CTableDataCell>
-                  <CTableDataCell>
-                    {version.uploadedBy?.name || 'Utilisateur inconnu'}
-                  </CTableDataCell>
-                  <CTableDataCell>{version.comment || '-'}</CTableDataCell>
-                  <CTableDataCell>
+              {document.versions.map((version, index) => {
+                // Utiliser uniqueId s'il existe, sinon utiliser l'index
+                const versionId = version.uniqueId || `version-${index}`;
+                const versionNumber = document.versions.length - index;
+
+                return (
+                  <CTableRow key={versionId}>
+                    <CTableDataCell>
+                      Version {versionNumber}
+                      {version.uniqueId && (
+                        <small className="ms-2 text-muted">({version.uniqueId.substring(0, 8)})</small>
+                      )}
+                    </CTableDataCell>
+                    <CTableDataCell>{formatDate(version.uploadedDate)}</CTableDataCell>
+                    <CTableDataCell>{formatFileSize(version.fileSize)}</CTableDataCell>
+                    <CTableDataCell>
+                      {version.uploadedBy?.name || 'Utilisateur inconnu'}
+                    </CTableDataCell>
+                    <CTableDataCell>{version.comment || '-'}</CTableDataCell>
+                    <CTableDataCell>
                     <CButton
                       color="primary"
                       size="sm"
@@ -187,7 +203,8 @@ const DocumentVersions = ({ document, onVersionRestore }) => {
                     </CButton>
                   </CTableDataCell>
                 </CTableRow>
-              ))}
+                );
+              })}
             </CTableBody>
           </CTable>
         </CCardBody>

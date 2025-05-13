@@ -58,7 +58,7 @@ const ProjectDetails = () => {
         return
       }
 
-      const response = await axios.get(`/projects/${id}`)
+      const response = await axios.get(`/api/projects/${id}`)
 
       if (response.data.success) {
         setProject(response.data.project)

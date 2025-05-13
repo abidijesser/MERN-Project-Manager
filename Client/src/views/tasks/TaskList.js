@@ -14,12 +14,15 @@ import {
   CSpinner,
   CFormInput,
   CAlert,
+  CPagination,
+  CPaginationItem,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilX } from '@coreui/icons'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import { getUserTasks } from '../../services/taskService'
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([])
@@ -27,6 +30,8 @@ const TaskList = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -53,7 +58,19 @@ const TaskList = () => {
       )
       setFilteredTasks(filtered)
     }
+    // Reset to first page when search query changes
+    setCurrentPage(1)
   }, [searchQuery, tasks])
+
+  // Get current tasks for pagination
+  const indexOfLastTask = currentPage * itemsPerPage
+  const indexOfFirstTask = indexOfLastTask - itemsPerPage
+  const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask)
+
+  // Change page
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber)
+  }
 
   const fetchTasks = async () => {
     try {
@@ -65,21 +82,14 @@ const TaskList = () => {
         return
       }
 
-      const response = await axios.get('http://localhost:3001/api/tasks', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (response.data.success) {
-        setTasks(response.data.tasks)
-      } else {
-        throw new Error('Failed to fetch tasks')
-      }
+      console.log('TaskList - Fetching tasks using taskService...')
+      const tasksData = await getUserTasks()
+      console.log('TaskList - Tasks fetched successfully:', tasksData.length)
+      setTasks(tasksData)
     } catch (error) {
       console.error('Error fetching tasks:', error)
-      setError(error.response?.data?.error || 'Erreur lors de la récupération des tâches')
-      toast.error(error.response?.data?.error || 'Erreur lors de la récupération des tâches')
+      setError('Erreur lors de la récupération des tâches')
+      toast.error('Erreur lors de la récupération des tâches')
     } finally {
       setLoading(false)
     }
@@ -101,11 +111,7 @@ const TaskList = () => {
       console.log('TaskList - User ID:', userId)
 
       // Récupérer les détails de la tâche pour vérifier le propriétaire du projet
-      const taskResponse = await axios.get(`http://localhost:3001/api/tasks/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const taskResponse = await axios.get(`/api/tasks/${id}`)
 
       const task = taskResponse.data.task
       const isAdmin = userRole === 'Admin'
@@ -123,11 +129,7 @@ const TaskList = () => {
       }
 
       if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
-        await axios.delete(`http://localhost:3001/api/tasks/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+        await axios.delete(`/api/tasks/${id}`)
         toast.success('Tâche supprimée avec succès !')
         fetchTasks()
       }
@@ -225,7 +227,7 @@ const TaskList = () => {
                 </CTableDataCell>
               </CTableRow>
             ) : (
-              filteredTasks.map((task) => (
+              currentTasks.map((task) => (
                 <CTableRow key={task._id}>
                   <CTableDataCell>{task.title}</CTableDataCell>
                   <CTableDataCell>{task.project?.projectName || 'Non assigné'}</CTableDataCell>
@@ -318,6 +320,37 @@ const TaskList = () => {
             )}
           </CTableBody>
         </CTable>
+
+        {/* Pagination */}
+        {filteredTasks.length > itemsPerPage && (
+          <CPagination className="mt-4 justify-content-center" aria-label="Pagination des tâches">
+            <CPaginationItem
+              aria-label="Précédent"
+              disabled={currentPage === 1}
+              onClick={() => handlePageChange(currentPage - 1)}
+            >
+              <span aria-hidden="true">&laquo;</span>
+            </CPaginationItem>
+
+            {[...Array(Math.ceil(filteredTasks.length / itemsPerPage)).keys()].map((number) => (
+              <CPaginationItem
+                key={number + 1}
+                active={currentPage === number + 1}
+                onClick={() => handlePageChange(number + 1)}
+              >
+                {number + 1}
+              </CPaginationItem>
+            ))}
+
+            <CPaginationItem
+              aria-label="Suivant"
+              disabled={currentPage === Math.ceil(filteredTasks.length / itemsPerPage)}
+              onClick={() => handlePageChange(currentPage + 1)}
+            >
+              <span aria-hidden="true">&raquo;</span>
+            </CPaginationItem>
+          </CPagination>
+        )}
       </CCardBody>
     </CCard>
   )

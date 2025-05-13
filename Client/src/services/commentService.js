@@ -1,7 +1,7 @@
 import axios from '../utils/axios'
 import socketService from './socketService'
 
-const API_URL = '/comments'
+const API_URL = '/api/comments'
 
 // Create a comment for a task
 export const createTaskComment = async (taskId, content) => {

@@ -23,6 +23,8 @@ const documentRoutes = require("./routes/documentRoutes");
 const shareRoutes = require("./routes/shareRoutes");
 const meetingRoutes = require("./routes/meetingRoutes");
 const messageRoutes = require("./routes/messageRoutes");
+const recommendationRoutes = require("./routes/recommendationRoutes");
+const driveRoutes = require("./routes/driveRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
 const Message = require("./models/Message");
@@ -94,6 +96,8 @@ app.use("/api/documents", documentRoutes);
 app.use("/api/share", shareRoutes);
 app.use("/api/meetings", meetingRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/recommendations", recommendationRoutes);
+app.use("/api/drive", driveRoutes);
 // Add a simple test route
 app.get("/api/test", (req, res) => {
   res.json({ message: "Server is running" });

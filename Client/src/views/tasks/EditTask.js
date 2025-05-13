@@ -46,15 +46,21 @@ const EditTask = () => {
       const response = await axios.get(`http://localhost:3001/api/tasks/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       })
-      const taskData = response.data.task
-      setTask({
-        ...taskData,
-        dueDate: taskData.dueDate ? new Date(taskData.dueDate).toISOString().split('T')[0] : '',
-        assignedTo: taskData.assignedTo?._id || '',
-        project: taskData.project?._id || '',
-      })
+
+      if (response.data && response.data.success && response.data.task) {
+        const taskData = response.data.task
+        setTask({
+          ...taskData,
+          dueDate: taskData.dueDate ? new Date(taskData.dueDate).toISOString().split('T')[0] : '',
+          assignedTo: taskData.assignedTo?._id || '',
+          project: taskData.project?._id || '',
+        })
+      } else {
+        throw new Error('Task data not found or invalid response format')
+      }
     } catch (error) {
       console.error('Erreur lors de la récupération de la tâche:', error)
       toast.error('Erreur lors de la récupération de la tâche.')
@@ -69,17 +75,16 @@ const EditTask = () => {
         return
       }
 
+      const headers = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+
       const [projectsRes, usersRes] = await Promise.all([
-        axios.get('http://localhost:3001/api/projects', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }),
-        axios.get('http://localhost:3001/api/auth/users', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }),
+        axios.get('http://localhost:3001/api/projects', headers),
+        axios.get('http://localhost:3001/api/auth/users', headers),
       ])
       setProjects(projectsRes.data.projects || [])
       setUsers(usersRes.data.users || [])
@@ -108,6 +113,7 @@ const EditTask = () => {
       await axios.put(`http://localhost:3001/api/tasks/${id}`, task, {
         headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       })
       toast.success('Tâche modifiée avec succès !')
@@ -193,7 +199,7 @@ const EditTask = () => {
                     onChange={handleChange}
                   >
                     <option value="">Sélectionner un utilisateur</option>
-                    {users.map(user => (
+                    {users.map((user) => (
                       <option key={user._id} value={user._id}>
                         {user.name} ({user.email})
                       </option>
@@ -210,7 +216,7 @@ const EditTask = () => {
                     onChange={handleChange}
                   >
                     <option value="">Sélectionner un projet</option>
-                    {projects.map(project => (
+                    {projects.map((project) => (
                       <option key={project._id} value={project._id}>
                         {project.projectName}
                       </option>

@@ -55,6 +55,19 @@ const MediaSchema = new Schema(
       type: Date,
       default: Date.now,
     },
+    // Google Drive specific fields
+    driveFileId: {
+      type: String,
+      default: null,
+    },
+    driveViewLink: {
+      type: String,
+      default: null,
+    },
+    driveDownloadLink: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );
