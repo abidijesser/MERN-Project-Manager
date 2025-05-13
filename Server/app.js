@@ -39,10 +39,10 @@ const PORT = process.env.PORT || 3001;
 app.use(
   cors({
     origin: [
-      "http://localhost:3000",
-      "http://localhost:5173",
-      "http://127.0.0.1:5173",
-      "http://127.0.0.1:3000",
+      "http://192.168.33.10:3000",
+      "http://192.168.33.10:5173",
+      "http://192.168.33.10:5173",
+      "http://192.168.33.10:3000",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -146,12 +146,12 @@ app.get("/api/check-oauth-config", (req, res) => {
     google: {
       clientID: process.env.GOOGLE_CLIENT_ID ? "Configured" : "Missing",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ? "Configured" : "Missing",
-      callbackURL: "http://localhost:3001/auth/google/callback",
+      callbackURL: "http://192.168.33.10:3001/auth/google/callback",
     },
     facebook: {
       clientID: process.env.FACEBOOK_APP_ID ? "Configured" : "Missing",
       clientSecret: process.env.FACEBOOK_APP_SECRET ? "Configured" : "Missing",
-      callbackURL: "http://localhost:3001/api/auth/facebook/callback",
+      callbackURL: "http://192.168.33.10:3001/api/auth/facebook/callback",
     },
   });
 });
@@ -171,10 +171,10 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: [
-      "http://localhost:3000",
-      "http://localhost:5173",
-      "http://127.0.0.1:5173",
-      "http://127.0.0.1:3000",
+      "http://192.168.33.10:3000",
+      "http://192.168.33.10:5173",
+      "http://192.168.33.10:5173",
+      "http://192.168.33.10:3000",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
