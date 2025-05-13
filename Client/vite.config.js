@@ -1,13 +1,11 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import path from 'node:path';
-import autoprefixer from 'autoprefixer';
-import polyfills from 'vite-plugin-node-polyfills';
-
-
+const { defineConfig } = require('vite');
+const react = require('@vitejs/plugin-react');
+const path = require('path');
+const autoprefixer = require('autoprefixer');
+const polyfills = require('vite-plugin-node-polyfills');
 
 // https://vitejs.dev/config/
-export default defineConfig(() => {
+module.exports = defineConfig(() => {
   return {
     base: './',
     build: {
