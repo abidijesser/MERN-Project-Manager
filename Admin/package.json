@@ -39,6 +39,7 @@
     "@mui/x-date-pickers": "^8.0.0",
     "@vitejs/plugin-react": "4.3.4",
     "apexcharts": "^4.5.0",
+    "axios": "^1.9.0",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
