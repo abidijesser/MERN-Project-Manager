@@ -79,7 +79,7 @@ const AppHeaderDropdown = () => {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await axios.get('/auth/profile')
+      const response = await axios.get('http://localhost:3001/api/auth/profile')
       if (response.data.success) {
         const userData = response.data.user
 
@@ -238,6 +238,7 @@ const AppHeaderDropdown = () => {
           <CIcon icon={cilCalendar} className="me-2 text-success" />
           Calendrier
         </CDropdownItem>
+
         <CDropdownItem onClick={() => navigate('/settings')}>
           <CIcon icon={cilSettings} className="me-2 text-secondary" />
           Paramètres

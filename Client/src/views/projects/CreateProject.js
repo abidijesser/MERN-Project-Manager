@@ -14,6 +14,11 @@ import {
   CListGroup,
   CListGroupItem,
   CFormCheck,
+  CModal,
+  CModalHeader,
+  CModalTitle,
+  CModalBody,
+  CModalFooter,
 } from '@coreui/react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -32,6 +37,18 @@ const CreateProject = () => {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(false)
   const [selectedMembers, setSelectedMembers] = useState([])
+  const [modalVisible, setModalVisible] = useState(false)
+  const [predictedBudget, setPredictedBudget] = useState(null)
+  const [predictionLoading, setPredictionLoading] = useState(false)
+  const [predictionError, setPredictionError] = useState(null)
+  const [predictionData, setPredictionData] = useState({
+    'Actual Cost': '',
+    Progress: '',
+    'Budget Deviation': '',
+    Priority: 'High',
+    'Task Status': 'In Progress',
+    'Resource Usage Ratio': '',
+  })
   const navigate = useNavigate()
 
   // Fetch client users for member selection
@@ -45,7 +62,7 @@ const CreateProject = () => {
           return
         }
 
-        const response = await axios.get('/auth/users', {
+        const response = await axios.get('/api/auth/users', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -72,6 +89,15 @@ const CreateProject = () => {
   const handleChange = (e) => {
     const { name, value } = e.target
     setProject((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
+
+  // Handle prediction form changes
+  const handlePredictionChange = (e) => {
+    const { name, value } = e.target
+    setPredictionData((prev) => ({
       ...prev,
       [name]: value,
     }))
@@ -114,7 +140,7 @@ const CreateProject = () => {
       }
 
       console.log('Données envoyées :', projectData)
-      const response = await axios.post('/projects', projectData)
+      const response = await axios.post('/api/projects', projectData)
 
       if (response.data.message) {
         toast.success(response.data.message)
@@ -144,12 +170,70 @@ const CreateProject = () => {
     }
   }
 
+  // Handle prediction API call
+  const handlePredict = async () => {
+    // Validate form data
+    if (
+      !predictionData['Actual Cost'] ||
+      !predictionData.Progress ||
+      !predictionData['Budget Deviation'] ||
+      !predictionData['Resource Usage Ratio']
+    ) {
+      toast.error('Veuillez remplir tous les champs numériques')
+      return
+    }
+
+    // Convert numeric fields to numbers
+    const dataToSend = {
+      'Actual Cost': Number(predictionData['Actual Cost']),
+      Progress: Number(predictionData.Progress),
+      'Budget Deviation': Number(predictionData['Budget Deviation']),
+      Priority: predictionData.Priority,
+      'Task Status': predictionData['Task Status'],
+      'Resource Usage Ratio': Number(predictionData['Resource Usage Ratio']),
+    }
+
+    console.log('Data sent to API:', dataToSend)
+
+    setPredictionLoading(true)
+    setPredictionError(null)
+    setPredictedBudget(null)
+    try {
+      const response = await axios.post('http://127.0.0.1:5000/predict-budget', dataToSend)
+      console.log('API response:', response.data)
+      if (response.data.predicted_budget !== undefined) {
+        setPredictedBudget(response.data.predicted_budget)
+        toast.success('Prédiction réussie !')
+      } else {
+        throw new Error("Réponse inattendue de l'API: predicted_budget manquant")
+      }
+    } catch (error) {
+      console.error('Error during prediction:', error, 'Response:', error.response?.data)
+      setPredictionError(
+        error.response?.data?.error || error.message || 'Erreur lors de la prédiction',
+      )
+      toast.error(error.response?.data?.error || error.message || 'Erreur lors de la prédiction')
+    } finally {
+      setPredictionLoading(false)
+    }
+  }
+
   return (
     <CRow>
       <CCol>
         <CCard>
           <CCardHeader>
-            <strong>Créer un nouveau projet</strong>
+            <div className="d-flex justify-content-between align-items-center">
+              <strong>Créer un nouveau projet</strong>
+              <CButton
+                color="info"
+                size="sm"
+                className="me-2 text-white"
+                onClick={() => setModalVisible(true)}
+              >
+                Predire
+              </CButton>
+            </div>
           </CCardHeader>
           <CCardBody>
             <CForm onSubmit={handleSubmit}>
@@ -186,6 +270,7 @@ const CreateProject = () => {
                     <option value="Active">Active</option>
                     <option value="Completed">Completed</option>
                     <option value="Archived">Archived</option>
+                    <option value="En retard">En retard</option>
                   </CFormSelect>
                 </CCol>
               </CRow>
@@ -264,6 +349,122 @@ const CreateProject = () => {
             </CForm>
           </CCardBody>
         </CCard>
+
+        {/* Prediction Modal */}
+        <CModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          aria-labelledby="predictionModalLabel"
+        >
+          <CModalHeader>
+            <CModalTitle id="predictionModalLabel">Prédictions du projet</CModalTitle>
+          </CModalHeader>
+          <CModalBody>
+            <CForm>
+              <CRow className="mb-3">
+                <CCol>
+                  <CFormInput
+                    label="Coût réel"
+                    name="Actual Cost"
+                    type="number"
+                    value={predictionData['Actual Cost']}
+                    onChange={handlePredictionChange}
+                    required
+                  />
+                </CCol>
+              </CRow>
+              <CRow className="mb-3">
+                <CCol>
+                  <CFormInput
+                    label="Progrès"
+                    name="Progress"
+                    type="number"
+                    step="0.01"
+                    value={predictionData.Progress}
+                    onChange={handlePredictionChange}
+                    required
+                  />
+                </CCol>
+              </CRow>
+              <CRow className="mb-3">
+                <CCol>
+                  <CFormInput
+                    label="Écart budgétaire"
+                    name="Budget Deviation"
+                    type="number"
+                    value={predictionData['Budget Deviation']}
+                    onChange={handlePredictionChange}
+                    required
+                  />
+                </CCol>
+              </CRow>
+              <CRow className="mb-3">
+                <CCol>
+                  <CFormSelect
+                    label="Priorité"
+                    name="Priority"
+                    value={predictionData.Priority}
+                    onChange={handlePredictionChange}
+                  >
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </CFormSelect>
+                </CCol>
+              </CRow>
+              <CRow className="mb-3">
+                <CCol>
+                  <CFormSelect
+                    label="Statut des tâches"
+                    name="Task Status"
+                    value={predictionData['Task Status']}
+                    onChange={handlePredictionChange}
+                  >
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Not Started">Not Started</option>
+                  </CFormSelect>
+                </CCol>
+              </CRow>
+              <CRow className="mb-3">
+                <CCol>
+                  <CFormInput
+                    label="Ratio d'utilisation des ressources"
+                    name="Resource Usage Ratio"
+                    type="number"
+                    step="0.01"
+                    value={predictionData['Resource Usage Ratio']}
+                    onChange={handlePredictionChange}
+                    required
+                  />
+                </CCol>
+              </CRow>
+              <CRow className="mb-3">
+                <CCol>
+                  {predictionLoading ? (
+                    <div className="text-center">Chargement de la prédiction...</div>
+                  ) : predictionError ? (
+                    <div className="text-danger">Erreur: {predictionError}</div>
+                  ) : predictedBudget !== null ? (
+                    <CFormInput label="Budget estimé" value={predictedBudget} readOnly />
+                  ) : (
+                    <div className="text-center">
+                      Remplissez le formulaire et cliquez sur Prédire
+                    </div>
+                  )}
+                </CCol>
+              </CRow>
+            </CForm>
+          </CModalBody>
+          <CModalFooter>
+            <CButton color="primary" onClick={handlePredict} disabled={predictionLoading}>
+              {predictionLoading ? 'Prédiction en cours...' : 'Prédire'}
+            </CButton>
+            <CButton color="secondary" onClick={() => setModalVisible(false)}>
+              Fermer
+            </CButton>
+          </CModalFooter>
+        </CModal>
       </CCol>
     </CRow>
   )

@@ -10,10 +10,20 @@ import {
   CFormTextarea,
   CFormSelect,
   CButton,
+  CModal,
+  CModalHeader,
+  CModalTitle,
+  CModalBody,
+  CModalFooter,
+  CSpinner,
+  CListGroup,
+  CListGroupItem,
+  CBadge,
 } from '@coreui/react'
 import axios from 'axios'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { getRecommendedMembers } from '../../services/recommendationService'
 
 const TaskForm = () => {
   const [task, setTask] = useState({
@@ -31,6 +41,11 @@ const TaskForm = () => {
   const [users, setUsers] = useState([])
   const [projectMembers, setProjectMembers] = useState([])
   const [selectedProject, setSelectedProject] = useState(null)
+  const [recommendModalVisible, setRecommendModalVisible] = useState(false)
+  const [recommendLoading, setRecommendLoading] = useState(false)
+  const [recommendedMembers, setRecommendedMembers] = useState([])
+  const [recommendError, setRecommendError] = useState(null)
+  const [extractedKeywords, setExtractedKeywords] = useState([])
 
   const { id } = useParams()
   const navigate = useNavigate()
@@ -280,6 +295,54 @@ const TaskForm = () => {
     }
   }
 
+  // Handle recommendation button click
+  const handleRecommendMember = async () => {
+    try {
+      // Validate required fields
+      if (!task.title || !task.description) {
+        toast.error('Le titre et la description sont requis pour les recommandations')
+        return
+      }
+
+      if (!task.project) {
+        toast.error('Veuillez sélectionner un projet pour obtenir des recommandations')
+        return
+      }
+
+      setRecommendModalVisible(true)
+      setRecommendLoading(true)
+      setRecommendError(null)
+
+      // Call the recommendation API
+      const result = await getRecommendedMembers(task.title, task.description, task.project)
+
+      if (result.success) {
+        setRecommendedMembers(result.recommendations)
+        setExtractedKeywords(result.keywords)
+        console.log('Recommended members:', result.recommendations)
+        console.log('Extracted keywords:', result.keywords)
+      } else {
+        throw new Error(result.error || 'Erreur lors de la récupération des recommandations')
+      }
+    } catch (error) {
+      console.error('Error getting recommendations:', error)
+      setRecommendError(error.message || 'Erreur lors de la récupération des recommandations')
+      toast.error(error.message || 'Erreur lors de la récupération des recommandations')
+    } finally {
+      setRecommendLoading(false)
+    }
+  }
+
+  // Handle selecting a recommended member
+  const handleSelectRecommendedMember = (memberId) => {
+    setTask((prev) => ({
+      ...prev,
+      assignedTo: memberId,
+    }))
+    setRecommendModalVisible(false)
+    toast.success('Membre recommandé sélectionné')
+  }
+
   if (loading) {
     return <div>Chargement...</div>
   }
@@ -366,27 +429,44 @@ const TaskForm = () => {
                 />
               </div>
               <div className="mb-3">
-                <CFormSelect
-                  label="Assigné à"
-                  name="assignedTo"
-                  value={task.assignedTo}
-                  onChange={handleChange}
-                  disabled={!task.project || projectMembers.length === 0} // Disable if no project selected or no members
-                  options={[
-                    {
-                      label: !task.project
+                <div className="d-flex align-items-center mb-2">
+                  <CFormSelect
+                    label="Assigné à"
+                    name="assignedTo"
+                    value={task.assignedTo}
+                    onChange={handleChange}
+                    disabled={!task.project || projectMembers.length === 0} // Disable if no project selected or no members
+                    options={[
+                      {
+                        label: !task.project
+                          ? "Sélectionnez d'abord un projet"
+                          : projectMembers.length === 0
+                            ? 'Aucun membre disponible pour ce projet'
+                            : 'Sélectionner un utilisateur',
+                        value: '',
+                      },
+                      ...projectMembers.map((user) => ({
+                        label: user.name,
+                        value: user._id,
+                      })),
+                    ]}
+                    className="me-2"
+                  />
+                  <CButton
+                    color="info"
+                    onClick={handleRecommendMember}
+                    disabled={!task.project || !task.title || !task.description}
+                    title={
+                      !task.project
                         ? "Sélectionnez d'abord un projet"
-                        : projectMembers.length === 0
-                          ? 'Aucun membre disponible pour ce projet'
-                          : 'Sélectionner un utilisateur',
-                      value: '',
-                    },
-                    ...projectMembers.map((user) => ({
-                      label: user.name,
-                      value: user._id,
-                    })),
-                  ]}
-                />
+                        : !task.title || !task.description
+                          ? 'Le titre et la description sont requis pour les recommandations'
+                          : 'Recommander un membre basé sur les compétences'
+                    }
+                  >
+                    Recommander
+                  </CButton>
+                </div>
                 {task.project && projectMembers.length === 0 && (
                   <div className="text-danger mt-1 small">
                     Aucun membre disponible pour ce projet. Veuillez ajouter des membres au projet.
@@ -405,6 +485,116 @@ const TaskForm = () => {
           </CCardBody>
         </CCard>
       </CCol>
+
+      {/* Recommendation Modal */}
+      <CModal
+        visible={recommendModalVisible}
+        onClose={() => setRecommendModalVisible(false)}
+        size="lg"
+      >
+        <CModalHeader>
+          <CModalTitle>Recommandation de membres</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          {recommendLoading ? (
+            <div className="text-center my-4">
+              <CSpinner color="primary" />
+              <p className="mt-2">Analyse des compétences en cours...</p>
+            </div>
+          ) : recommendError ? (
+            <div className="alert alert-danger">{recommendError}</div>
+          ) : (
+            <>
+              <div className="mb-4">
+                <h5>Mots-clés extraits de la tâche:</h5>
+                <div className="d-flex flex-wrap gap-2 mt-2">
+                  {extractedKeywords.map((keyword, index) => (
+                    <CBadge key={index} color="info" shape="rounded-pill" className="px-3 py-2">
+                      {keyword}
+                    </CBadge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="alert alert-info mb-3">
+                <div className="fw-bold">Comment fonctionne la recommandation ?</div>
+                <p className="mb-1 small">
+                  Le système analyse le titre et la description de la tâche pour extraire des
+                  mots-clés, puis les compare avec les compétences des membres du projet.
+                </p>
+                <p className="mb-0 small">
+                  <strong>Note :</strong> Les membres sans compétences définies sont marqués avec un
+                  astérisque (*) et reçoivent un score de base.
+                </p>
+              </div>
+
+              <h5>Membres recommandés:</h5>
+              {recommendedMembers.length > 0 ? (
+                <CListGroup>
+                  {recommendedMembers.map((member) => (
+                    <CListGroupItem
+                      key={member._id}
+                      className="d-flex justify-content-between align-items-center"
+                    >
+                      <div>
+                        <div className="fw-bold">{member.name}</div>
+                        <div className="small text-muted">{member.email}</div>
+                        <div className="mt-1">
+                          {member.skills && member.skills.length > 0 ? (
+                            member.skills.map((skill, index) => (
+                              <CBadge key={index} color="light" className="me-1 text-dark">
+                                {skill}
+                              </CBadge>
+                            ))
+                          ) : (
+                            <div className="small text-muted fst-italic">
+                              Aucune compétence définie
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="d-flex align-items-center">
+                        <CBadge
+                          color={
+                            member.hasSkills === false
+                              ? 'secondary'
+                              : member.score > 80
+                                ? 'success'
+                                : member.score > 50
+                                  ? 'warning'
+                                  : 'danger'
+                          }
+                          className="me-3"
+                        >
+                          {member.score}%{!member.hasSkills && <span className="ms-1">*</span>}
+                        </CBadge>
+                        <CButton
+                          color="primary"
+                          size="sm"
+                          onClick={() => handleSelectRecommendedMember(member._id)}
+                        >
+                          Sélectionner
+                        </CButton>
+                      </div>
+                    </CListGroupItem>
+                  ))}
+                </CListGroup>
+              ) : (
+                <div className="alert alert-warning">
+                  Aucun membre recommandé trouvé. Essayez d'ajouter plus de détails à la description
+                  de la tâche ou vérifiez que les membres du projet ont des compétences définies
+                  dans leurs profils.
+                </div>
+              )}
+            </>
+          )}
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setRecommendModalVisible(false)}>
+            Fermer
+          </CButton>
+        </CModalFooter>
+      </CModal>
     </CRow>
   )
 }

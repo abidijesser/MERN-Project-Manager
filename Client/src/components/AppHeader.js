@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import axios from 'axios'
+import { toast } from 'react-toastify'
+import './NotificationDropdown.css'
 import {
   CContainer,
   CDropdown,
@@ -33,7 +35,8 @@ import {
   cilDescription,
   cilCalculator,
   cilLibrary,
-  cilCheck
+  cilCheck,
+  cilCloud,
 } from '@coreui/icons'
 
 import { AppBreadcrumb } from './index'
@@ -57,7 +60,7 @@ const AppHeader = () => {
 
       const token = localStorage.getItem('token')
       if (!token) {
-        console.error('Aucun token d\'authentification trouvé')
+        console.error("Aucun token d'authentification trouvé")
         setNotificationError('Vous devez être connecté pour voir vos notifications')
         setLoadingNotifications(false)
         return
@@ -93,18 +96,44 @@ const AppHeader = () => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      })
+    })
 
       // Mettre à jour l'état local
-      setNotifications(prevNotifications =>
-        prevNotifications.map(notification =>
-          notification._id === notificationId
-            ? { ...notification, read: true }
-            : notification
-        )
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) =>
+          notification._id === notificationId ? { ...notification, read: true } : notification,
+        ),
       )
     } catch (error) {
       console.error('Erreur lors du marquage de la notification comme lue:', error)
+    }
+  }
+
+  // Fonction pour marquer toutes les notifications comme lues
+  const markAllNotificationsAsRead = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
+
+      await axios.put(
+        'http://localhost:3001/api/notifications/read-all',
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+
+      // Mettre à jour l'état local
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) => ({ ...notification, read: true })),
+      )
+
+      toast.success('Toutes les notifications ont été marquées comme lues')
+    } catch (error) {
+      console.error('Erreur lors du marquage de toutes les notifications comme lues:', error)
+      toast.error('Erreur lors du marquage des notifications comme lues')
     }
   }
 
@@ -130,7 +159,7 @@ const AppHeader = () => {
         <div className="d-flex align-items-center justify-content-between w-100">
           <div className="d-flex align-items-center">
             <div className="app-logo me-4">
-              <span className="fw-bold fs-4 text-white">WebTrack</span>
+              <span className="fw-bold fs-4 text-white">worktrack</span>
             </div>
             <CHeaderToggler
               onClick={() => dispatch({ type: 'set', sidebarShow: !sidebarShow })}
@@ -169,6 +198,12 @@ const AppHeader = () => {
                   <span>Ressources</span>
                 </CNavLink>
               </CNavItem>
+              <CNavItem>
+                <CNavLink to="/drive" as={NavLink} className="nav-link-custom">
+                  <CIcon icon={cilCloud} className="nav-icon" />
+                  <span>Google Drive</span>
+                </CNavLink>
+              </CNavItem>
               <CDropdown variant="nav-item">
                 <CDropdownToggle caret className="nav-link-custom">
                   <CIcon icon={cilCursor} className="nav-icon" />
@@ -186,12 +221,6 @@ const AppHeader = () => {
                   <span>Médias</span>
                 </CNavLink>
               </CNavItem>
-              <CNavItem>
-                <CNavLink to="/settings" as={NavLink} className="nav-link-custom">
-                  <CIcon icon={cilCalculator} className="nav-icon" />
-                  <span>Paramètres</span>
-                </CNavLink>
-              </CNavItem>
             </CHeaderNav>
           </div>
 
@@ -200,60 +229,66 @@ const AppHeader = () => {
               {/* Utiliser directement CDropdown au lieu de l'imbriquer dans CNavItem */}
               <CDropdown variant="nav-item">
                 <CDropdownToggle caret={false} className="action-link">
-                  <div className="icon-wrapper">
+                  <div className="icon-wrapper" style={{ position: 'relative' }}>
                     <CIcon icon={cilBell} size="lg" />
-                    <CBadge color="danger" shape="rounded-pill" position="top-end" size="sm">
-                      {notifications.filter(notification => !notification.read).length}
-                    </CBadge>
+                    {notifications.filter((notification) => !notification.read).length > 0 && (
+                      <div className="notification-badge">
+                        {notifications.filter((notification) => !notification.read).length}
+                      </div>
+                    )}
                   </div>
                 </CDropdownToggle>
-                <CDropdownMenu style={{ minWidth: '300px', maxHeight: '400px', overflowY: 'auto' }}>
-                  <CDropdownItem header="true" className="d-flex justify-content-between align-items-center">
+                <CDropdownMenu className="notification-dropdown-menu">
+                  <div className="notification-header">
                     <span>Notifications</span>
-                    {loadingNotifications && <CSpinner size="sm" />}
-                  </CDropdownItem>
+                    <div className="d-flex align-items-center">
+                      {notifications.filter((n) => !n.read).length > 0 && (
+                        <CTooltip content="Marquer tout comme lu">
+                          <button
+                            className="btn btn-sm btn-link text-success p-0 me-2"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              markAllNotificationsAsRead()
+                            }}
+                          >
+                            <CIcon icon={cilCheck} size="sm" />
+                          </button>
+                        </CTooltip>
+                      )}
+                      {loadingNotifications && <CSpinner size="sm" />}
+                    </div>
+                  </div>
 
                   {notificationError && (
-                    <CDropdownItem className="text-danger">
-                      {notificationError}
-                    </CDropdownItem>
+                    <div className="notification-item text-danger">{notificationError}</div>
                   )}
 
                   {notifications.length > 0 ? (
-                    notifications.map((notification) => (
-                      <CDropdownItem
-                        key={notification._id}
-                        onClick={() => markNotificationAsRead(notification._id)}
-                        style={{
-                          backgroundColor: notification.read ? 'transparent' : '#f0f9ff',
-                          borderLeft: notification.read ? 'none' : '3px solid #1890ff',
-                          padding: '10px 15px',
-                          margin: '2px 0'
-                        }}
-                      >
-                        <div>
-                          <div className="d-flex justify-content-between">
-                            <small className="text-muted">
-                              {new Date(notification.createdAt).toLocaleString()}
-                            </small>
+                    <>
+                      {notifications.map((notification) => (
+                        <div
+                          key={notification._id}
+                          className={`notification-item ${!notification.read ? 'unread' : ''}`}
+                          onClick={() => markNotificationAsRead(notification._id)}
+                        >
+                          <span className="notification-time">
+                            {new Date(notification.createdAt).toLocaleString()}
                             {notification.read && (
                               <CTooltip content="Lu">
-                                <CIcon icon={cilCheck} size="sm" className="text-success" />
+                                <CIcon icon={cilCheck} size="sm" className="text-success ms-2" />
                               </CTooltip>
                             )}
-                          </div>
-                          <div>{notification.message}</div>
+                          </span>
+                          <p className="notification-message">{notification.message}</p>
                         </div>
-                      </CDropdownItem>
-                    ))
+                      ))}
+                      <div className="notification-footer">
+                        <a href="#/collaboration/notifications">Voir toutes les notifications</a>
+                      </div>
+                    </>
                   ) : (
-                    <CDropdownItem disabled>Aucune notification</CDropdownItem>
+                    <div className="notification-empty">Aucune notification</div>
                   )}
-
-                  <CDropdownItem divider="true" />
-                  <CDropdownItem href="#/collaboration/notifications">
-                    Voir toutes les notifications
-                  </CDropdownItem>
                 </CDropdownMenu>
               </CDropdown>
               <CNavItem>
@@ -270,7 +305,7 @@ const AppHeader = () => {
                         justifyContent: 'center',
                         color: 'white',
                         fontWeight: 'bold',
-                        fontSize: '16px'
+                        fontSize: '16px',
                       }}
                     >
                       G

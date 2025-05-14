@@ -12,6 +12,7 @@ import {
   CTabContent,
   CTabPane,
   CSpinner,
+  CBadge,
 } from '@coreui/react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axios from '../../utils/axios'
@@ -58,7 +59,7 @@ const ProjectDetails = () => {
         return
       }
 
-      const response = await axios.get(`/projects/${id}`)
+      const response = await axios.get(`/api/projects/${id}`)
 
       if (response.data.success) {
         setProject(response.data.project)
@@ -97,6 +98,17 @@ const ProjectDetails = () => {
     return userRole === 'Admin' || (project.owner && project.owner._id === userId)
   }
 
+  // Fonction pour obtenir le badge de statut avec la couleur appropriée
+  const getStatusBadge = (status) => {
+    const statusColors = {
+      Active: 'primary',
+      Completed: 'success',
+      Archived: 'secondary',
+      'En retard': 'danger',
+    }
+    return <CBadge color={statusColors[status] || 'info'}>{status}</CBadge>
+  }
+
   return (
     <CRow>
       <CCol>
@@ -132,7 +144,7 @@ const ProjectDetails = () => {
               {project.owner ? project.owner.name || project.owner.email : 'Non défini'}
             </p>
             <p>
-              <strong>Statut:</strong> {project.status}
+              <strong>Statut:</strong> {getStatusBadge(project.status)}
             </p>
             <p>
               <strong>Date de début:</strong> {new Date(project.startDate).toLocaleDateString()}

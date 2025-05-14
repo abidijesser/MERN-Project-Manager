@@ -15,6 +15,7 @@ import {
   cilStar,
   cilLibrary,
   cilCalendar,
+  cilList,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
@@ -69,9 +70,9 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'Paramètres',
-    to: '/settings',
-    icon: <CIcon icon={cilCalculator} customClassName="nav-icon" />,
+    name: 'Activités',
+    to: '/activity',
+    icon: <CIcon icon={cilList} customClassName="nav-icon" />,
   },
 ]
 

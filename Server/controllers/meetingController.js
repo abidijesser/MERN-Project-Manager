@@ -83,12 +83,10 @@ exports.updateMeeting = async (req, res) => {
 
     // Check if user is the organizer
     if (meeting.organizer.toString() !== req.user.id) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          error: "Not authorized to update this meeting",
-        });
+      return res.status(403).json({
+        success: false,
+        error: "Not authorized to update this meeting",
+      });
     }
 
     const updatedMeeting = await Meeting.findByIdAndUpdate(
@@ -117,12 +115,10 @@ exports.deleteMeeting = async (req, res) => {
 
     // Check if user is the organizer
     if (meeting.organizer.toString() !== req.user.id) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          error: "Not authorized to delete this meeting",
-        });
+      return res.status(403).json({
+        success: false,
+        error: "Not authorized to delete this meeting",
+      });
     }
 
     await Meeting.findByIdAndDelete(req.params.id);
@@ -201,12 +197,10 @@ exports.joinMeeting = async (req, res) => {
       .populate("participants", "name email");
 
     if (!meeting) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          error: "Active meeting not found with this code",
-        });
+      return res.status(404).json({
+        success: false,
+        error: "Active meeting not found with this code",
+      });
     }
 
     // Check if user is authorized to join this meeting

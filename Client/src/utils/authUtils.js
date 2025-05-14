@@ -13,7 +13,7 @@ export const getCurrentUser = async () => {
       return null
     }
 
-    const response = await axios.get('/auth/profile')
+    const response = await axios.get('/api/auth/profile')
     return response.data.user
   } catch (error) {
     console.error('Error fetching current user:', error)
@@ -96,7 +96,7 @@ export const isClient = async () => {
 // Function to handle login
 export const login = async (email, password) => {
   try {
-    const response = await axios.post('/auth/login', { email, password })
+    const response = await axios.post('/api/auth/login', { email, password })
     if (response.data.success) {
       localStorage.setItem('token', response.data.token)
 
@@ -137,7 +137,7 @@ export const login = async (email, password) => {
 export const verify2FA = async (email, password, twoFactorToken) => {
   try {
     const response = await axios.post(
-      '/auth/login',
+      '/api/auth/login',
       { email, password },
       { headers: { 'x-2fa-token': twoFactorToken } },
     )
@@ -179,7 +179,7 @@ export const verify2FA = async (email, password, twoFactorToken) => {
 // Function to handle registration
 export const register = async (userData) => {
   try {
-    const response = await axios.post('/auth/register', userData)
+    const response = await axios.post('/api/auth/register', userData)
     if (response.data.success) {
       return { success: true, token: response.data.token }
     } else {

@@ -49,7 +49,7 @@ const ProjectDocuments = ({ projectId }) => {
   const fetchDocuments = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(`/documents?projectId=${projectId}`)
+      const response = await axios.get(`/api/documents?projectId=${projectId}`)
       if (response.data.success && response.data.data) {
         setDocuments(response.data.data)
       } else {
@@ -85,12 +85,12 @@ const ProjectDocuments = ({ projectId }) => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) {
       return
     }
-    
+
     try {
-      const response = await axios.delete(`/documents/${docId}`)
+      const response = await axios.delete(`/api/documents/${docId}`)
       if (response.data.success) {
         // Remove the document from the state
-        setDocuments(documents.filter(doc => doc._id !== docId))
+        setDocuments(documents.filter((doc) => doc._id !== docId))
         toast.success('Document supprimé avec succès')
       } else {
         toast.error('Erreur lors de la suppression du document')
@@ -104,19 +104,21 @@ const ProjectDocuments = ({ projectId }) => {
   // Function to toggle pin status
   const handleTogglePin = async (docId, currentPinned) => {
     try {
-      const response = await axios.put(`/documents/${docId}/pin`)
+      const response = await axios.put(`/api/documents/${docId}/pin`)
       if (response.data.success) {
         // Update the document in the state
-        setDocuments(documents.map(doc => 
-          doc._id === docId ? { ...doc, pinned: !currentPinned } : doc
-        ))
+        setDocuments(
+          documents.map((doc) => (doc._id === docId ? { ...doc, pinned: !currentPinned } : doc)),
+        )
         toast.success(currentPinned ? 'Document désépinglé' : 'Document épinglé')
       } else {
-        toast.error('Erreur lors de la modification du statut d\'épinglage')
+        toast.error("Erreur lors de la modification du statut d'épinglage")
       }
     } catch (error) {
-      console.error('Erreur lors de la modification du statut d\'épinglage:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la modification du statut d\'épinglage')
+      console.error("Erreur lors de la modification du statut d'épinglage:", error)
+      toast.error(
+        error.response?.data?.error || "Erreur lors de la modification du statut d'épinglage",
+      )
     }
   }
 
@@ -162,20 +164,20 @@ const ProjectDocuments = ({ projectId }) => {
     if (doc.uploadedBy?._id === localStorage.getItem('userId')) {
       return 'edit'
     }
-    
+
     // Check explicit permissions
     if (doc.permissions && doc.permissions.length > 0) {
-      const userPermission = doc.permissions.find(p => p.user === localStorage.getItem('userId'))
+      const userPermission = doc.permissions.find((p) => p.user === localStorage.getItem('userId'))
       if (userPermission) {
         return userPermission.access === 'admin' ? 'edit' : userPermission.access
       }
     }
-    
+
     // If document is public, default to view permission
     if (doc.isPublic) {
       return 'view'
     }
-    
+
     return 'view' // Default permission
   }
 
@@ -215,14 +217,19 @@ const ProjectDocuments = ({ projectId }) => {
             <CTableBody>
               {documents.map((doc) => {
                 const permissionLevel = getPermissionLevel(doc)
+                // Utiliser uniqueId ou displayId s'ils existent, sinon utiliser _id
+                const documentId = doc.uniqueId || doc.displayId || doc._id
                 return (
-                  <CTableRow key={doc._id}>
+                  <CTableRow key={documentId}>
                     <CTableDataCell className="d-flex align-items-center">
                       <div className="document-icon me-2">
                         <CIcon icon={getFileIcon(doc.fileType)} size="lg" />
                       </div>
                       <div>
                         {doc.name}
+                        {doc.displayId && (
+                          <small className="ms-2 text-muted">({doc.displayId})</small>
+                        )}
                         {doc.pinned && (
                           <CTooltip content="Document épinglé">
                             <CIcon
@@ -239,7 +246,9 @@ const ProjectDocuments = ({ projectId }) => {
                     </CTableDataCell>
                     <CTableDataCell>{formatFileSize(doc.fileSize)}</CTableDataCell>
                     <CTableDataCell>{doc.uploadedBy?.name || 'Utilisateur inconnu'}</CTableDataCell>
-                    <CTableDataCell>{new Date(doc.uploadedDate).toLocaleDateString()}</CTableDataCell>
+                    <CTableDataCell>
+                      {new Date(doc.uploadedDate).toLocaleDateString()}
+                    </CTableDataCell>
                     <CTableDataCell>
                       <CDropdown alignment="end">
                         <CDropdownToggle color="transparent" caret={false}>

@@ -29,6 +29,7 @@ const Profile = () => {
     role: '',
     twoFactorEnabled: false,
     profilePicture: null,
+    skills: [],
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
@@ -43,7 +44,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await axios.get('/auth/profile')
+        const response = await axios.get('/api/auth/profile')
         if (response.data.success && response.data.user) {
           setUser(response.data.user)
         } else {
@@ -232,7 +233,7 @@ const Profile = () => {
       const formData = new FormData()
       formData.append('profilePicture', file)
 
-      const response = await axios.post('/auth/upload-profile-picture', formData, {
+      const response = await axios.post('/api/auth/upload-profile-picture', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -383,6 +384,24 @@ const Profile = () => {
               <div className="mb-3">
                 <label className="form-label">Role</label>
                 <CFormInput type="text" value={user.role || ''} disabled />
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label">Compétences</label>
+                {user.skills && user.skills.length > 0 ? (
+                  <div className="d-flex flex-wrap gap-2 mt-2">
+                    {user.skills.map((skill, index) => (
+                      <div
+                        key={index}
+                        className="bg-light rounded-pill px-3 py-1 d-flex align-items-center"
+                      >
+                        <span>{skill}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-muted">Aucune compétence ajoutée</div>
+                )}
               </div>
               <div className="mb-3">
                 <label className="form-label">Two-Factor Authentication</label>

@@ -467,14 +467,20 @@ const getProfileById = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, skills } = req.body;
+    const updateData = {
+      name,
+      email,
+    };
+
+    // Only update skills if they are provided
+    if (skills !== undefined) {
+      updateData.skills = skills;
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
-      {
-        name,
-        email,
-        // Ajoutez d'autres champs si nécessaire
-      },
+      updateData,
       { new: true }
     ).select("-password");
 

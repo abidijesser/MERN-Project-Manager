@@ -133,10 +133,60 @@ const getUserActivityLogs = async (req, res) => {
 // Get recent activity logs for dashboard
 const getRecentActivityLogs = async (req, res) => {
   try {
-    const { limit = 10 } = req.query;
+    const { limit = 20, skip = 0, action = null } = req.query;
 
-    // Get recent activity logs
-    const activityLogs = await ActivityLog.find()
+    // Build query based on filters
+    const query = {};
+    if (action && action !== "all") {
+      query.action = action;
+    }
+
+    // Get recent activity logs with pagination
+    const activityLogs = await ActivityLog.find(query)
+      .populate("user", "name email")
+      .populate("task", "title")
+      .populate("project", "projectName")
+      .sort({ timestamp: -1 })
+      .skip(parseInt(skip))
+      .limit(parseInt(limit));
+
+    // Get total count for pagination
+    const total = await ActivityLog.countDocuments(query);
+
+    console.log(
+      `Returning ${activityLogs.length} activity logs (total: ${total})`
+    );
+    console.log(`Skip: ${skip}, Limit: ${limit}`);
+    console.log(`Filter action: ${action || "all"}`);
+    console.log(
+      `Activity types: ${activityLogs.map((log) => log.action).join(", ")}`
+    );
+
+    res.status(200).json({
+      success: true,
+      activityLogs,
+      pagination: {
+        total,
+        limit: parseInt(limit),
+        skip: parseInt(skip),
+      },
+    });
+  } catch (error) {
+    console.error("Error getting recent activity logs:", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur lors de la récupération des journaux d'activité récents",
+    });
+  }
+};
+
+// Get recent comment activities only
+const getRecentComments = async (req, res) => {
+  try {
+    const { limit = 5 } = req.query;
+
+    // Get recent comment activities only
+    const activityLogs = await ActivityLog.find({ action: "COMMENT" })
       .populate("user", "name email")
       .populate("task", "title")
       .populate("project", "projectName")
@@ -148,10 +198,10 @@ const getRecentActivityLogs = async (req, res) => {
       activityLogs,
     });
   } catch (error) {
-    console.error("Error getting recent activity logs:", error);
+    console.error("Error getting recent comments:", error);
     res.status(500).json({
       success: false,
-      error: "Erreur lors de la récupération des journaux d'activité récents",
+      error: "Erreur lors de la récupération des commentaires récents",
     });
   }
 };
@@ -173,5 +223,6 @@ module.exports = {
   getTaskActivityLogs,
   getUserActivityLogs,
   getRecentActivityLogs,
+  getRecentComments,
   createActivityLog,
 };

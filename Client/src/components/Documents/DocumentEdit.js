@@ -46,7 +46,7 @@ const DocumentEdit = ({ document, visible, onClose, onEditSuccess }) => {
   const fetchProjects = async () => {
     try {
       setLoading(true)
-      const response = await axios.get('/projects')
+      const response = await axios.get('/api/projects')
       if (response.data.success && response.data.projects) {
         setProjects(response.data.projects)
       } else {
@@ -87,10 +87,10 @@ const DocumentEdit = ({ document, visible, onClose, onEditSuccess }) => {
         name,
         description,
         project: project || null,
-        isPublic
+        isPublic,
       }
 
-      const response = await axios.put(`/documents/${document.id}`, documentData)
+      const response = await axios.put(`/api/documents/${document.id}`, documentData)
 
       if (response.data.success) {
         toast.success('Document modifié avec succès')

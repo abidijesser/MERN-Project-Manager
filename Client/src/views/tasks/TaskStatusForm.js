@@ -203,6 +203,7 @@ const TaskStatusForm = () => {
                 <option value="To Do">À faire</option>
                 <option value="In Progress">En cours</option>
                 <option value="Done">Terminé</option>
+                <option value="En retard">En retard</option>
               </CFormSelect>
             </CCol>
           </CRow>

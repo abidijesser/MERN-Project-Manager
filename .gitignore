@@ -10,3 +10,6 @@ logs
 
 # Env files
 .env
+
+# Python Virtual Environment
+/Server/ML-APIs/venv

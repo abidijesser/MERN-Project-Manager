@@ -55,7 +55,12 @@ const TaskDetail = () => {
           return
         }
 
-        const response = await axios.get(`/tasks/${id}`)
+        const response = await axios.get(`http://localhost:3001/api/tasks/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        })
 
         if (response.data.success) {
           setTask(response.data.task)
@@ -97,7 +102,12 @@ const TaskDetail = () => {
       }
 
       if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
-        await axios.delete(`/tasks/${id}`)
+        await axios.delete(`http://localhost:3001/api/tasks/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        })
         toast.success('Tâche supprimée avec succès')
         navigate('/tasks')
       }
@@ -112,6 +122,7 @@ const TaskDetail = () => {
       'To Do': 'warning',
       'In Progress': 'info',
       Done: 'success',
+      'En retard': 'danger',
     }
     return <CBadge color={statusColors[status] || 'secondary'}>{status}</CBadge>
   }
