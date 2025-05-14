@@ -35,7 +35,7 @@ const refreshToken = async (credentials, token) => {
     console.log("Attempting to refresh Google Drive token...");
 
     // Force the drive callback URL
-    const driveCallbackUrl = "http://localhost:3001/api/drive/callback";
+    const driveCallbackUrl = "http://192.168.33.10:3001/api/drive/callback";
     const oAuth2Client = createOAuth2Client(credentials, driveCallbackUrl);
     oAuth2Client.setCredentials(token);
 
@@ -74,7 +74,7 @@ const refreshToken = async (credentials, token) => {
             "Trying with calendar callback URI as fallback for refresh..."
           );
           const calendarCallbackUrl =
-            "http://localhost:3001/api/calendar/callback";
+            "http://192.168.33.10:3001/api/calendar/callback";
           const altOAuth2Client = createOAuth2Client(
             credentials,
             calendarCallbackUrl

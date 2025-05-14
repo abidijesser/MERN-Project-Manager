@@ -116,7 +116,7 @@ const AppHeader = () => {
       if (!token) return
 
       await axios.put(
-        'http://localhost:3001/api/notifications/read-all',
+        'http://192.168.33.10:3001/api/notifications/read-all',
         {},
         {
           headers: {

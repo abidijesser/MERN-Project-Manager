@@ -46,9 +46,8 @@ const ForgotPassword = () => {
     setValidationError('')
 
     try {
-      const response = await axios.post('http://192.168.33.10:3001/api/auth/forgot-password', { email })
       setInfo('Sending...')
-      const response = await axios.post('http://localhost:3001/api/auth/forgot-password', { email })
+      const response = await axios.post('http://192.168.33.10:3001/api/auth/forgot-password', { email })
 
       if (response.data.success) {
         if (response.data.userExists === false) {

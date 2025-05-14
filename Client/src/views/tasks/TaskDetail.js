@@ -55,7 +55,7 @@ const TaskDetail = () => {
           return
         }
 
-        const response = await axios.get(`http://localhost:3001/api/tasks/${id}`, {
+        const response = await axios.get(`http://192.168.33.10:3001/api/tasks/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -102,7 +102,7 @@ const TaskDetail = () => {
       }
 
       if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
-        await axios.delete(`http://localhost:3001/api/tasks/${id}`, {
+        await axios.delete(`http://192.168.33.10:3001/api/tasks/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',

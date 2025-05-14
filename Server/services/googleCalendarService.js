@@ -87,7 +87,7 @@ const refreshToken = async (credentials, token) => {
 const getAuthUrl = (credentials, userId = null) => {
   try {
     // Force the calendar callback URL
-    const calendarCallbackUrl = "http://localhost:3001/api/calendar/callback";
+    const calendarCallbackUrl = "http://192.168.33.10:3001/api/calendar/callback";
     const oAuth2Client = createOAuth2Client(credentials, calendarCallbackUrl);
 
     // Create state parameter with userId if provided
@@ -121,7 +121,7 @@ const getToken = async (credentials, code) => {
     console.log("Exchanging code for token...");
 
     // Force the calendar callback URL
-    const calendarCallbackUrl = "http://localhost:3001/api/calendar/callback";
+    const calendarCallbackUrl = "http://192.168.33.10:3001/api/calendar/callback";
     const oAuth2Client = createOAuth2Client(credentials, calendarCallbackUrl);
 
     // Set the redirect_uri explicitly for the token exchange

@@ -5,10 +5,10 @@ import joblib
 
 app = Flask(__name__)
 
-# Configure CORS to allow requests from http://localhost:3000 with credentials
+# Configure CORS to allow requests from http://192.168.33.10:3000 with credentials
 CORS(app, resources={
     r"/predict-budget": {
-        "origins": "http://localhost:3000",
+        "origins": "http://192.168.33.10:3000",
         "supports_credentials": True
     }
 })

@@ -124,13 +124,13 @@ const handleCallback = async (req, res) => {
     console.log(`Google Drive token saved for user: ${userId}`);
 
     // Redirect to frontend
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = process.env.FRONTEND_URL || "http://192.168.33.10:5173";
     console.log(`Redirecting to: ${frontendUrl}/#/drive-auth-success`);
     res.redirect(`${frontendUrl}/#/drive-auth-success`);
   } catch (error) {
     console.error("Error handling Google Drive callback:", error);
     console.error("Error details:", error.response?.data || error.message);
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = process.env.FRONTEND_URL || "http://192.168.33.10:5173";
     res.redirect(`${frontendUrl}/#/drive-auth-error`);
   }
 };

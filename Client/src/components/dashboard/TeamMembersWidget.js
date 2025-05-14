@@ -23,7 +23,7 @@ const TeamMembersWidget = () => {
           return
         }
 
-        const response = await axios.get('http://localhost:3001/api/projects', {
+        const response = await axios.get('http://192.168.33.10:3001/api/projects', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -66,7 +66,7 @@ const TeamMembersWidget = () => {
 
         // First get the project details to identify the owner
         const projectResponse = await axios.get(
-          `http://localhost:3001/api/projects/${selectedProject}`,
+          `http://192.168.33.10:3001/api/projects/${selectedProject}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -86,7 +86,7 @@ const TeamMembersWidget = () => {
 
         // Get all tasks for this project
         const tasksResponse = await axios.get(
-          `http://localhost:3001/api/tasks?project=${selectedProject}`,
+          `http://192.168.33.10:3001/api/tasks?project=${selectedProject}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -98,7 +98,7 @@ const TeamMembersWidget = () => {
 
         // Get members details
         const membersResponse = await axios.get(
-          `http://localhost:3001/api/projects/${selectedProject}/members`,
+          `http://192.168.33.10:3001/api/projects/${selectedProject}/members`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

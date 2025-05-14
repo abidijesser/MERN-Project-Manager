@@ -79,7 +79,7 @@ const AppHeaderDropdown = () => {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/auth/profile')
+      const response = await axios.get('http://192.168.33.10:3001/api/auth/profile')
       if (response.data.success) {
         const userData = response.data.user
 
