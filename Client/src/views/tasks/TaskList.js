@@ -123,7 +123,7 @@ const TaskList = () => {
       console.log('TaskList - User ID:', userId)
 
       // Récupérer les détails de la tâche pour vérifier le propriétaire du projet
-      const taskResponse = await axios.get(`/api/tasks/${id}`)
+      const taskResponse = await axios.get(`/tasks/${id}`)
 
       const task = taskResponse.data.task
       const isAdmin = userRole === 'Admin'
@@ -141,7 +141,7 @@ const TaskList = () => {
       }
 
       if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
-        await axios.delete(`/api/tasks/${id}`)
+        await axios.delete(`/tasks/${id}`)
         toast.success('Tâche supprimée avec succès !')
         fetchTasks()
       }

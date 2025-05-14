@@ -32,7 +32,7 @@ const DocumentComments = ({ documentId }) => {
     try {
       setLoading(true)
       setError(null)
-      const response = await axios.get(`/api/comments/document/${documentId}`)
+      const response = await axios.get(`/comments/document/${documentId}`)
       if (response.data.success) {
         setComments(response.data.comments)
       } else {
@@ -53,7 +53,7 @@ const DocumentComments = ({ documentId }) => {
     try {
       setSubmitting(true)
       setError(null)
-      const response = await axios.post(`/api/comments/document/${documentId}`, {
+      const response = await axios.post(`/comments/document/${documentId}`, {
         content: newComment,
       })
 
@@ -76,7 +76,7 @@ const DocumentComments = ({ documentId }) => {
 
   const handleDelete = async (commentId) => {
     try {
-      const response = await axios.delete(`/api/comments/${commentId}`)
+      const response = await axios.delete(`/comments/${commentId}`)
       if (response.data.success) {
         setComments(comments.filter((comment) => comment._id !== commentId))
         toast.success('Commentaire supprimé avec succès')
@@ -91,7 +91,7 @@ const DocumentComments = ({ documentId }) => {
 
   const handleUpdate = async (commentId, content) => {
     try {
-      const response = await axios.put(`/api/comments/${commentId}`, { content })
+      const response = await axios.put(`/comments/${commentId}`, { content })
       if (response.data.success) {
         setComments(
           comments.map((comment) =>

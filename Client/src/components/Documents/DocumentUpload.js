@@ -51,7 +51,7 @@ const DocumentUpload = ({ visible, onClose, onUploadSuccess }) => {
   const fetchProjects = async () => {
     try {
       setLoading(true)
-      const response = await axios.get('/api/projects')
+      const response = await axios.get('/projects')
       if (response.data.success && response.data.projects) {
         setProjects(response.data.projects)
       } else {
@@ -109,7 +109,7 @@ const DocumentUpload = ({ visible, onClose, onUploadSuccess }) => {
       }
       formData.append('isPublic', isPublic)
 
-      const response = await axios.post('/api/documents', formData, {
+      const response = await axios.post('/documents', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

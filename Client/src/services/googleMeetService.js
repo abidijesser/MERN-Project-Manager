@@ -7,7 +7,7 @@ import axios from '../utils/axios';
  */
 export const generateMeetLink = async (date) => {
   try {
-    const response = await axios.post('/api/calendar/generate-meet-link', { date });
+    const response = await axios.post('/calendar/generate-meet-link', { date });
     return response.data;
   } catch (error) {
     console.error('Erreur lors de la génération du lien Google Meet:', error);
@@ -43,7 +43,7 @@ export const generateMeetLink = async (date) => {
  */
 export const checkGoogleCalendarAuth = async () => {
   try {
-    const response = await axios.get('/api/calendar/check-auth');
+    const response = await axios.get('/calendar/check-auth');
     return response.data;
   } catch (error) {
     console.error('Erreur lors de la vérification de l\'authentification Google Calendar:', error);
@@ -61,7 +61,7 @@ export const checkGoogleCalendarAuth = async () => {
  */
 export const getGoogleCalendarAuthUrl = async () => {
   try {
-    const response = await axios.get('/api/calendar/auth-url');
+    const response = await axios.get('/calendar/auth-url');
     return response.data;
   } catch (error) {
     console.error('Erreur lors de la récupération de l\'URL d\'authentification:', error);

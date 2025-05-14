@@ -11,7 +11,7 @@ export const getUserTasks = async () => {
     const token = localStorage.getItem('token')
     console.log('taskService - Token exists:', !!token)
 
-    const response = await axios.get('/api/tasks')
+    const response = await axios.get('/tasks')
 
     console.log('taskService - Response received:', response.status)
     console.log('taskService - Response data:', response.data)

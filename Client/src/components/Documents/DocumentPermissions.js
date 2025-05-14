@@ -73,7 +73,7 @@ const DocumentPermissions = ({ document, visible, onClose, onPermissionsUpdated 
 
     try {
       console.log('Récupération des informations complètes du document:', documentId)
-      const response = await axios.get(`/api/documents/${documentId}`)
+      const response = await axios.get(`/documents/${documentId}`)
 
       if (response.data.success && response.data.data) {
         console.log('Informations complètes du document récupérées:', response.data.data)
@@ -100,7 +100,7 @@ const DocumentPermissions = ({ document, visible, onClose, onPermissionsUpdated 
     try {
       setLoading(true)
       console.log('Récupération des permissions pour le document ID:', documentId)
-      const response = await axios.get(`/api/documents/${documentId}/permissions`)
+      const response = await axios.get(`/documents/${documentId}/permissions`)
 
       if (response.data.success) {
         const documentPermissions = response.data.data || []
@@ -133,7 +133,7 @@ const DocumentPermissions = ({ document, visible, onClose, onPermissionsUpdated 
     try {
       setLoading(true)
       console.log('Récupération des utilisateurs pour le partage...')
-      const response = await axios.get('/api/auth/users-for-sharing')
+      const response = await axios.get('/auth/users-for-sharing')
 
       console.log("Réponse de l'API users-for-sharing:", response.data)
 
@@ -196,7 +196,7 @@ const DocumentPermissions = ({ document, visible, onClose, onPermissionsUpdated 
         return
       }
 
-      const response = await axios.put(`/api/documents/${documentId}/permissions`, {
+      const response = await axios.put(`/documents/${documentId}/permissions`, {
         userId: selectedUser,
         access: selectedAccess,
       })
@@ -258,7 +258,7 @@ const DocumentPermissions = ({ document, visible, onClose, onPermissionsUpdated 
         return
       }
 
-      const response = await axios.put(`/api/documents/${documentId}/permissions`, {
+      const response = await axios.put(`/documents/${documentId}/permissions`, {
         userId,
         access: newAccess,
       })
@@ -311,7 +311,7 @@ const DocumentPermissions = ({ document, visible, onClose, onPermissionsUpdated 
       }
 
       // Mettre à jour avec un accès "none" pour supprimer
-      const response = await axios.put(`/api/documents/${documentId}/permissions`, {
+      const response = await axios.put(`/documents/${documentId}/permissions`, {
         userId,
         access: 'none',
       })

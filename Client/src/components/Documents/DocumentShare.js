@@ -82,7 +82,7 @@ const DocumentShare = ({ document, visible, onClose }) => {
       setError(null)
 
       console.log('Récupération des liens de partage pour le document:', document._id)
-      const response = await axios.get(`/api/share/document/${document._id}`)
+      const response = await axios.get(`/share/document/${document._id}`)
 
       if (response.data.success) {
         setShareLinks(response.data.data)
@@ -115,7 +115,7 @@ const DocumentShare = ({ document, visible, onClose }) => {
       }
 
       console.log("Création d'un lien de partage pour le document:", document._id)
-      const response = await axios.post(`/api/share/document/${document._id}`, payload)
+      const response = await axios.post(`/share/document/${document._id}`, payload)
 
       if (response.data.success) {
         toast.success('Lien de partage créé avec succès')
@@ -141,7 +141,7 @@ const DocumentShare = ({ document, visible, onClose }) => {
     try {
       setLoading(true)
 
-      const response = await axios.delete(`/api/share/${token}`)
+      const response = await axios.delete(`/share/${token}`)
 
       if (response.data.success) {
         toast.success('Lien de partage désactivé avec succès')
@@ -174,7 +174,7 @@ const DocumentShare = ({ document, visible, onClose }) => {
         documentName: document.name,
       }
 
-      const response = await axios.post(`/api/share/${selectedLink.token}/email`, payload)
+      const response = await axios.post(`/share/${selectedLink.token}/email`, payload)
 
       if (response.data.success) {
         toast.success('Lien de partage envoyé par email avec succès')

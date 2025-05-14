@@ -100,7 +100,7 @@ const ProjectsList = () => {
     setLoading(true)
     try {
       // Récupération des projets depuis l'API backend
-      const response = await axios.get('/api/projects')
+      const response = await axios.get('/projects')
 
       if (response.data.success && response.data.projects) {
         console.log(`Fetched ${response.data.projects.length} projects where user is a member`)
@@ -122,7 +122,7 @@ const ProjectsList = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
       try {
-        const response = await axios.delete(`/api/projects/${id}`)
+        const response = await axios.delete(`/projects/${id}`)
         if (response.data.success) {
           toast.success('Projet supprimé avec succès !')
           fetchProjects()
@@ -197,7 +197,7 @@ const ProjectsList = () => {
   const handleCheckOverdueProjects = async () => {
     try {
       setCheckingOverdue(true)
-      const response = await axios.post('/api/projects/check-overdue')
+      const response = await axios.post('/projects/check-overdue')
 
       if (response.data.success) {
         // Display a more informative toast message

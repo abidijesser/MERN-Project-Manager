@@ -8,7 +8,7 @@ import axios from '../utils/axios'
  */
 export const getGoogleCalendarAuthUrl = async () => {
   try {
-    const response = await axios.get('/api/calendar/auth-url')
+    const response = await axios.get('/calendar/auth-url')
     return response.data
   } catch (error) {
     console.error('Error getting Google Calendar auth URL:', error)
@@ -22,7 +22,7 @@ export const getGoogleCalendarAuthUrl = async () => {
  */
 export const checkGoogleCalendarAuth = async () => {
   try {
-    const response = await axios.get('/api/calendar/check-auth')
+    const response = await axios.get('/calendar/check-auth')
     return response.data
   } catch (error) {
     console.error('Error checking Google Calendar auth:', error)
@@ -36,7 +36,7 @@ export const checkGoogleCalendarAuth = async () => {
  */
 export const removeGoogleCalendarToken = async () => {
   try {
-    const response = await axios.post('/api/calendar/remove-token', {})
+    const response = await axios.post('/calendar/remove-token', {})
     return response.data
   } catch (error) {
     console.error('Error removing Google Calendar token:', error)
@@ -50,7 +50,7 @@ export const removeGoogleCalendarToken = async () => {
  */
 export const syncTasksWithGoogleCalendar = async () => {
   try {
-    const response = await axios.post('/api/calendar/sync-tasks', {})
+    const response = await axios.post('/calendar/sync-tasks', {})
     return response.data
   } catch (error) {
     console.error('Error syncing tasks with Google Calendar:', error)
@@ -64,7 +64,7 @@ export const syncTasksWithGoogleCalendar = async () => {
  */
 export const syncProjectsWithGoogleCalendar = async () => {
   try {
-    const response = await axios.post('/api/calendar/sync-projects', {})
+    const response = await axios.post('/calendar/sync-projects', {})
     return response.data
   } catch (error) {
     console.error('Error syncing projects with Google Calendar:', error)
@@ -79,7 +79,7 @@ export const syncProjectsWithGoogleCalendar = async () => {
  */
 export const syncTaskWithGoogleCalendar = async (taskId) => {
   try {
-    const response = await axios.post(`/api/calendar/sync-task/${taskId}`, {})
+    const response = await axios.post(`/calendar/sync-task/${taskId}`, {})
     return response.data
   } catch (error) {
     console.error('Error syncing task with Google Calendar:', error)
@@ -94,7 +94,7 @@ export const syncTaskWithGoogleCalendar = async (taskId) => {
  */
 export const syncProjectWithGoogleCalendar = async (projectId) => {
   try {
-    const response = await axios.post(`/api/calendar/sync-project/${projectId}`, {})
+    const response = await axios.post(`/calendar/sync-project/${projectId}`, {})
     return response.data
   } catch (error) {
     console.error('Error syncing project with Google Calendar:', error)

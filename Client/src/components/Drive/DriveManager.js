@@ -21,7 +21,7 @@ const DriveManager = () => {
   const fetchProjects = async () => {
     setLoading(true)
     try {
-      const response = await axios.get('/api/projects')
+      const response = await axios.get('/projects')
       console.log('Projects response:', response.data)
 
       if (response.data.success) {

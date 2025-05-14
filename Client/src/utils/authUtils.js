@@ -13,7 +13,7 @@ export const getCurrentUser = async () => {
       return null
     }
 
-    const response = await axios.get('/api/auth/profile')
+    const response = await axios.get('/auth/profile')
     return response.data.user
   } catch (error) {
     console.error('Error fetching current user:', error)
@@ -179,7 +179,7 @@ export const verify2FA = async (email, password, twoFactorToken) => {
 // Function to handle registration
 export const register = async (userData) => {
   try {
-    const response = await axios.post('/api/auth/register', userData)
+    const response = await axios.post('/auth/register', userData)
     if (response.data.success) {
       return { success: true, token: response.data.token }
     } else {

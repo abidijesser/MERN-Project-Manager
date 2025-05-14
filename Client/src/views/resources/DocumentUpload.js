@@ -34,7 +34,7 @@ const DocumentUpload = ({ visible, onClose, onUploadSuccess }) => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await axios.get('/api/projects')
+        const response = await axios.get('/projects')
         if (response.data.success && response.data.projects) {
           setProjects(response.data.projects.map(project => ({
             id: project._id,
@@ -116,7 +116,7 @@ const DocumentUpload = ({ visible, onClose, onUploadSuccess }) => {
         }, 100)
 
         // Upload file
-        const response = await axios.post('/api/documents', formData, {
+        const response = await axios.post('/documents', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }

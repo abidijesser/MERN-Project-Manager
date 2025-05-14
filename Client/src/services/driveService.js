@@ -39,7 +39,7 @@ export const getGoogleDriveAuthUrl = async () => {
     }
 
     // Pass the user ID as a query parameter
-    const response = await axios.get(`/api/drive/auth-url?userId=${userId}`)
+    const response = await axios.get(`/drive/auth-url?userId=${userId}`)
     return response.data
   } catch (error) {
     console.error('Error getting Google Drive auth URL:', error)
@@ -67,7 +67,7 @@ export const checkGoogleDriveAuth = async () => {
       }
     }
 
-    const response = await axios.get('/api/drive/check-auth', {
+    const response = await axios.get('/drive/check-auth', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -90,7 +90,7 @@ export const checkGoogleDriveAuth = async () => {
  */
 export const removeGoogleDriveToken = async () => {
   try {
-    const response = await axios.post('/api/drive/remove-token')
+    const response = await axios.post('/drive/remove-token')
     return response.data
   } catch (error) {
     console.error('Error removing Google Drive token:', error)
@@ -108,7 +108,7 @@ export const removeGoogleDriveToken = async () => {
  */
 export const uploadFileToDrive = async (formData) => {
   try {
-    const response = await axios.post('/api/drive/upload', formData, {
+    const response = await axios.post('/drive/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -153,7 +153,7 @@ export const listDriveFiles = async (options = {}) => {
     if (options.query) queryParams.append('query', options.query)
     if (options.orderBy) queryParams.append('orderBy', options.orderBy)
 
-    const response = await axios.get(`/api/drive/files?${queryParams.toString()}`)
+    const response = await axios.get(`/drive/files?${queryParams.toString()}`)
     return response.data
   } catch (error) {
     console.error('Error listing files from Google Drive:', error)
@@ -190,7 +190,7 @@ export const listDriveFiles = async (options = {}) => {
  */
 export const importFileFromDrive = async (fileData) => {
   try {
-    const response = await axios.post('/api/drive/import', fileData)
+    const response = await axios.post('/drive/import', fileData)
     return response.data
   } catch (error) {
     console.error('Error importing file from Google Drive:', error)
