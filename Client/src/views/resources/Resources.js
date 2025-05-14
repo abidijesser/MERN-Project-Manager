@@ -77,7 +77,7 @@ const Resources = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await axios.get('/api/projects')
+        const response = await axios.get('/projects')
         if (response.data.success && response.data.projects) {
           setProjects(
             response.data.projects.map((project) => ({
@@ -97,7 +97,7 @@ const Resources = () => {
 
     const fetchDocuments = async () => {
       try {
-        const response = await axios.get('/api/documents')
+        const response = await axios.get('/documents')
         if (response.data.success && response.data.data) {
           setDocuments(
             response.data.data.map((doc) => ({
@@ -163,7 +163,7 @@ const Resources = () => {
   const fetchDocuments = async () => {
     try {
       setLoading(true)
-      const response = await axios.get('/api/documents')
+      const response = await axios.get('/documents')
       if (response.data.success && response.data.data) {
         setDocuments(
           response.data.data.map((doc) => ({
@@ -378,7 +378,7 @@ const Resources = () => {
       toast.info(`Téléchargement de "${doc.name}" en cours...`)
 
       // Construire l'URL de téléchargement
-      const downloadUrl = `/api/documents/${docId}/download`
+      const downloadUrl = `/documents/${docId}/download`
       console.log('URL de téléchargement:', downloadUrl)
 
       // Utiliser axios pour faire une requête avec le token d'authentification
@@ -482,7 +482,7 @@ const Resources = () => {
       console.log('Suppression du document avec ID MongoDB:', mongoId)
       console.log('Document à supprimer:', docId)
 
-      const response = await axios.delete(`/api/documents/${mongoId}`)
+      const response = await axios.delete(`/documents/${mongoId}`)
 
       if (response.data.success) {
         // Identifier le document à supprimer par son ID unique ou MongoDB
@@ -547,7 +547,7 @@ const Resources = () => {
       console.log("Modification du statut d'épinglage pour le document avec ID MongoDB:", mongoId)
       console.log('Document à modifier:', docId)
 
-      const response = await axios.put(`/api/documents/${mongoId}/pin`)
+      const response = await axios.put(`/documents/${mongoId}/pin`)
 
       if (response.data.success) {
         // Update the document in the state using unique identifiers

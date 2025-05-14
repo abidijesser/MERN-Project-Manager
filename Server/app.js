@@ -78,30 +78,30 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Mount routes
-app.use("/api/auth", authRouter);
+app.use("/auth", authRouter);
 app.use("/", googleAuthRouter); // This should be before other routes
 
 app.use("/admin", adminRoutes);
-app.use("/api/tasks", taskRoutes);
-app.use("/api/projects", projectRoutes);
-app.use("/api/chat", chatRoutes);
-app.use("/api/gemini", geminiRoutes);
-app.use("/api/notifications", notificationRoutes);
-app.use("/api/stats", statsRoutes);
-app.use("/api/statistics", statisticsRoutes);
-app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/calendar", calendarRoutes);
-app.use("/api/comments", commentRoutes);
-app.use("/api/activity", activityLogRoutes);
-app.use("/api/media", mediaRoutes);
-app.use("/api/documents", documentRoutes);
-app.use("/api/share", shareRoutes);
-app.use("/api/meetings", meetingRoutes);
-app.use("/api/messages", messageRoutes);
-app.use("/api/recommendations", recommendationRoutes);
-app.use("/api/drive", driveRoutes);
+app.use("/tasks", taskRoutes);
+app.use("/projects", projectRoutes);
+app.use("/chat", chatRoutes);
+app.use("/gemini", geminiRoutes);
+app.use("/notifications", notificationRoutes);
+app.use("/stats", statsRoutes);
+app.use("/statistics", statisticsRoutes);
+app.use("/dashboard", dashboardRoutes);
+app.use("/calendar", calendarRoutes);
+app.use("/comments", commentRoutes);
+app.use("/activity", activityLogRoutes);
+app.use("/media", mediaRoutes);
+app.use("/documents", documentRoutes);
+app.use("/share", shareRoutes);
+app.use("/meetings", meetingRoutes);
+app.use("/messages", messageRoutes);
+app.use("/recommendations", recommendationRoutes);
+app.use("/drive", driveRoutes);
 // Add a simple test route
-app.get("/api/test", (req, res) => {
+app.get("/test", (req, res) => {
   res.json({ message: "Server is running" });
 });
 
@@ -111,7 +111,7 @@ app.get("/task-count", (req, res) => {
 });
 
 // Add a direct API endpoint to get task counts
-app.get("/api/task-counts", async (req, res) => {
+app.get("/task-counts", async (req, res) => {
   try {
     const Task = require("./models/Task");
 
@@ -149,7 +149,7 @@ app.get("/api/task-counts", async (req, res) => {
 });
 
 // Add a route to check OAuth configurations
-app.get("/api/check-oauth-config", (req, res) => {
+app.get("/check-oauth-config", (req, res) => {
   res.json({
     google: {
       clientID: process.env.GOOGLE_CLIENT_ID ? "Configured" : "Missing",
