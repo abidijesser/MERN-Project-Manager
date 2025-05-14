@@ -137,7 +137,6 @@ const EditProject = () => {
 
       console.log(`Fetching project with ID: ${id}`)
 
-      // Utiliser l'URL complète avec le préfixe http://localhost:3001
       const response = await axios.get(`http://192.168.33.10:3001/api/projects/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,

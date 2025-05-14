@@ -473,7 +473,7 @@ const scheduleOverdueChecks = () => {
   }, 24 * 60 * 60 * 1000); // 24 hours
 };
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0',() => {
   console.log(`Server is running on port ${PORT}`);
 
   // Start the scheduled task after server is running

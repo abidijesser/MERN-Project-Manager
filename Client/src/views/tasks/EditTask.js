@@ -83,8 +83,8 @@ const EditTask = () => {
       }
 
       const [projectsRes, usersRes] = await Promise.all([
-        axios.get('http://localhost:3001/api/projects', headers),
-        axios.get('http://localhost:3001/api/auth/users', headers),
+        axios.get('http://192.168.33.10:3001/api/projects', headers),
+        axios.get('http://192.168.33.10:3001/api/auth/users', headers),
       ])
       setProjects(projectsRes.data.projects || [])
       setUsers(usersRes.data.users || [])
