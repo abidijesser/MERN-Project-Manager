@@ -97,7 +97,7 @@ Client Application: http://localhost:3000
 
 Admin Panel: http://localhost:3001/admin
 
-API: http://localhost:3001/api
+login: http://localhost:3001/#/login
 
 Key Functionalities
 Client: Manage projects, tasks, and resources.
