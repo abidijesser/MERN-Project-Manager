@@ -5,7 +5,7 @@ import axios from 'axios';
  */
 
 // URL de base de l'API
-const API_URL = 'http://192.168.33.10:3001/api';
+const API_URL = 'http://192.168.33.10:3001';
 
 /**
  * Récupère les tâches de l'utilisateur
