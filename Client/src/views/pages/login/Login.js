@@ -44,8 +44,8 @@ const Login = () => {
     console.log('Attempting to login with email:', email)
 
     try {
-      console.log('Sending login request to:', axios.defaults.baseURL + '/api/auth/login')
-      const response = await axios.post('/api/auth/login', {
+      console.log('Sending login request to:', axios.defaults.baseURL + '/auth/login')
+      const response = await axios.post('/auth/login', {
         email: email,
         password: password,
       })
@@ -139,7 +139,7 @@ const Login = () => {
       const cleanCode = twoFactorCode.toString().replace(/\s+/g, '')
       console.log('Cleaned 2FA code:', cleanCode)
 
-      const response = await axios.post('/api/auth/login', {
+      const response = await axios.post('/auth/login', {
         email: tempUserData.email,
         password: tempUserData.password,
         twoFactorCode: cleanCode,

@@ -96,7 +96,7 @@ export const isClient = async () => {
 // Function to handle login
 export const login = async (email, password) => {
   try {
-    const response = await axios.post('/api/auth/login', { email, password })
+    const response = await axios.post('/auth/login', { email, password })
     if (response.data.success) {
       localStorage.setItem('token', response.data.token)
 
@@ -137,7 +137,7 @@ export const login = async (email, password) => {
 export const verify2FA = async (email, password, twoFactorToken) => {
   try {
     const response = await axios.post(
-      '/api/auth/login',
+      '/auth/login',
       { email, password },
       { headers: { 'x-2fa-token': twoFactorToken } },
     )
