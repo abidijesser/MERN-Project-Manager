@@ -1,6 +1,6 @@
-# Project Management System
+Project Management System
 
-This project is a comprehensive **Project Management System** designed to streamline task management, resource allocation, and team collaboration. It includes a **client-side application**, an **admin panel**, and a **server-side API** to provide a seamless experience for managing projects, tasks, and resources.
+This project is a comprehensive Project Management System designed to streamline task management, resource allocation, and team collaboration. It includes a client-side application, an admin panel, and a server-side API to provide a seamless experience for managing projects, tasks, and resources.
 
 ---
 
@@ -36,9 +36,26 @@ This project is a comprehensive **Project Management System** designed to stream
 ---
 
 ## Project Structure
-Project/ ├── Admin/ # Admin panel for managing the system 
-         │ └── mantis-free-react-admin-template-master/ 
-         ├── Client/ # Client-side application │ ├── src/ │ │ ├── components/ # Reusable components │ │ ├── views/ # Application views (e.g., dashboard, tasks, projects) │ │ ├── utils/ # Utility functions (e.g., Axios configuration) │ │ └── App.js # Main application entry point │ ├── public/ # Static assets │ └── package.json # Client dependencies and scripts ├── Server/ # Server-side API │ ├── controllers/ # API controllers │ ├── models/ # Database models (e.g., Project, Task, User) │ ├── routes/ # API routes │ ├── scripts/ # Utility scripts (e.g., seed data) │ └── server.js # Main server entry point ├── docs/ # Documentation └── README.md # Project documentation
+Project/
+├── Admin/                         # Admin panel for managing the system
+│   └── mantis-free-react-admin-template-master/
+├── Client/                        # Client-side application
+│   ├── public/                    # Static assets
+│   ├── src/
+│   │   ├── components/            # Reusable components
+│   │   ├── views/                 # Application views (dashboard, tasks, projects)
+│   │   ├── utils/                 # Utility functions (e.g., Axios configuration)
+│   │   └── App.js                 # Main application entry point
+│   └── package.json              # Client dependencies and scripts
+├── Server/                        # Server-side API
+│   ├── controllers/              # API controllers
+│   ├── models/                   # Database models (e.g., Project, Task, User)
+│   ├── routes/                   # API routes
+│   ├── scripts/                  # Utility scripts (e.g., seed data)
+│   └── server.js                 # Main server entry point
+├── docs/                          # Documentation
+└── README.md                      # Project documentation
+
 
          
 ---
@@ -51,36 +68,65 @@ Project/ ├── Admin/ # Admin panel for managing the system
 - **npm** or **yarn** (for package management)
 
 ### Steps
-1. Clone the repository:
-   
-   git clone <https://github.com/abidijesser/MERN-Project-Manager.git>
-   cd Project
-   cd Client
+# Clone the repository
+git clone https://github.com/abidijesser/MERN-Project-Manager.git
+cd Project
+
+# Install client dependencies
+cd Client
 npm install
+# running 
+npm start
+
+# Install admin panel dependencies
 cd ../Admin/mantis-free-react-admin-template-master
 npm install
+# running 
+npm start
+
+
+# Install server dependencies
 cd ../../Server
 npm install
+# running 
+npm run dev
 
 Usage
 Accessing the Applications
 Client Application: http://localhost:3000
+
 Admin Panel: http://localhost:3001/admin
+
 API: http://localhost:3001/api
+
 Key Functionalities
 Client: Manage projects, tasks, and resources.
+
 Admin: Oversee system-wide settings and user management.
+
 Server: Handle API requests and database operations.
+
+
+
 Technologies Used
+
 Frontend
-React: For building the user interface.
-CoreUI: For pre-designed UI components.
-Axios: For API requests.
+React: For building the user interface
+
+CoreUI: Pre-designed UI components
+
+Axios: For HTTP requests
+
 Backend
-Node.js: For server-side logic.
-Express.js: For building the API.
-MongoDB: For database storage.
+Node.js: Server-side JavaScript runtime
+
+Express.js: Web framework
+
+MongoDB: NoSQL database
+
 Other Tools
-Socket.IO: For real-time communication.
-Chart.js: For data visualization.
-Toastify: For notifications.
+Socket.IO: Real-time communication
+
+Chart.js: Data visualization
+
+Toastify: Notifications
