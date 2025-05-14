@@ -129,4 +129,6 @@ Socket.IO: Real-time communication
 
 Chart.js: Data visualization
 
+Flask & Python : Models development and integration
+
 Toastify: Notifications
