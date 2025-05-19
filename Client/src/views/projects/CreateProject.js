@@ -47,11 +47,11 @@ const CreateProject = () => {
   const [predictionError, setPredictionError] = useState(null)
   const [predictionData, setPredictionData] = useState({
     'Actual Cost': '',
-    Progress: '',
+    Progress: '90',
     'Budget Deviation': '',
     Priority: 'High',
     'Task Status': 'In Progress',
-    'Resource Usage Ratio': '',
+    'Resource Usage Ratio': '1.25',
   })
   const navigate = useNavigate()
 
@@ -481,7 +481,7 @@ const CreateProject = () => {
                   />
                 </CCol>
               </CRow>
-              <CRow className="mb-3">
+              {/* <CRow className="mb-3">
                 <CCol>
                   <CFormInput
                     label="Progrès"
@@ -493,7 +493,7 @@ const CreateProject = () => {
                     required
                   />
                 </CCol>
-              </CRow>
+              </CRow> */}
               <CRow className="mb-3">
                 <CCol>
                   <CFormInput
@@ -534,7 +534,7 @@ const CreateProject = () => {
                   </CFormSelect>
                 </CCol>
               </CRow>
-              <CRow className="mb-3">
+              {/* <CRow className="mb-3">
                 <CCol>
                   <CFormInput
                     label="Ratio d'utilisation des ressources"
@@ -546,24 +546,26 @@ const CreateProject = () => {
                     required
                   />
                 </CCol>
-              </CRow>
-              <CRow className="mb-3">
-                <CCol>
-                  {predictionLoading ? (
-                    <div className="text-center">Chargement de la prédiction...</div>
-                  ) : predictionError ? (
-                    <div className="text-danger">Erreur: {predictionError}</div>
-                  ) : predictedBudget !== null ? (
-                    <CFormInput
-                      label="Budget estimé"
-                      value={predictedBudget}
-                      readOnly
-                    />
-                  ) : (
-                    <div className="text-center">Remplissez le formulaire et cliquez sur Prédire</div>
-                  )}
-                </CCol>
-              </CRow>
+              </CRow> */}
+              <CCol>
+  {predictionLoading ? (
+    <div className="text-center text-primary fw-bold">Chargement de la prédiction...</div>
+  ) : predictionError ? (
+    <div className="text-danger fw-bold">❌ Erreur : {predictionError}</div>
+  ) : predictedBudget !== null ? (
+    <div className="predicted-budget-box text-center shadow-sm">
+      <div className="icon-box mb-2">💰</div>
+      <div className="predicted-budget-value">
+        Budget estimé : <strong>{Number(predictedBudget).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</strong>
+      </div>
+    </div>
+  ) : (
+    <div className="text-center text-muted fst-italic">
+      Remplissez le formulaire et cliquez sur <strong>Prédire</strong>
+    </div>
+  )}
+</CCol>
+
             </CForm>
           </CModalBody>
           <CModalFooter>

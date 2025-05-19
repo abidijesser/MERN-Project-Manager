@@ -247,9 +247,10 @@ const Login = () => {
       <CContainer>
         <CRow className="justify-content-center">
           <CCol md={10} lg={9} xl={8}>
-            <div className="text-center mb-4">
-              <h1 className="worktrack-logo">WorkTrack</h1>
-            </div>
+            {/* <div className="text-center mb-5">
+            <h1 className="worktrack-logo">Work<span className="highlight">Track</span></h1>
+          </div> */}
+
             <CCard className="login-card">
               <CCardGroup>
                 <CCard className="login-form-container border-0">

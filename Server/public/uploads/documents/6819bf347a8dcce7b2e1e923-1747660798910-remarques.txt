@@ -1,0 +1,39 @@
+sqlcmd -S (localdb)\mssqllocaldb
+1> USE BibliothequeExamAbidiJasser;
+2> GO
+
+3> SELECT name FROM sys.tables;
+
+DELETE FROM Categorie;
+
+var livresEntreDates = GetMany()
+    .Where(l => l.PretLivres.Any(p => p.DateDebut >= a && p.DateFin <= b))
+    .Select(l => new { l.Titre, l.Auteur })
+    .ToList();
+
+var livresEntreDates = GetMany()
+    .Where(l => l.PretLivres.Any(p => p.DateDebut >= a && p.DateFin <= b))
+    .Select(l => l.Auteur)
+    .ToList();
+
+
+
+------------------> a jouter dans infrastructure/AMContext.cs
+ public AMContext(DbContextOptions<AMContext> options) : base(options) { }
+
+
+
+------------------> search bar : dans le view 
+
+<fieldset>
+    <legend>Search By:</legend>
+    <form asp-action="index">
+        <label>Departure Date</label>
+        <input type="text" name="filter" />
+        <input type="submit" value="Search" />
+    </form>
+</fieldset>
+
+: dans le controller
+if (!string.IsNullOrEmpty(filter))
+    return View(FlightService.GetAll().Where(f => f.FlightDate.ToString() == filter));

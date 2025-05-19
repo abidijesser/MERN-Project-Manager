@@ -545,9 +545,9 @@ const TaskForm = () => {
                 )}
               </div>
               <div className="mb-3">
-                <div className="d-flex align-items-center mb-2">
+                <div className="">
                   <CFormSelect
-                    label="Assigné à"
+                    label="Assigner à"
                     name="assignedTo"
                     value={task.assignedTo}
                     onChange={handleChange}
@@ -569,7 +569,7 @@ const TaskForm = () => {
                     ]}
                     className="me-2"
                   />
-                  <CButton
+                  <CButton className="mt-2"
                     color="info"
                     onClick={handleRecommendMember}
                     disabled={!task.project || !task.title || !task.description}

@@ -55,14 +55,14 @@ const ProjectsList = () => {
   const [showMyProjectsOnly, setShowMyProjectsOnly] = useState(false) // New state for checkbox
   const [predictionData, setPredictionData] = useState({
     budget: '',
-    actualCost: '',
+    actualCost: '49000',
     progress: '',
     delay: '',
-    budgetDeviation: '',
+    budgetDeviation: '3000',
     projectType: '',
     priority: '',
     taskStatus: '',
-    resourceUsageRatio: '',
+    resourceUsageRatio: '1.25',
   })
   const navigate = useNavigate()
 
@@ -425,16 +425,16 @@ const ProjectsList = () => {
           <form>
             <CFormInput
               type="number"
-              label="Budget"
+              label="Budget de projet"
               value={predictionData.budget}
               onChange={(e) => setPredictionData({ ...predictionData, budget: e.target.value })}
             />
-            <CFormInput
+            {/* <CFormInput
               type="number"
               label="Actual Cost"
               value={predictionData.actualCost}
               onChange={(e) => setPredictionData({ ...predictionData, actualCost: e.target.value })}
-            />
+            /> */}
             <CFormInput
               type="number"
               label="Progress"
@@ -447,39 +447,40 @@ const ProjectsList = () => {
               value={predictionData.delay}
               onChange={(e) => setPredictionData({ ...predictionData, delay: e.target.value })}
             />
-            <CFormInput
+            {/* <CFormInput
               type="number"
               label="Budget Deviation"
               value={predictionData.budgetDeviation}
               onChange={(e) =>
                 setPredictionData({ ...predictionData, budgetDeviation: e.target.value })
               }
-            />
+            /> */}
             <CFormInput
-              label="Project Type"
+              label="Type de project"
               value={predictionData.projectType}
               onChange={(e) =>
                 setPredictionData({ ...predictionData, projectType: e.target.value })
               }
             />
             <CFormInput
-              label="Priority"
+              label="Priorité"
               value={predictionData.priority}
               onChange={(e) => setPredictionData({ ...predictionData, priority: e.target.value })}
             />
             <CFormInput
-              label="Task Status"
+              className="mt-1"
+              label="Statut de projet"
               value={predictionData.taskStatus}
               onChange={(e) => setPredictionData({ ...predictionData, taskStatus: e.target.value })}
             />
-            <CFormInput
+            {/* <CFormInput
               type="number"
               label="Resource Usage Ratio"
               value={predictionData.resourceUsageRatio}
               onChange={(e) =>
                 setPredictionData({ ...predictionData, resourceUsageRatio: e.target.value })
               }
-            />
+            /> */}
           </form>
           {predictionResult && (
             <div className="mt-3 p-3 bg-light rounded">
