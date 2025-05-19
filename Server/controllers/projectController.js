@@ -146,16 +146,16 @@ const createProject = async (req, res) => {
     }
 
     // Validation du nombre minimum de membres (5)
-    if (
-      !req.body.members ||
-      !Array.isArray(req.body.members) ||
-      req.body.members.length < 5
-    ) {
-      return res.status(400).json({
-        success: false,
-        error: "Le projet doit avoir au moins 5 membres",
-      });
-    }
+    // if (
+    //   !req.body.members ||
+    //   !Array.isArray(req.body.members) ||
+    //   req.body.members.length < 5
+    // ) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     error: "Le projet doit avoir au moins 5 membres",
+    //   });
+    // }
 
     // Validation des dates
     const start = new Date(startDate);
@@ -269,12 +269,12 @@ const updateProject = async (req, res) => {
     }
 
     // Validation du nombre minimum de membres (5)
-    if (!members || !Array.isArray(members) || members.length < 5) {
-      return res.status(400).json({
-        success: false,
-        error: "Le projet doit avoir au moins 5 membres",
-      });
-    }
+    // if (!members || !Array.isArray(members) || members.length < 5) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     error: "Le projet doit avoir au moins 5 membres",
+    //   });
+    // }
 
     // Update the project
     const updatedProject = await Project.findByIdAndUpdate(

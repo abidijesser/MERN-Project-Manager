@@ -4,6 +4,7 @@ import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianGri
 import { getProjectsPerformance } from '../../services/performanceService';
 import { FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import axios from 'axios';
 import './Performances.css';
 
 const { TabPane } = Tabs;
@@ -111,9 +112,169 @@ const Performances = () => {
 
 
     // Afficher les détails d'un projet
-    const showProjectDetails = (project) => {
-        setSelectedProject(project);
-        setIsDetailModalVisible(true);
+    const showProjectDetails = async (project) => {
+        try {
+            // Afficher un message de chargement
+            message.loading({ content: 'Chargement des détails du projet...', key: 'projectDetails' });
+
+            // Récupérer les données complètes du projet depuis l'API
+            const token = localStorage.getItem('token');
+            if (!token) {
+                message.error({ content: 'Erreur d\'authentification', key: 'projectDetails' });
+                return;
+            }
+
+            // Récupérer les détails du projet
+            const projectId = project._id;
+            const projectResponse = await axios.get(`http://localhost:3001/api/projects/${projectId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (!projectResponse.data || !projectResponse.data.project) {
+                message.error({ content: 'Erreur lors de la récupération des détails du projet', key: 'projectDetails' });
+                return;
+            }
+
+            const projectDetails = projectResponse.data.project;
+
+            // Récupérer les tâches du projet
+            const tasksResponse = await axios.get(`http://localhost:3001/api/tasks`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (!tasksResponse.data || !tasksResponse.data.success || !tasksResponse.data.tasks) {
+                message.error({ content: 'Erreur lors de la récupération des tâches', key: 'projectDetails' });
+                return;
+            }
+
+            // Filtrer les tâches du projet
+            const projectTasks = tasksResponse.data.tasks.filter(task => {
+                if (!task.project) return false;
+
+                // Gérer les différents formats possibles de l'ID du projet
+                const taskProjectId = typeof task.project === 'object'
+                    ? task.project._id || task.project.id
+                    : task.project;
+
+                return taskProjectId === projectId ||
+                       taskProjectId.toString() === projectId.toString();
+            });
+
+            // Calculer les métriques de performance
+            const now = new Date();
+
+            // Compter les tâches par statut
+            const totalTasks = projectTasks.length;
+            const completedTasks = projectTasks.filter(task =>
+                task.status === 'completed' ||
+                task.status === 'done' ||
+                task.status === 'terminé' ||
+                task.status === 'terminée'
+            ).length;
+
+            const lateTasks = projectTasks.filter(task => {
+                if (task.status !== 'completed' && task.status !== 'done' && task.dueDate) {
+                    const dueDate = new Date(task.dueDate);
+                    return dueDate < now;
+                }
+                return false;
+            }).length;
+
+            // Calculer le taux d'achèvement
+            const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+            // Calculer l'efficacité temporelle (basée sur les dates prévues vs réelles)
+            let timeEfficiency = 100; // Valeur par défaut
+            const tasksWithDates = projectTasks.filter(task =>
+                (task.status === 'completed' || task.status === 'done') && task.dueDate && task.completedAt
+            );
+
+            if (tasksWithDates.length > 0) {
+                const efficiencyScores = tasksWithDates.map(task => {
+                    const dueDate = new Date(task.dueDate);
+                    const completedAt = new Date(task.completedAt);
+                    const diffDays = Math.floor((completedAt - dueDate) / (1000 * 60 * 60 * 24));
+
+                    // Si la tâche est terminée avant la date prévue, l'efficacité est > 100%
+                    // Si elle est terminée après, l'efficacité est < 100%
+                    return diffDays <= 0 ? 100 + Math.min(Math.abs(diffDays) * 5, 50) : Math.max(100 - (diffDays * 10), 50);
+                });
+
+                timeEfficiency = Math.round(efficiencyScores.reduce((sum, score) => sum + score, 0) / efficiencyScores.length);
+            }
+
+            // Calculer le niveau de risque
+            const lateTaskPercentage = totalTasks > 0 ? Math.round((lateTasks / totalTasks) * 100) : 0;
+
+            // Niveau de risque basé sur le pourcentage de tâches en retard
+            let riskLevel = 0;
+            if (lateTaskPercentage >= 30) {
+                riskLevel = 30; // Risque élevé
+            } else if (lateTaskPercentage >= 15) {
+                riskLevel = 20; // Risque moyen
+            } else if (lateTaskPercentage > 0) {
+                riskLevel = 10; // Risque faible
+            }
+
+            // Calculer l'utilisation des ressources
+            let resourceUtilization = 85; // Valeur par défaut
+
+            if (projectDetails.team && projectDetails.team.length > 0) {
+                // Compter les tâches assignées à chaque membre de l'équipe
+                const teamSize = projectDetails.team.length;
+                const assignedTasksCount = projectTasks.filter(task => task.assignedTo && task.assignedTo.length > 0).length;
+
+                // Calculer l'utilisation des ressources en fonction du ratio tâches/membres
+                const idealTasksPerMember = totalTasks / teamSize;
+                const actualTasksPerMember = assignedTasksCount / teamSize;
+
+                // Normaliser entre 0 et 100
+                resourceUtilization = Math.min(Math.round((actualTasksPerMember / idealTasksPerMember) * 100), 100);
+            }
+
+            // Créer l'objet de performance
+            const performance = {
+                completionRate,
+                timeEfficiency,
+                riskLevel,
+                resourceUtilization,
+                taskCount: totalTasks,
+                completedTaskCount: completedTasks,
+                lateTaskCount: lateTasks,
+                tasks: projectTasks.map(task => ({
+                    id: task._id || task.id,
+                    title: task.title,
+                    status: task.status,
+                    dueDate: task.dueDate,
+                    isLate: task.dueDate && new Date(task.dueDate) < now &&
+                            task.status !== 'completed' && task.status !== 'done'
+                }))
+            };
+
+            // Créer l'objet projet complet avec les performances
+            const fullProject = {
+                ...projectDetails,
+                performance
+            };
+
+            // Mettre à jour l'état et afficher la modal
+            setSelectedProject(fullProject);
+            setIsDetailModalVisible(true);
+
+            // Fermer le message de chargement avec succès
+            message.success({ content: 'Détails du projet chargés', key: 'projectDetails', duration: 2 });
+
+        } catch (error) {
+            console.error('Erreur lors de la récupération des détails du projet:', error);
+            message.error({
+                content: `Erreur: ${error.message || 'Impossible de charger les détails du projet'}`,
+                key: 'projectDetails'
+            });
+
+            // En cas d'erreur, utiliser les données de base fournies
+            setSelectedProject(project);
+            setIsDetailModalVisible(true);
+        }
     };
 
     // Fermer la modal de détails
@@ -727,17 +888,7 @@ const Performances = () => {
                                                 size="small"
                                                 style={{ borderRadius: '4px' }}
                                                 onClick={() => showProjectDetails({
-                                                    _id: record.key,
-                                                    projectName: record.name,
-                                                    performance: {
-                                                        completionRate: record.completion,
-                                                        timeEfficiency: record.efficiency,
-                                                        riskLevel: record.risk,
-                                                        resourceUtilization: 85,
-                                                        taskCount: 10,
-                                                        completedTaskCount: Math.round(10 * record.completion / 100),
-                                                        lateTaskCount: Math.round(10 * record.risk / 100)
-                                                    }
+                                                    _id: record.key
                                                 })}
                                             >
                                                 Détails
@@ -1079,6 +1230,84 @@ const Performances = () => {
                                         </Row>
                                     </Card>
                                 </div>
+
+                                {/* Liste des tâches du projet */}
+                                {selectedProject.performance && selectedProject.performance.tasks && selectedProject.performance.tasks.length > 0 && (
+                                    <div style={{ marginTop: '24px' }}>
+                                        <Card
+                                            title={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>Liste des tâches</span>}
+                                            className="card-shadow"
+                                        >
+                                            <Table
+                                                columns={[
+                                                    {
+                                                        title: 'Titre',
+                                                        dataIndex: 'title',
+                                                        key: 'title',
+                                                        render: (text) => <span style={{ fontWeight: 'bold' }}>{text}</span>
+                                                    },
+                                                    {
+                                                        title: 'Statut',
+                                                        dataIndex: 'status',
+                                                        key: 'status',
+                                                        render: (status) => {
+                                                            let color = '#1890ff';
+                                                            let text = status || 'En cours';
+
+                                                            if (status === 'completed' || status === 'done' || status === 'terminé' || status === 'terminée') {
+                                                                color = '#52c41a';
+                                                                text = 'Terminée';
+                                                            } else if (status === 'late' || status === 'en retard') {
+                                                                color = '#f5222d';
+                                                                text = 'En retard';
+                                                            }
+
+                                                            return <Tag color={color} style={{ padding: '2px 8px', borderRadius: '4px' }}>{text}</Tag>;
+                                                        }
+                                                    },
+                                                    {
+                                                        title: 'Date d\'échéance',
+                                                        dataIndex: 'dueDate',
+                                                        key: 'dueDate',
+                                                        render: (dueDate) => {
+                                                            if (!dueDate) return <span style={{ color: '#8c8c8c' }}>Non définie</span>;
+
+                                                            const date = new Date(dueDate);
+                                                            const now = new Date();
+                                                            const isLate = date < now;
+
+                                                            return (
+                                                                <span style={{ color: isLate ? '#f5222d' : 'inherit' }}>
+                                                                    {date.toLocaleDateString('fr-FR')}
+                                                                    {isLate && <span style={{ marginLeft: '8px', fontSize: '12px', color: '#f5222d' }}>(en retard)</span>}
+                                                                </span>
+                                                            );
+                                                        }
+                                                    }
+                                                ]}
+                                                dataSource={selectedProject.performance.tasks.map((task, index) => ({
+                                                    key: task.id || index,
+                                                    title: task.title || `Tâche ${index + 1}`,
+                                                    status: task.status,
+                                                    dueDate: task.dueDate,
+                                                    isLate: task.isLate
+                                                }))}
+                                                pagination={{
+                                                    pageSize: 5,
+                                                    showSizeChanger: true,
+                                                    pageSizeOptions: ['5', '10', '20'],
+                                                    showTotal: (total, range) => `${range[0]}-${range[1]} sur ${total} tâches`
+                                                }}
+                                                rowClassName={(record) => {
+                                                    if (record.isLate) return 'table-row-risk';
+                                                    if (record.status === 'completed' || record.status === 'done') return 'table-row-completed';
+                                                    return '';
+                                                }}
+                                                style={{ marginBottom: '16px' }}
+                                            />
+                                        </Card>
+                                    </div>
+                                )}
                             </div>
                         </TabPane>
                         <TabPane tab="Analyse de performance" key="3">
@@ -1093,27 +1322,29 @@ const Performances = () => {
                                                 data={[
                                                     {
                                                         subject: 'Achèvement',
-                                                        value: selectedProject.performance.completionRate,
+                                                        value: selectedProject.performance.completionRate || 0,
                                                         fullMark: 100
                                                     },
                                                     {
                                                         subject: 'Efficacité',
-                                                        value: selectedProject.performance.timeEfficiency,
+                                                        value: selectedProject.performance.timeEfficiency || 0,
                                                         fullMark: 100
                                                     },
                                                     {
                                                         subject: 'Ressources',
-                                                        value: selectedProject.performance.resourceUtilization,
+                                                        value: selectedProject.performance.resourceUtilization || 0,
                                                         fullMark: 100
                                                     },
                                                     {
                                                         subject: 'Qualité',
-                                                        value: 100 - selectedProject.performance.riskLevel,
+                                                        value: 100 - (selectedProject.performance.riskLevel || 0),
                                                         fullMark: 100
                                                     },
                                                     {
                                                         subject: 'Respect des délais',
-                                                        value: selectedProject.performance.timeEfficiency > 80 ? 90 : 70,
+                                                        value: selectedProject.performance.lateTaskCount > 0
+                                                            ? Math.max(0, 100 - (selectedProject.performance.lateTaskCount / selectedProject.performance.taskCount * 100))
+                                                            : 100,
                                                         fullMark: 100
                                                     }
                                                 ]}
