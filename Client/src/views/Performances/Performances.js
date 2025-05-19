@@ -126,7 +126,7 @@ const Performances = () => {
 
             // Récupérer les détails du projet
             const projectId = project._id;
-            const projectResponse = await axios.get(`http://localhost:3001/api/projects/${projectId}`, {
+            const projectResponse = await axios.get(`http://192.168.33.10:3001/api/projects/${projectId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -138,7 +138,7 @@ const Performances = () => {
             const projectDetails = projectResponse.data.project;
 
             // Récupérer les tâches du projet
-            const tasksResponse = await axios.get(`http://localhost:3001/api/tasks`, {
+            const tasksResponse = await axios.get(`http://192.168.33.10:3001/api/tasks`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 

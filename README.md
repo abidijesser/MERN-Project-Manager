@@ -93,11 +93,11 @@ npm run dev
 
 Usage
 Accessing the Applications
-Client Application: http://localhost:3000
+Client Application: http://192.168.33.10:3000
 
-Admin Panel: http://localhost:3001/admin
+Admin Panel: http://192.168.33.10:3001/admin
 
-login: http://localhost:3001/#/login
+login: http://192.168.33.10:3001/#/login
 
 Key Functionalities
 Client: Manage projects, tasks, and resources.

@@ -204,7 +204,7 @@ const TaskForm = () => {
       const userRole = localStorage.getItem('userRole')
       console.log('TaskForm - User role:', userRole)
 
-      const projectsRes = await axios.get('http://localhost:3001/api/projects', {
+      const projectsRes = await axios.get('http://192.168.33.10:3001/api/projects', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -213,7 +213,7 @@ const TaskForm = () => {
       let usersRes = { data: { success: true, users: [] } }
 
       try {
-        usersRes = await axios.get('http://localhost:3001/api/auth/users', {
+        usersRes = await axios.get('http://192.168.33.10:3001/api/auth/users', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
