@@ -18,7 +18,7 @@ export const getUserTasks = async () => {
       throw new Error('No authentication token found');
     }
 
-    const response = await axios.get(`${API_URL}/tasks`, {
+    const response = await axios.get(`${API_URL}/api/tasks`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

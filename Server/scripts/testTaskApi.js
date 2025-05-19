@@ -6,7 +6,7 @@ const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZDBkMWIxOTM4NTc4
 
 // Create an axios instance
 const api = axios.create({
-  baseURL: 'http://192.168.33.10:3001/api',
+  baseURL: 'http://192.168.33.10:3001',
   headers: {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
@@ -17,7 +17,7 @@ const api = axios.create({
 async function getAllTasks() {
   try {
     console.log('Testing GET /tasks');
-    const response = await api.get('/tasks');
+    const response = await api.get('/api/tasks');
     console.log('Response status:', response.status);
     console.log('Number of tasks:', response.data.tasks.length);
     

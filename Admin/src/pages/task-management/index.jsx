@@ -134,7 +134,7 @@ const TaskManagement = ({ dashboardView = false }) => {
       setLoading(true);
       // Use Promise.allSettled to handle partial failures
       // Use adminApi for projects to get all projects without filtering by user
-      const results = await Promise.allSettled([api.get('/tasks'), adminApi.get('/projects'), adminApi.get('/users')]);
+      const results = await Promise.allSettled([api.get('/api/tasks'), adminApi.get('/projects'), adminApi.get('/users')]);
 
       // Process results
       const [tasksRes, projectsRes, usersRes] = results.map((result) =>
@@ -457,7 +457,7 @@ const TaskManagement = ({ dashboardView = false }) => {
 
       // If fetch API fails, try axios as originally implemented
       try {
-        const response = await api.get(`/tasks/${taskIdStr}`);
+        const response = await api.get(`/api/tasks/${taskIdStr}`);
         if (response.data.success) {
           const task = response.data.task;
           console.log('Axios task data from server:', JSON.stringify(task));
@@ -693,7 +693,7 @@ const TaskManagement = ({ dashboardView = false }) => {
         // For new tasks, remove the _id field if it exists
         const { _id, ...newTaskData } = taskData;
         console.log('Submitting new task data:', newTaskData);
-        response = await api.post('/tasks', newTaskData);
+        response = await api.post('/api/tasks', newTaskData);
       } else if (taskFormMode === 'edit') {
         // Get the task ID from taskToSubmit (which should now have the ID from one of our sources)
         let taskId = taskToSubmit._id ? taskToSubmit._id.toString() : null;
@@ -773,14 +773,14 @@ const TaskManagement = ({ dashboardView = false }) => {
           }
 
           // Log the URL and data being sent for debugging
-          console.log('Axios update URL:', `/tasks/${taskId}`);
+          console.log('Axios update URL:', `/api/tasks/${taskId}`);
           console.log('Axios update data:', updateDataWithoutId);
 
           // All fields are optional now, no validation needed
           console.log('All fields are optional for task update, proceeding with submission');
 
           // Send the update request
-          response = await api.put(`/tasks/${taskId}`, updateDataWithoutId);
+          response = await api.put(`/api/tasks/${taskId}`, updateDataWithoutId);
 
           // Log the response for debugging
           console.log('Update response:', response);
@@ -848,7 +848,7 @@ const TaskManagement = ({ dashboardView = false }) => {
     if (window.confirm('Are you sure you want to delete this task?')) {
       try {
         // Get the task details to check if the user is the project owner
-        const taskResponse = await api.get(`/tasks/${taskId}`);
+        const taskResponse = await api.get(`/api/tasks/${taskId}`);
         const task = taskResponse.data.task;
 
         // Get user info
@@ -873,7 +873,7 @@ const TaskManagement = ({ dashboardView = false }) => {
         }
 
         // Proceed with deletion
-        const response = await api.delete(`/tasks/${taskId}`);
+        const response = await api.delete(`/api/tasks/${taskId}`);
         if (response.data.success) {
           setSnackbar({
             open: true,
@@ -901,7 +901,7 @@ const TaskManagement = ({ dashboardView = false }) => {
   // View task details
   const handleViewTaskDetails = async (taskId) => {
     try {
-      const response = await api.get(`/tasks/${taskId}`);
+      const response = await api.get(`/api/tasks/${taskId}`);
       if (response.data.success) {
         setTaskDetails(response.data.task);
         setOpenTaskDetails(true);
@@ -1564,7 +1564,7 @@ const TaskManagement = ({ dashboardView = false }) => {
 
                           // Fetch the task data directly from the API to ensure we have the most up-to-date information
                           console.log('Fetching task data from API for ID:', taskId);
-                          const response = await api.get(`/tasks/${taskId}`);
+                          const response = await api.get(`/api/tasks/${taskId}`);
 
                           if (response.data.success && response.data.task) {
                             const apiTask = response.data.task;

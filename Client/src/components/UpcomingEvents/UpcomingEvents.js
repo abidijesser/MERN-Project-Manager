@@ -64,7 +64,7 @@ const UpcomingEvents = () => {
     if (event.type === 'Réunion') {
       navigate(`/meeting-room/${event.id}`)
     } else if (event.type === 'Échéance') {
-      navigate(`/tasks/${event.id}`)
+      navigate(`/api/tasks/${event.id}`)
     }
   }
 

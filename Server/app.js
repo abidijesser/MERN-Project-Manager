@@ -81,27 +81,27 @@ app.use(passport.session());
 app.use("/auth", authRouter);
 app.use("/", googleAuthRouter); // This should be before other routes
 
-app.use("/admin", adminRoutes);
-app.use("/tasks", taskRoutes);
-app.use("/projects", projectRoutes);
-app.use("/chat", chatRoutes);
-app.use("/gemini", geminiRoutes);
-app.use("/notifications", notificationRoutes);
-app.use("/stats", statsRoutes);
-app.use("/statistics", statisticsRoutes);
-app.use("/dashboard", dashboardRoutes);
-app.use("/calendar", calendarRoutes);
-app.use("/comments", commentRoutes);
-app.use("/activity", activityLogRoutes);
-app.use("/media", mediaRoutes);
-app.use("/documents", documentRoutes);
-app.use("/share", shareRoutes);
-app.use("/meetings", meetingRoutes);
-app.use("/messages", messageRoutes);
-app.use("/recommendations", recommendationRoutes);
-app.use("/drive", driveRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/tasks", taskRoutes);
+app.use("/api/projects", projectRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/gemini", geminiRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/stats", statsRoutes);
+app.use("/api/statistics", statisticsRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/calendar", calendarRoutes);
+app.use("/api/comments", commentRoutes);
+app.use("/api/activity", activityLogRoutes);
+app.use("/api/media", mediaRoutes);
+app.use("/api/documents", documentRoutes);
+app.use("/api/share", shareRoutes);
+app.use("/api/meetings", meetingRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/recommendations", recommendationRoutes);
+app.use("/api/drive", driveRoutes);
 // Add a simple test route
-app.get("/test", (req, res) => {
+app.get("/api/test", (req, res) => {
   res.json({ message: "Server is running" });
 });
 

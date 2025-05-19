@@ -45,7 +45,7 @@ const Login = () => {
 
     try {
       console.log('Sending login request to:', axios.defaults.baseURL + '/auth/login')
-      const response = await axios.post('/auth/login', {
+      const response = await axios.post('/api/auth/login', {
         email: email,
         password: password,
       })

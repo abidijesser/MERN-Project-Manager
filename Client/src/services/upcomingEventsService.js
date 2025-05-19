@@ -45,7 +45,7 @@ export const fetchUpcomingMeetings = async () => {
  */
 export const fetchUpcomingTaskDeadlines = async () => {
   try {
-    const response = await axios.get(`${API_URL}/tasks`, getAuthHeaders());
+    const response = await axios.get(`${API_URL}/api/tasks`, getAuthHeaders());
     
     if (response.data.success) {
       const now = new Date();

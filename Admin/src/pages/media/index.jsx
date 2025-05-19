@@ -172,7 +172,7 @@ const MediaManagement = () => {
     }
 
     try {
-      const response = await api.get('/tasks', {
+      const response = await api.get('/api/tasks', {
         params: { project: projectId }
       });
 
@@ -506,7 +506,7 @@ const MediaManagement = () => {
 
     try {
       console.log('Fetching task by ID:', taskId);
-      const response = await api.get(`/tasks/${taskId}`);
+      const response = await api.get(`/api/tasks/${taskId}`);
 
       if (response.data.success && response.data.task) {
         // Ajouter la tâche à la liste des tâches si elle n'y est pas déjà

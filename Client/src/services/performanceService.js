@@ -11,7 +11,7 @@ export const getPerformanceData = async () => {
     }
 
     // Récupérer les tâches
-    const tasksResponse = await axios.get(`${API_URL}/tasks`, {
+    const tasksResponse = await axios.get(`${API_URL}/api/tasks`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -503,7 +503,7 @@ export const getProjectsPerformance = async (filters = {}) => {
     });
 
     // Récupérer les tâches pour calculer les métriques de performance
-    const tasksResponse = await axios.get(`${API_URL}/tasks`, {
+    const tasksResponse = await axios.get(`${API_URL}/api/tasks`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
